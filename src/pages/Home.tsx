@@ -1,10 +1,10 @@
-import {useParams} from 'react-router-dom'
+// import {useParams} from 'react-router-dom'
 import {Linear} from "../components/Linear.tsx";
 import {Guide} from "../panels/Guide.tsx";
 import {Configuration} from "../panels/Configuration.tsx";
 import {Generator} from "../panels/Generator.tsx";
 
-export const Home  = () => {
+export const Home = () => {
 
     // const params = useParams();
 
