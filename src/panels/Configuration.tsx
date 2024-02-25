@@ -1,7 +1,11 @@
 import {Col} from "../components/Col.tsx";
 import {useState} from "react";
-import {Rule, Rules} from "../components/Rules.tsx";
+import {Rule, RuleInstance} from "./RuleInstance.tsx";
 import {uid} from "uid";
+import cloneDeep from "lodash.clonedeep";
+import {Row} from "../components/Row.tsx";
+import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {arrayMove, SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
 
 type ConfigurationProps = {
     enableWeights: boolean
@@ -103,15 +107,94 @@ export const Configuration = ({enableWeights, enableSerif}: ConfigurationProps) 
         },
     ]);
 
+    const onRuleChangeIndex = (index: number) => {
+        return (group: Rule) => {
+            const newRules = cloneDeep(rules)
+            newRules[index] = group
+            setRules(newRules)
+        }
+    }
+
+    const onRuleDeleteIndex = (index: number) => {
+        return () => {
+            const newRules = cloneDeep(rules)
+            newRules.splice(index, 1)
+            setRules(newRules)
+        }
+    }
+
+    const onRuleAdd = () => {
+        setRules([...rules, {
+            id: uid(),
+            name: "",
+            patterns: [],
+            rewrites: [],
+            exclusions: [],
+            terminalOnly: false,
+            showRewrites: false,
+            showExclusions: false,
+        }])
+    }
+
+    const onGroupAdd = () => {
+        setRules([...rules, {
+            id: uid(),
+            name: "",
+            patterns: [],
+            rewrites: [],
+            exclusions: [],
+            terminalOnly: true,
+            showRewrites: false,
+            showExclusions: false,
+        }])
+    }
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+    );
+
+    const onRulePatternDragEnd = (event: DragEndEvent) => {
+        const {active, over} = event;
+
+        if (active.id !== over?.id) {
+
+            const oldIndex = rules.findIndex(it => it.id === active.id);
+            const newIndex = rules.findIndex(it => it.id === over?.id);
+
+            const newRules = arrayMove(rules, oldIndex, newIndex)
+            setRules(newRules)
+        }
+    };
+
     return (
         <>
-            <Col className="bg-background md:w-1/2">
+            <Col className="bg-background md:w-2/3">
                 <div className="bg-surface p-4">Configuration</div>
 
                 <Col className="p-6 gap-4 overflow-auto no-scrollbar pb-64">
 
-                    <Rules className="" rules={rules} onRulesChange={setRules} enableWeight={enableWeights}
-                           enableSerif={enableSerif}/>
+                    <Col>
+                        <Col className="gap-4">
+
+                            <DndContext sensors={sensors} collisionDetection={closestCenter}
+                                        onDragEnd={onRulePatternDragEnd}>
+                                <SortableContext items={rules} strategy={verticalListSortingStrategy}>
+                                    {rules.map((r, index) =>
+                                        <RuleInstance rule={r}
+                                                      onRuleChange={onRuleChangeIndex(index)}
+                                                      onDelete={onRuleDeleteIndex(index)}
+                                                      enableWeight={enableWeights}
+                                                      enableSerif={enableSerif}/>)}
+                                </SortableContext>
+                            </DndContext>
+
+                            <Row className="gap-4">
+                                <button onClick={onGroupAdd} className="grow bg-primary rounded p-1">Add Group</button>
+                                <button onClick={onRuleAdd} className="grow bg-secondary rounded p-1">Add Rule</button>
+                            </Row>
+                        </Col>
+
+                    </Col>
 
                 </Col>
 
