@@ -210,7 +210,6 @@ const GroupPattern = ({
                                 minWidth={10}/>
             ) : null
             }
-
         </Row>
     );
 }

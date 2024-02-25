@@ -1,72 +1,107 @@
 import {Col} from "../components/Col.tsx";
-import {Groups} from "../components/Groups.tsx";
 import {useState} from "react";
-import {SwitchLabel} from "../components/SwitchLabel.tsx";
-import {Rules} from "../components/Rules.tsx";
+import {Rule, Rules} from "../components/Rules.tsx";
+import {uid} from "uid";
 
-export const Configuration = () => {
+type ConfigurationProps = {
+    enableWeights: boolean
+    enableSerif: boolean
+}
 
-    const [enableWeights, setEnableWeights] = useState(false)
-    const [enableSerif, setEnableSerif] = useState(false)
-    const [groups, setGroups] = useState([
+export const Configuration = ({enableWeights, enableSerif}: ConfigurationProps) => {
+
+    const [rules, setRules] = useState<Rule[]>([
         {
             name: "Vowel",
+            id: uid(),
+            terminalOnly: true,
             patterns: [
-                {pattern: "a", weight: 1.0},
-                {pattern: "e", weight: 1.0},
-                {pattern: "i", weight: 1.0},
-                {pattern: "o", weight: 1.0},
-                {pattern: "u", weight: 1.0},
-            ]
+                {pattern: "a", id: uid(), weight: 1.0},
+                {pattern: "e", id: uid(), weight: 1.0},
+                {pattern: "i", id: uid(), weight: 1.0},
+                {pattern: "o", id: uid(), weight: 1.0},
+                {pattern: "u", id: uid(), weight: 1.0},
+            ],
+            rewrites: [],
+            showRewrites: false,
+            exclusions: [],
+            showExclusions: false,
         },
         {
             name: "Consonant",
+            id: uid(),
+            terminalOnly: true,
             patterns: [
-                {pattern: "p", weight: 1.0},
-                {pattern: "t", weight: 1.0},
-                {pattern: "k", weight: 1.0},
-                {pattern: "s", weight: 1.0},
-                {pattern: "m", weight: 1.0},
-                {pattern: "n", weight: 1.0},
-                {pattern: "l", weight: 1.0},
-                {pattern: "w", weight: 1.0},
-                {pattern: "j", weight: 1.0},
-            ]
+                {pattern: "p", id: uid(), weight: 1.0},
+                {pattern: "t", id: uid(), weight: 1.0},
+                {pattern: "k", id: uid(), weight: 1.0},
+                {pattern: "s", id: uid(), weight: 1.0},
+                {pattern: "m", id: uid(), weight: 1.0},
+                {pattern: "n", id: uid(), weight: 1.0},
+                {pattern: "l", id: uid(), weight: 1.0},
+                {pattern: "w", id: uid(), weight: 1.0},
+                {pattern: "j", id: uid(), weight: 1.0},
+            ],
+            rewrites: [],
+            showRewrites: false,
+            exclusions: [],
+            showExclusions: false,
         },
         {
             name: "Coda",
+            id: uid(),
+            terminalOnly: true,
             patterns: [
-                {pattern: "n", weight: 1.0},
-            ]
+                {pattern: "n", id: uid(), weight: 1.0},
+            ],
+            rewrites: [],
+            showRewrites: false,
+            exclusions: [],
+            showExclusions: false,
         },
-    ]);
-    const [rules, setRules] = useState([
         {
             name: "Initial",
+            id: uid(),
+            terminalOnly: false,
             patterns: [
-                {pattern: "Consonant.Vowel.Coda", weight: 1.0},
-                {pattern: "Consonant.Vowel", weight: 1.0},
-                {pattern: "Vowel.Coda", weight: 1.0},
-                {pattern: "Vowel", weight: 1.0},
-            ]
+                {pattern: "Consonant.Vowel.Coda", id: uid(), weight: 1.0},
+                {pattern: "Consonant.Vowel", id: uid(), weight: 1.0},
+                {pattern: "Vowel.Coda", id: uid(), weight: 1.0},
+                {pattern: "Vowel", id: uid(), weight: 1.0},
+            ],
+            rewrites: [],
+            showRewrites: false,
+            exclusions: [],
+            showExclusions: false,
         },
         {
             name: "Syllable",
+            id: uid(),
+            terminalOnly: false,
             patterns: [
-                {pattern: "Consonant.Vowel.Coda", weight: 1.0},
-                {pattern: "Consonant.Vowel", weight: 1.0},
-            ]
+                {pattern: "Consonant.Vowel.Coda", id: uid(), weight: 1.0},
+                {pattern: "Consonant.Vowel", id: uid(), weight: 1.0},
+            ],
+            rewrites: [],
+            showRewrites: false,
+            exclusions: [],
+            showExclusions: false,
         },
         {
             name: "Word",
+            id: uid(),
+            terminalOnly: false,
             patterns: [
-                {pattern: "Initial", weight: 1.0},
-                {pattern: "Initial.Syllable", weight: 1.0},
-                {pattern: "Initial.Syllable.Syllable", weight: 1.0},
-            ]
+                {pattern: "Initial", id: uid(), weight: 1.0},
+                {pattern: "Initial.Syllable", id: uid(), weight: 1.0},
+                {pattern: "Initial.Syllable.Syllable", id: uid(), weight: 1.0},
+            ],
+            rewrites: [],
+            showRewrites: false,
+            exclusions: [],
+            showExclusions: false,
         },
     ]);
-
 
     return (
         <>
@@ -75,19 +110,9 @@ export const Configuration = () => {
 
                 <Col className="p-6 gap-4 overflow-auto no-scrollbar pb-64">
 
-                    <Col className="bg-surface p-2 rounded gap-2">
-                        <SwitchLabel checked={enableWeights} onChange={setEnableWeights}
-                                     label="Enable probability weights"
-                                     enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/20"/>
-                        <SwitchLabel checked={enableSerif} onChange={setEnableSerif} label="Enable serifs"
-                                     enabledColor="bg-primary" disabledColor="bg-primary/20"/>
-                    </Col>
+                    <Rules className="" rules={rules} onRulesChange={setRules} enableWeight={enableWeights}
+                           enableSerif={enableSerif}/>
 
-
-                    <Groups className="" groups={groups} onGroupsChange={setGroups} enableWeight={enableWeights}
-                            enableSerif={enableSerif}/>
-
-                    <Rules className="" rules={rules} onRulesChange={setRules} enableWeight={enableWeights}/>
                 </Col>
 
             </Col>
