@@ -1,15 +1,98 @@
 import {GenericProps} from "../components/GenericProps.tsx";
-import {useSortable} from "@dnd-kit/sortable";
+import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
 import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
-import {EllipsisVerticalIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
+import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {Rule} from "./RuleInstance.tsx";
+import cloneDeep from "lodash.clonedeep";
+import {uid} from "uid";
 
 export type ExclusionPattern = {
     id: string
     match: string,
 }
+
+
+export type ExclusionSectionProps = {
+    rule: Rule
+    onRuleChange: (rule: Rule) => void
+    enableSerif?: boolean
+}
+
+export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProps<ExclusionSectionProps>) => {
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+    );
+
+    const onExclusionPatternChangeIndex = (index: number) => {
+        return (pattern: ExclusionPattern) => {
+            const newRule = cloneDeep(rule)
+            newRule.exclusions[index] = pattern
+            onRuleChange(newRule)
+        }
+    }
+
+    const onExclusionPatternDeleteIndex = (index: number) => {
+        return () => {
+            const newRule = cloneDeep(rule)
+            newRule.exclusions.splice(index, 1)
+            onRuleChange(newRule)
+        }
+    }
+
+    const onExclusionPatternAdd = () => {
+        const newRule = cloneDeep(rule)
+        newRule.exclusions.push({id: uid(), match: ""})
+        onRuleChange(newRule)
+    }
+
+    const onExclusionPatternDragEnd = (event: DragEndEvent) => {
+        const {active, over} = event;
+
+        if (active.id !== over?.id) {
+
+            const oldIndex = rule.exclusions.findIndex(it => it.id === active.id);
+            const newIndex = rule.exclusions.findIndex(it => it.id === over?.id);
+
+            const newRule = cloneDeep(rule)
+            newRule.exclusions = arrayMove(newRule.exclusions, oldIndex, newIndex)
+            onRuleChange(newRule)
+        }
+    };
+
+    return (
+        <>
+            <Row className="items-baseline justify-between gap-4">
+                <div>Exclusions</div>
+                <div className="h-0.5 bg-white/10 grow"/>
+            </Row>
+            <Row className="gap-4 flex-wrap">
+                <DndContext sensors={sensors} collisionDetection={closestCenter}
+                            onDragEnd={onExclusionPatternDragEnd}>
+                    <SortableContext items={rule.exclusions} strategy={horizontalListSortingStrategy}>
+                        {rule.exclusions.map((e, index) =>
+                            <ExclusionPattern exclusion={e}
+                                              onChange={onExclusionPatternChangeIndex(index)}
+                                              onDelete={onExclusionPatternDeleteIndex(index)}
+                                              enableSerif={enableSerif}/>
+                        )}
+                    </SortableContext>
+                </DndContext>
+
+                <button onClick={onExclusionPatternAdd}
+                        className={`bg-accent-caution  mr-4 rounded p-1`}>
+                    <PlusIcon className="h-6"/>
+                </button>
+            </Row>
+        </>
+    );
+}
+
+
 export type ExclusionPatternProps = {
     exclusion: ExclusionPattern
     onChange: (value: ExclusionPattern) => void

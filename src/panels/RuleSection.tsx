@@ -1,16 +1,94 @@
 import {GenericProps} from "../components/GenericProps.tsx";
 import {ChangeEvent, useEffect, useState} from "react";
-import {useSortable} from "@dnd-kit/sortable";
+import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
 import {Row} from "../components/Row.tsx";
-import {EllipsisVerticalIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
+import {Rule} from "./RuleInstance.tsx";
+import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import cloneDeep from "lodash.clonedeep";
+import {uid} from "uid";
 
 export type RulePattern = {
     id: string
     pattern: string
     weight: number
 }
+
+
+export type RuleSectionProps = {
+    rule: Rule
+    onRuleChange: (rule: Rule) => void
+    enableSerif?: boolean
+    enableWeights?: boolean
+}
+
+export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: GenericProps<RuleSectionProps>) => {
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+    );
+
+    const onRuleChangeIndex = (index: number) => {
+        return (pattern: RulePattern) => {
+            const newRule = cloneDeep(rule)
+            newRule.patterns[index] = pattern
+            onRuleChange(newRule)
+        }
+    }
+
+    const onRuleDeleteIndex = (index: number) => {
+        return () => {
+            const newRule = cloneDeep(rule)
+            newRule.patterns.splice(index, 1)
+            onRuleChange(newRule)
+        }
+    }
+
+    const onRuleAdd = () => {
+        const newRule = cloneDeep(rule)
+        newRule.patterns.push({id: uid(), pattern: "", weight: 1.0})
+        onRuleChange(newRule)
+    }
+
+    const onRulePatternDragEnd = (event: DragEndEvent) => {
+        const {active, over} = event;
+
+        if (active.id !== over?.id) {
+
+            const oldIndex = rule.patterns.findIndex(it => it.id === active.id);
+            const newIndex = rule.patterns.findIndex(it => it.id === over?.id);
+
+            const newRule = cloneDeep(rule)
+            newRule.patterns = arrayMove(newRule.patterns, oldIndex, newIndex)
+            onRuleChange(newRule)
+        }
+    };
+
+    return (
+        <Row className="gap-4 flex-wrap">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRulePatternDragEnd}>
+                <SortableContext items={rule.patterns} strategy={horizontalListSortingStrategy}>
+                    {rule.patterns.map((p, index) =>
+                        <RulePattern pattern={p}
+                                     onChange={onRuleChangeIndex(index)}
+                                     terminalOnly={rule.terminalOnly}
+                                     onDelete={onRuleDeleteIndex(index)}
+                                     enableWeight={enableWeights}
+                                     enableSerif={enableSerif}/>
+                    )}
+                </SortableContext>
+            </DndContext>
+            <button onClick={onRuleAdd}
+                    className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded p-1`}>
+                <PlusIcon className="h-6"/>
+            </button>
+        </Row>
+    );
+}
+
+
 type RulePatternProps = {
     pattern: RulePattern
     onChange: (value: RulePattern) => void

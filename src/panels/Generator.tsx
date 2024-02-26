@@ -1,5 +1,7 @@
 import {Col} from "../components/Col.tsx";
 import {SwitchLabel} from "../components/SwitchLabel.tsx";
+import {Row} from "../components/Row.tsx";
+import {ArrowDownTrayIcon, ArrowUpTrayIcon, LinkIcon} from "@heroicons/react/24/outline";
 
 
 type GeneratorProps = {
@@ -20,15 +22,35 @@ export const Generator = ({enableWeights, setEnableWeights, enableSerif, setEnab
 
                     <SwitchLabel checked={enableWeights} onChange={setEnableWeights}
                                  label="Enable probability weights"
-                                 enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/20"/>
+                                 enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
                     <SwitchLabel checked={enableSerif} onChange={setEnableSerif}
                                  label="Enable serifs (For IPA characters readability)"
-                                 enabledColor="bg-primary" disabledColor="bg-primary/20"/>
+                                 enabledColor="bg-primary" disabledColor="bg-primary/30"/>
 
-                    <button>Share link</button>
-                    <button>Export Config</button>
-                    <button>Import Config</button>
-                    <button>Generate Word</button>
+                    <div className="h-0.5 bg-white/20"/>
+
+                    <Row className="gap-4">
+                        <button className="grow bg-primary rounded p-2">
+                            <Row className="items-center justify-center gap-2">
+                                <h1>Share link</h1>
+                                <LinkIcon className="h-5"/>
+                            </Row>
+                        </button>
+                        <button className="grow bg-primary rounded p-2">
+                            <Row className="items-center justify-center gap-2">
+                                <h1>Export Config</h1>
+                                <ArrowUpTrayIcon className="h-5"/>
+                            </Row>
+                        </button>
+                        <button className="grow bg-primary rounded p-2">
+                            <Row className="items-center justify-center gap-2">
+                                <h1>Import Config</h1>
+                                <ArrowDownTrayIcon className="h-5"/>
+                            </Row>
+                        </button>
+                    </Row>
+
+                    <button className="bg-primary rounded p-2">Generate Word</button>
 
                 </Col>
             </Col>

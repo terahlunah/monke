@@ -22,17 +22,17 @@ export const SwitchLabel = ({
                                 disabledColor
                             }: GenericProps<SwitchLabelProps>) => {
     return (
-        <Row className={`${className} items-center gap-4`}>
+        <Row className={`${className} items-center gap-2`}>
             <Switch
                 checked={checked}
                 onChange={onChange}
                 className={`${
                     checked ? enabledColor : disabledColor
-                } relative inline-flex h-6 w-11 items-center rounded-full`}>
+                } relative inline-flex h-4 w-8 items-center rounded-full`}>
                             <span
-                                className={`${checked ? 'translate-x-6' : 'translate-x-1'} inline-block h-4 w-4 transform rounded-full bg-white transition`}/>
+                                className={`${checked ? 'translate-x-4' : 'translate-x-1'} inline-block h-3 w-3 transform rounded-full bg-white transition`}/>
             </Switch>
-            <h1 className={`${labelClass} text-lg`}>{label}</h1>
+            <h1 className={`${labelClass}`}>{label}</h1>
         </Row>
     )
 }

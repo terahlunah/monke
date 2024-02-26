@@ -6,6 +6,7 @@ import cloneDeep from "lodash.clonedeep";
 import {Row} from "../components/Row.tsx";
 import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
 import {arrayMove, SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
+import {SmartPointerSensor} from "../components/SmartPointerSensor.ts";
 
 type ConfigurationProps = {
     enableWeights: boolean
@@ -150,7 +151,7 @@ export const Configuration = ({enableWeights, enableSerif}: ConfigurationProps) 
     }
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(SmartPointerSensor),
     );
 
     const onRulePatternDragEnd = (event: DragEndEvent) => {
@@ -183,7 +184,7 @@ export const Configuration = ({enableWeights, enableSerif}: ConfigurationProps) 
                                         <RuleInstance rule={r}
                                                       onRuleChange={onRuleChangeIndex(index)}
                                                       onDelete={onRuleDeleteIndex(index)}
-                                                      enableWeight={enableWeights}
+                                                      enableWeights={enableWeights}
                                                       enableSerif={enableSerif}/>)}
                                 </SortableContext>
                             </DndContext>
