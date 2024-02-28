@@ -19,7 +19,7 @@ import {Config} from "../pages/Home.tsx";
 import {Rule as ConfigRule} from "./RuleInstance.tsx";
 import {RulePattern} from "./RuleSection.tsx";
 import clipboard from "clipboardy";
-import {toast, ToastContainer} from "react-toastify";
+import {toast} from "react-toastify";
 
 
 type GeneratorProps = {

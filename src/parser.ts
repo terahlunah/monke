@@ -1,13 +1,12 @@
 import {
-    makeChoice,
-    makeSeq,
-    makeAtom,
-    makeRef,
     Expr,
+    makeAtom,
     makeRange,
+    makeRef,
+    makeSeq,
     makeWeighted,
-    WeightedExpr,
-    makeWeightedChoice
+    makeWeightedChoice,
+    WeightedExpr
 } from "./wordgen.ts";
 
 export class Parser {
