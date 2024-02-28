@@ -1,8 +1,8 @@
 import {Col} from "../components/Col.tsx";
 import {SwitchLabel} from "../components/SwitchLabel.tsx";
 import {Row} from "../components/Row.tsx";
-import {ArrowDownTrayIcon, ArrowUpTrayIcon, LinkIcon} from "@heroicons/react/24/outline";
-import {useState} from "react";
+import {ArrowDownTrayIcon, ArrowUpTrayIcon, ClipboardDocumentListIcon, LinkIcon} from "@heroicons/react/24/outline";
+import {ChangeEvent, useMemo, useState} from "react";
 import {Parser} from "../parser.ts";
 import {
     Expr,
@@ -10,13 +10,16 @@ import {
     Grammar,
     makeAtom,
     makeGrammar,
-    makeRule, makeWeighted,
+    makeRule,
+    makeWeighted,
     makeWeightedChoice,
     Rule
 } from "../wordgen.ts";
 import {Config} from "../pages/Home.tsx";
 import {Rule as ConfigRule} from "./RuleInstance.tsx";
 import {RulePattern} from "./RuleSection.tsx";
+import clipboard from "clipboardy";
+import {toast, ToastContainer} from "react-toastify";
 
 
 type GeneratorProps = {
@@ -27,14 +30,54 @@ type GeneratorProps = {
 
 export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorProps) => {
 
-    const [text, setText] = useState("")
+    const [generatedWords, setGeneratedWords] = useState<string[]>([])
+    const [wordCount, setwordCount] = useState("50")
+    const [outputList, setOutputList] = useState(false)
+    const [filterDuplicates, setFilterDuplicates] = useState(false)
+
+    const text = useMemo(
+        () => outputList ?
+            generatedWords.join("\n") :
+            generatedWords.join(" "),
+        [generatedWords, outputList]
+    )
+
+    function isPositiveNumber(value?: string | number): boolean {
+        return ((value != null) &&
+            (value !== '') &&
+            !isNaN(Number(value.toString())) &&
+            Number(value.toString()) >= 0
+        );
+    }
+
+    const onWordCountInput = (e: ChangeEvent<HTMLInputElement>) => {
+        const v = e.target.value
+        setwordCount(v)
+    }
+
+    const onWordCountBlur = () => {
+        if (!isPositiveNumber(wordCount)) {
+            setwordCount('10')
+        }
+    }
 
     const onGenerate = () => {
-        let grammar = configToGrammar(config, "Word")
+        const grammar = configToGrammar(config, "Word")
 
-        let s = generate(grammar)
+        const words = []
+        const count = Number(wordCount)
 
-        setText(s)
+        for (let i = 0; i < count; i++) {
+            words.push(generate(grammar))
+        }
+
+        setGeneratedWords(words)
+    }
+
+    const onCopy = async () => {
+        console.log("Test")
+        await clipboard.write(text)
+        toast("Words copied to clipboard!")
     }
 
     return (
@@ -42,7 +85,7 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
             <Col className="grow bg-primary/5 md:basis-1/2">
                 <div className="bg-primary p-4">Generator</div>
 
-                <Col className="p-6 gap-4 overflow-auto no-scrollbar pb-64">
+                <Col className="p-6 gap-4 overflow-auto no-scrollbar">
 
                     <SwitchLabel checked={config.enableWeights} onChange={setEnableWeights}
                                  label="Enable probability weights"
@@ -50,23 +93,29 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
                     <SwitchLabel checked={config.enableSerif} onChange={setEnableSerif}
                                  label="Enable serifs (For IPA characters readability)"
                                  enabledColor="bg-primary" disabledColor="bg-primary/30"/>
+                    <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}
+                                 label="Filter Duplicates"
+                                 enabledColor="bg-accent-caution" disabledColor="bg-accent-caution/30"/>
+                    <SwitchLabel checked={outputList} onChange={setOutputList}
+                                 label="Output as list"
+                                 enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
 
-                    <div className="h-0.5 bg-white/20"/>
+                    <div className="border-t border-white/20"/>
 
                     <Row className="gap-4">
-                        <button className="grow bg-primary rounded p-2">
+                        <button className="grow bg-gray-600/30 rounded p-2" title={"Not yet implemented"}>
                             <Row className="items-center justify-center gap-2">
                                 <h1>Share link</h1>
                                 <LinkIcon className="h-5"/>
                             </Row>
                         </button>
-                        <button className="grow bg-primary rounded p-2">
+                        <button className="grow bg-gray-600/30 rounded p-2" title={"Not yet implemented"}>
                             <Row className="items-center justify-center gap-2">
                                 <h1>Export Config</h1>
                                 <ArrowUpTrayIcon className="h-5"/>
                             </Row>
                         </button>
-                        <button className="grow bg-primary rounded p-2">
+                        <button className="grow bg-gray-600/30 rounded p-2" title={"Not yet implemented"}>
                             <Row className="items-center justify-center gap-2">
                                 <h1>Import Config</h1>
                                 <ArrowDownTrayIcon className="h-5"/>
@@ -74,9 +123,22 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
                         </button>
                     </Row>
 
-                    <button onClick={onGenerate} className="bg-primary rounded p-2">Generate Word</button>
+                    <Row className="gap-4">
+                        <Row className="items-center justify-start grow">
+                            <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3">Generate
+                            </button>
+                            <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
+                                   className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
+                        </Row>
+                        <button className="grow bg-primary rounded p-2" onClick={onCopy}>
+                            <Row className="items-center justify-center gap-2">
+                                <h1>Copy words</h1>
+                                <ClipboardDocumentListIcon className="h-5"/>
+                            </Row>
+                        </button>
+                    </Row>
 
-                    <p>
+                    <p className="whitespace-pre-line">
                         {text}
                     </p>
 
@@ -94,10 +156,10 @@ const configToGrammar = (config: Config, root: string): Grammar => {
 const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
 
     if (rule.terminalOnly) {
-        let ruleExpr = terminalPatternsToExpr(rule.patterns)
+        const ruleExpr = terminalPatternsToExpr(rule.patterns)
         return makeRule(rule.name, ruleExpr, [], [])
     } else {
-        let ruleExpr = rulePatternsToExpr(rule.patterns)
+        const ruleExpr = rulePatternsToExpr(rule.patterns)
         return makeRule(rule.name, ruleExpr, [], [])
     }
 

@@ -6,6 +6,7 @@ import {Generator} from "../panels/Generator.tsx";
 import {useState} from "react";
 import {Rule} from "../panels/RuleInstance.tsx";
 import {uid} from "uid";
+import {Bounce, ToastContainer} from "react-toastify";
 
 export type Config = {
     rules: Rule[],
@@ -39,7 +40,19 @@ export const Home = () => {
     return (
         <div className="text-on-surface">
             {/*<p>Home {params.config}</p>*/}
-
+            <ToastContainer
+                position="bottom-center"
+                autoClose={5000}
+                hideProgressBar
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+                transition={Bounce}
+            />
             <Linear className="bg-background md:h-screen">
                 <Guide/>
                 <Configuration config={config} setRules={setRules}/>
