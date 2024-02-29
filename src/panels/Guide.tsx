@@ -10,10 +10,10 @@ export const Guide = () => {
     return (
         <>
             {showGuide ? (
-                <Col className="bg-secondary/20 grow md:basis-1/2">
+                <Col className="bg-secondary/20 grow md:w-1/2">
                     <Row className="justify-between bg-secondary p-4">
                         <div className="">Guide</div>
-                        <button onClick={() => setShowGuide(false)} ><XMarkIcon className="h-6"/></button>
+                        <button onClick={() => setShowGuide(false)}><XMarkIcon className="h-6"/></button>
                     </Row>
                     <div className="p-8">
                         <h1>Work in Progress</h1>
@@ -21,7 +21,7 @@ export const Guide = () => {
                 </Col>
             ) : (
                 <Col className="bg-secondary/20">
-                    <button className="bg-secondary p-4" onClick={() => setShowGuide(true)}>
+                    <button title="Guide" className="bg-secondary p-4" onClick={() => setShowGuide(true)}>
                         <BookOpenIcon className="h-6"/>
                     </button>
                 </Col>

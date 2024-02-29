@@ -3,43 +3,59 @@ import {SwitchLabel} from "../components/SwitchLabel.tsx";
 import {Row} from "../components/Row.tsx";
 import {ArrowDownTrayIcon, ArrowUpTrayIcon, ClipboardDocumentListIcon, LinkIcon} from "@heroicons/react/24/outline";
 import {ChangeEvent, useMemo, useState} from "react";
-import {Parser} from "../parser.ts";
-import {
-    Expr,
-    generate,
-    Grammar,
-    makeAtom,
-    makeGrammar,
-    makeRule,
-    makeWeighted,
-    makeWeightedChoice,
-    Rule
-} from "../wordgen.ts";
+import {countCombinations, detectCycle, generate, Grammar} from "../wordgen.ts";
 import {Config} from "../pages/Home.tsx";
-import {Rule as ConfigRule} from "./RuleInstance.tsx";
-import {RulePattern} from "./RuleSection.tsx";
 import clipboard from "clipboardy";
 import {toast} from "react-toastify";
 
 
 type GeneratorProps = {
     config: Config
+    grammar: Grammar | null
+    error: string | null
     setEnableWeights: (enable: boolean) => void
     setEnableSerif: (enable: boolean) => void
 }
 
-export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorProps) => {
+export const Generator = ({config, grammar, error, setEnableWeights, setEnableSerif}: GeneratorProps) => {
 
     const [generatedWords, setGeneratedWords] = useState<string[]>([])
-    const [wordCount, setwordCount] = useState("50")
+    const [wordCount, setWordCount] = useState("50")
     const [outputList, setOutputList] = useState(false)
     const [filterDuplicates, setFilterDuplicates] = useState(false)
+    const [generationError, setGenerationError] = useState<string | null>(null)
+
+    const filteredWords = useMemo(
+        () => {
+            if (filterDuplicates) {
+                const set = new Set(generatedWords)
+                return [...set]
+            } else {
+                return generatedWords
+            }
+        },
+        [generatedWords, filterDuplicates]
+    )
 
     const text = useMemo(
         () => outputList ?
-            generatedWords.join("\n") :
-            generatedWords.join(" "),
-        [generatedWords, outputList]
+            filteredWords.join("\n") :
+            filteredWords.join(" "),
+        [filteredWords, outputList]
+    )
+
+    const [cycle, combinations] = useMemo((): [string[], number] => {
+            if (grammar) {
+                const cycles = detectCycle(grammar) ?? []
+
+                const combinations = cycles.length != 0 ? 0 : countCombinations(grammar)
+
+                return [cycles, combinations]
+            } else {
+                return [[""], 0]
+            }
+        },
+        [grammar]
     )
 
     function isPositiveNumber(value?: string | number): boolean {
@@ -52,37 +68,45 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
 
     const onWordCountInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
-        setwordCount(v)
+        setWordCount(v)
     }
 
     const onWordCountBlur = () => {
         if (!isPositiveNumber(wordCount)) {
-            setwordCount('10')
+            setWordCount('10')
         }
     }
 
     const onGenerate = () => {
-        const grammar = configToGrammar(config, "Word")
 
-        const words = []
-        const count = Number(wordCount)
+        setGenerationError("")
 
-        for (let i = 0; i < count; i++) {
-            words.push(generate(grammar))
+        if (grammar) {
+            const words = []
+            const count = Number(wordCount)
+
+            for (let i = 0; i < count; i++) {
+
+                try {
+                    words.push(generate(grammar))
+                } catch (e) {
+                    setGenerationError((e as Error).message)
+                }
+
+            }
+
+            setGeneratedWords(words)
         }
-
-        setGeneratedWords(words)
     }
 
     const onCopy = async () => {
-        console.log("Test")
         await clipboard.write(text)
         toast("Words copied to clipboard!")
     }
 
     return (
         <>
-            <Col className="grow bg-primary/5 md:basis-1/2">
+            <Col className="grow bg-primary/5 md:w-1/2">
                 <div className="bg-primary p-4">Generator</div>
 
                 <Col className="p-6 gap-4 overflow-auto no-scrollbar">
@@ -123,6 +147,19 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
                         </button>
                     </Row>
 
+                    <div className="border-t border-white/20"/>
+
+                    <h3 className="text-gray-300">
+                        {grammar ?
+                            (cycle.length != 0 ?
+                                `Grammar has at least cycle one cycle: ${cycle}` :
+                                `Grammar has ${combinations} possible branches`) :
+                            `Invalid grammar: ${error}`
+                        }
+                    </h3>
+
+                    <div className="border-t border-white/20"/>
+
                     <Row className="gap-4">
                         <Row className="items-center justify-start grow">
                             <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3">Generate
@@ -132,13 +169,30 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
                         </Row>
                         <button className="grow bg-primary rounded p-2" onClick={onCopy}>
                             <Row className="items-center justify-center gap-2">
-                                <h1>Copy words</h1>
+                                <h1>Copy</h1>
                                 <ClipboardDocumentListIcon className="h-5"/>
                             </Row>
                         </button>
                     </Row>
 
-                    <p className="whitespace-pre-line">
+                    {
+                        filterDuplicates && generatedWords.length != 0 ?
+                            <h3 className="text-center italic text-gray-300">
+                                Showing {filteredWords.length} unique words out of {generatedWords.length} generated
+                            </h3> :
+                            null
+                    }
+
+                    {
+                        generationError ?
+                            <h3 className="text-center italic text-accent-danger">
+                                {generationError}
+                            </h3> :
+                            null
+                    }
+
+
+                    <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
                         {text}
                     </p>
 
@@ -147,31 +201,3 @@ export const Generator = ({config, setEnableWeights, setEnableSerif}: GeneratorP
         </>
     )
 }
-
-const configToGrammar = (config: Config, root: string): Grammar => {
-    const rules = config.rules.map(configRuleToGrammarRule)
-    return makeGrammar(root, rules, config.enableWeights)
-}
-
-const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
-
-    if (rule.terminalOnly) {
-        const ruleExpr = terminalPatternsToExpr(rule.patterns)
-        return makeRule(rule.name, ruleExpr, [], [])
-    } else {
-        const ruleExpr = rulePatternsToExpr(rule.patterns)
-        return makeRule(rule.name, ruleExpr, [], [])
-    }
-
-
-}
-
-const terminalPatternsToExpr = (patterns: RulePattern[]): Expr => {
-    return makeWeightedChoice(patterns.map(p => makeWeighted(makeAtom(p.pattern), p.weight)))
-}
-
-const rulePatternsToExpr = (patterns: RulePattern[]): Expr => {
-    return makeWeightedChoice(patterns.map(p => makeWeighted(parse(p.pattern), p.weight)))
-}
-
-const parse = (src: string): Expr => (new Parser(src)).parseExpr()

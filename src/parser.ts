@@ -1,13 +1,16 @@
 import {
-    Expr,
-    makeAtom,
+    Expr, getRuleEdges, Grammar,
+    makeAtom, makeGrammar,
     makeRange,
-    makeRef,
+    makeRef, makeRule,
     makeSeq,
     makeWeighted,
-    makeWeightedChoice,
+    makeWeightedChoice, Rule,
     WeightedExpr
 } from "./wordgen.ts";
+import {Config} from "./pages/Home.tsx";
+import {Rule as ConfigRule} from "./panels/RuleInstance.tsx";
+import {RulePattern} from "./panels/RuleSection.tsx";
 
 export class Parser {
     private currentPosition: number = 0;
@@ -105,7 +108,7 @@ export class Parser {
     }
 
     private parseSequence(): Expr {
-        let items: Expr[] = [this.parseQuantifiedTerm()]; // Start with the first term, which might be quantified
+        const items: Expr[] = [this.parseQuantifiedTerm()]; // Start with the first term, which might be quantified
 
         // While the next token indicates a sequence, keep parsing
         while (this.peek() === '.') {
@@ -118,11 +121,11 @@ export class Parser {
     }
 
     private parseQuantifiedTerm(): Expr {
-        let term = this.parseTerm(); // Parse the base term (could be an Atom, Ref, or a nested expression)
+        const term = this.parseTerm(); // Parse the base term (could be an Atom, Ref, or a nested expression)
 
         // If the next token is a QuantOperator, handle quantification
         if (this.peek() === '{') {
-            let [min, max] = this.parseQuantifier()
+            const [min, max] = this.parseQuantifier()
             return makeRange(term, min, max)
         }
 
@@ -136,7 +139,7 @@ export class Parser {
             firstWeight = this.parseWeight()
         }
 
-        let items: WeightedExpr[] = [makeWeighted(firstExpr, firstWeight)];
+        const items: WeightedExpr[] = [makeWeighted(firstExpr, firstWeight)];
 
         while (this.consume('/')) {
             const expr = this.parseSequence()
@@ -153,10 +156,11 @@ export class Parser {
     }
 
     private parseTerm(): Expr {
-        let char = this.peek()
+        const char = this.peek()
 
         if (!char) {
-            throw new Error("Expected an expression");
+            return makeAtom("")
+            // throw new Error("Expected an expression");
         }
 
 
@@ -179,7 +183,7 @@ export class Parser {
             throw new Error("Expected '(' at the start of an optional expression");
         }
 
-        let expr = this.parseExpr(); // Parse the base term (could be an Atom, Ref, or a nested expression)
+        const expr = this.parseExpr(); // Parse the base term (could be an Atom, Ref, or a nested expression)
 
         if (!this.consume(")")) {
             throw new Error("Expected ')' at the end of an optional expression");
@@ -194,7 +198,7 @@ export class Parser {
             throw new Error("Expected '[' at the start of a group");
         }
 
-        let expr = this.parseExpr(); // Parse the base term (could be an Atom, Ref, or a nested expression)
+        const expr = this.parseExpr(); // Parse the base term (could be an Atom, Ref, or a nested expression)
 
         if (!this.consume("]")) {
             throw new Error("Expected ']' at the end of a group");
@@ -215,7 +219,7 @@ export class Parser {
         let minMaxStr = '';
 
         // Collect numbers or ':' until '}'
-        while (this.peek() !== '}') {
+        while (this.peek() && this.peek() !== '}') {
             minMaxStr += this.input[this.currentPosition];
             this.advancePosition();
         }
@@ -248,7 +252,7 @@ export class Parser {
             this.advancePosition();
         }
 
-        let weight = parseFloat(weightStr);
+        const weight = parseFloat(weightStr);
         if (isNaN(weight) || weight < 0) {
             throw new Error("Invalid weight value");
         }
@@ -298,5 +302,58 @@ export class Parser {
         return this.currentPosition < this.input.length
     }
 
-    // Additional utility methods as needed for error handling, checking end of input, etc.
+    public parse(): Expr {
+        const expr = this.parseExpr();
+
+        if (this.currentPosition < this.input.length) {
+            throw new Error(`Unexpected character \`${this.peek()}\``);
+        }
+
+        return expr;
+    }
 }
+
+export const configToGrammar = (config: Config): Grammar | null => {
+    if (!config.root) return null
+
+    const rules = config.rules.map(configRuleToGrammarRule)
+
+    const rulesNames = rules.map(r => r.name)
+    for (const rule of rules) {
+        const edges = getRuleEdges(rule)
+
+        for (const e of edges) {
+            if (!rulesNames.includes(e)) {
+                throw new Error(`Uknown rule ${e}`)
+            }
+        }
+    }
+
+
+    return makeGrammar(config.root, rules, config.enableWeights)
+}
+
+const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
+
+    if (rule.terminalOnly) {
+        const ruleExpr = terminalPatternsToExpr(rule.patterns)
+        return makeRule(rule.name, ruleExpr, [], [])
+    } else {
+        const ruleExpr = rulePatternsToExpr(rule.patterns)
+        const exclusions = rule.exclusions.map(p => parse(p.match))
+        const rewrites: [Expr, Expr][] = rule.rewrites.map(p => [parse(p.match), parse(p.replace)])
+        return makeRule(rule.name, ruleExpr, exclusions, rewrites)
+    }
+
+}
+
+const terminalPatternsToExpr = (patterns: RulePattern[]): Expr => {
+    return makeWeightedChoice(patterns.map(p => makeWeighted(makeAtom(p.pattern), p.weight)))
+}
+
+const rulePatternsToExpr = (patterns: RulePattern[]): Expr => {
+    return makeWeightedChoice(patterns.map(p => makeWeighted(parse(p.pattern), p.weight)))
+}
+
+const parse = (src: string): Expr => (new Parser(src)).parse()
+

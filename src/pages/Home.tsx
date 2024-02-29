@@ -3,13 +3,18 @@ import {Linear} from "../components/Linear.tsx";
 import {Guide} from "../panels/Guide.tsx";
 import {Configuration} from "../panels/Configuration.tsx";
 import {Generator} from "../panels/Generator.tsx";
-import {useState} from "react";
+import {useMemo, useState} from "react";
 import {Rule} from "../panels/RuleInstance.tsx";
-import {uid} from "uid";
 import {Bounce, ToastContainer} from "react-toastify";
+import {Col} from "../components/Col.tsx";
+import {Row} from "../components/Row.tsx";
+import {tokiPonaRoot, tokiPonaRules} from "../defaults.ts";
+import {FaGithub} from "react-icons/fa";
+import {configToGrammar} from "../parser.ts";
 
 export type Config = {
     rules: Rule[],
+    root: string | null
     enableWeights: boolean,
     enableSerif: boolean,
 }
@@ -20,7 +25,8 @@ export const Home = () => {
     // const params = useParams();
 
     const [config, setConfig] = useState<Config>({
-        rules: defaultRules,
+        rules: tokiPonaRules,
+        root: tokiPonaRoot,
         enableWeights: false,
         enableSerif: false,
     })
@@ -33,12 +39,26 @@ export const Home = () => {
         setConfig({...config, enableSerif: value})
     }
 
-    const setRules = (value: Rule[]) => {
-        setConfig({...config, rules: value})
+    const setRules = (root: string | null, rules: Rule[]) => {
+        setConfig({...config, root: root, rules: rules})
     }
 
+    const [grammar, error] = useMemo(() => {
+            let grammar = null
+            let error = null
+            try {
+                grammar = configToGrammar(config)
+            } catch (e) {
+                console.log(e)
+                error = (e as Error).message
+            }
+            return [grammar, error]
+        },
+        [config]
+    )
+
     return (
-        <div className="text-on-surface">
+        <>
             {/*<p>Home {params.config}</p>*/}
             <ToastContainer
                 position="bottom-center"
@@ -53,99 +73,31 @@ export const Home = () => {
                 theme="dark"
                 transition={Bounce}
             />
-            <Linear className="bg-background md:h-screen">
-                <Guide/>
-                <Configuration config={config} setRules={setRules}/>
-                <Generator config={config} setEnableWeights={setEnableWeights} setEnableSerif={setEnableSerif}/>
-            </Linear>
-        </div>
+            <Col className="bg-background text-on-surface justify-stretch h-screen">
+                <Row className="gap-4 p-2 items-center justify-between">
+                    <Row className="ml-2 gap-4 p-2 items-center">
+                        <h1 className="text-xl font-bold">Monke</h1>
+                        <div className="border-l border-white/20 h-8"/>
+                        <h2 className="text-lg text-on-surface/80">A grammar based word generator</h2>
+                    </Row>
+                    <Row className="mr-2 gap-4 p-2 items-center">
+                        <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
+                            <FaGithub className="size-8"/>
+                        </a>
+                    </Row>
+                </Row>
+                <Linear className="overflow-auto grow">
+                    <Guide/>
+                    <Configuration config={config}
+                                   setRules={setRules}
+                                   setConfig={setConfig}/>
+                    <Generator config={config}
+                               grammar={grammar}
+                               error={error}
+                               setEnableWeights={setEnableWeights}
+                               setEnableSerif={setEnableSerif}/>
+                </Linear>
+            </Col>
+        </>
     )
 }
-
-const defaultRules = [
-    {
-        name: "Vowel",
-        id: uid(),
-        terminalOnly: true,
-        patterns: [
-            {pattern: "a", id: uid(), weight: 1.0},
-            {pattern: "e", id: uid(), weight: 1.0},
-            {pattern: "i", id: uid(), weight: 1.0},
-            {pattern: "o", id: uid(), weight: 1.0},
-            {pattern: "u", id: uid(), weight: 1.0},
-        ],
-        rewrites: [],
-        showRewrites: false,
-        exclusions: [],
-        showExclusions: false,
-    },
-    {
-        name: "Consonant",
-        id: uid(),
-        terminalOnly: true,
-        patterns: [
-            {pattern: "p", id: uid(), weight: 1.0},
-            {pattern: "t", id: uid(), weight: 1.0},
-            {pattern: "k", id: uid(), weight: 1.0},
-            {pattern: "s", id: uid(), weight: 1.0},
-            {pattern: "m", id: uid(), weight: 1.0},
-            {pattern: "n", id: uid(), weight: 1.0},
-            {pattern: "l", id: uid(), weight: 1.0},
-            {pattern: "w", id: uid(), weight: 1.0},
-            {pattern: "j", id: uid(), weight: 1.0},
-        ],
-        rewrites: [],
-        showRewrites: false,
-        exclusions: [],
-        showExclusions: false,
-    },
-    {
-        name: "Coda",
-        id: uid(),
-        terminalOnly: true,
-        patterns: [
-            {pattern: "n", id: uid(), weight: 1.0},
-        ],
-        rewrites: [],
-        showRewrites: false,
-        exclusions: [],
-        showExclusions: false,
-    },
-    {
-        name: "Rime",
-        id: uid(),
-        terminalOnly: false,
-        patterns: [
-            {pattern: "Vowel.(Coda)", id: uid(), weight: 1.0},
-        ],
-        rewrites: [],
-        showRewrites: false,
-        exclusions: [],
-        showExclusions: false,
-    },
-    {
-        name: "Full",
-        id: uid(),
-        terminalOnly: false,
-        patterns: [
-            {pattern: "Consonant.Rime", id: uid(), weight: 1.0},
-        ],
-        rewrites: [],
-        showRewrites: false,
-        exclusions: [],
-        showExclusions: false,
-    },
-
-    {
-        name: "Word",
-        id: uid(),
-        terminalOnly: false,
-        patterns: [
-            {pattern: "[Rime/Full].Full{:2}", id: uid(), weight: 1.0},
-        ],
-        rewrites: [],
-        showRewrites: false,
-        exclusions: [],
-        showExclusions: false,
-    },
-]

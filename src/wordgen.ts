@@ -1,9 +1,11 @@
+import findDirectedCycle from "find-cycle/directed"
+
 export type Expr =
     | { tag: 'Atom', value: string }
     | { tag: 'Ref', rule: string }
     | { tag: 'Seq', items: Expr[] }
     | { tag: 'Choice', items: WeightedExpr[] }
-    | { tag: 'Quantifier', term: Expr, min: number, max: number }
+    | { tag: 'Quantifier', expr: Expr, min: number, max: number }
 
 
 export type WeightedExpr = {
@@ -47,48 +49,43 @@ const matchChoice = (g: Grammar, choices: Expr[], s: string): number | null => {
     return null;
 };
 
+const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: string): number | null => {
+    for (let i = min; i <= max; ++i) {
+        const match = matchSeq(g, Array(i).fill(expr), s)
+        if (match !== null) return match;
+    }
+    return null
+};
+
 const matchExpr = (g: Grammar, e: Expr, s: string): number | null => {
     switch (e.tag) {
         case 'Atom':
             return s === e.value ? e.value.length : null
-        case 'Ref':
+        case 'Ref': {
             const rule = g.rules.find(r => r.name === e.rule);
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
             return matchExpr(g, rule.expr, s)
+        }
         case "Seq":
             return matchSeq(g, e.items, s)
         case "Choice":
             return matchChoice(g, e.items.map(c => c.expr), s)
         case "Quantifier":
-            // TODO FIX, we need to try every combinaisons
-            return null
-        // const n = Math.random() * (t.max - t.min) + t.min
-        // let sub = s
-        // let count = 0
-        //
-        // for (let i = 0; i < n; i++) {
-        //     const termMatch = matchExpr(g, t.term, sub);
-        //     if (termMatch !== null) {
-        //         count += termMatch
-        //         sub = sub.slice(termMatch)
-        //     } else {
-        //         return null
-        //     }
-        // }
-        //
-        // return count
+            return matchQuantifier(g, e.expr, e.min, e.max, s)
+
     }
 };
 
 
 const checkRuleExclusions = (g: Grammar, r: Rule, gen: string) => {
-    for (let e of r.exclusions) {
-
+    for (const e of r.exclusions) {
         for (let i = 0; i < gen.length; i++) {
-            const s = gen.substring(i);
+            for (let j = i + 1; j <= gen.length; j++) {
+                const s = gen.slice(i, j);
 
-            if (matchExpr(g, e, s) !== null) {
-                return true;
+                if (matchExpr(g, e, s) !== null) {
+                    return true;
+                }
             }
         }
     }
@@ -97,7 +94,7 @@ const checkRuleExclusions = (g: Grammar, r: Rule, gen: string) => {
 };
 
 const randomPick = <T>(array: T[]): T => {
-    let random = Math.floor(Math.random() * array.length);
+    const random = Math.floor(Math.random() * array.length);
     return array[random]
 };
 
@@ -121,55 +118,61 @@ const generateExpr = (g: Grammar, e: Expr): string => {
     switch (e.tag) {
         case 'Atom':
             return e.value;
-        case 'Ref':
+        case 'Ref': {
             const rule = g.rules.find(r => r.name === e.rule);
             if (!rule) throw new Error(`Rule ${e.rule} not found`);
             return generateRule(g, rule);
+        }
         case "Seq":
             return e.items.map(t => generateExpr(g, t)).join('')
-        case "Choice":
+        case "Choice": {
             const choice = g.useWeights ?
                 weightedPick(e.items.map(c => [c.expr, c.weight])) :
                 randomPick(e.items.map(c => c.expr))
             return generateExpr(g, choice)
-        case "Quantifier":
+        }
+        case "Quantifier": {
             const n = Math.floor(Math.random() * (1 + e.max - e.min) + e.min)
             let s = ""
             for (let i = 0; i < n; i++) {
-                s += generateExpr(g, e.term)
+                s += generateExpr(g, e.expr)
             }
             return s
+        }
     }
 };
 
 const generateRule = (g: Grammar, r: Rule): string => {
-    let gen = generateExpr(g, r.expr);
 
-    gen = applyRuleRewrites(g, r, gen);
+    for (let i = 0; i < 100; i++) {
+        let gen = generateExpr(g, r.expr);
 
-    if (checkRuleExclusions(g, r, gen)) {
-        console.log(`Rejected ${gen}`);
-        return "rejected";
-    } else {
-        return gen;
+        gen = applyRuleRewrites(g, r, gen);
+
+        if (!checkRuleExclusions(g, r, gen)) {
+            return gen;
+        }
     }
+
+    throw new Error("Exclusion rules are too restrictive")
 };
 
 const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
     let result = gen.slice()
 
     for (const [match, replace] of rule.rewrites) {
+
         for (let i = 0; i < result.length; i++) {
-            const s = result.slice(i);
-            const exprMatch = matchExpr(g, match, s);
-            if (exprMatch !== null) {
-                const head = result.slice(0, i);
-                const tail = result.slice(i + exprMatch);
-                const gen = generateExpr(g, replace);
+            for (let j = i + 1; j <= result.length; j++) {
+                const s = result.slice(i, j);
+                const exprMatch = matchExpr(g, match, s);
+                if (exprMatch !== null) {
+                    const head = result.slice(0, i);
+                    const tail = result.slice(i + exprMatch);
+                    const gen = generateExpr(g, replace);
 
-                console.log(`Rewrite Match (${i}, ${match}) \`${head}\` \`${gen}\` \`${tail}\``);
-
-                result = head + gen + tail;
+                    result = head + gen + tail;
+                }
             }
         }
     }
@@ -193,7 +196,7 @@ export const makeWeightedChoice = (items: WeightedExpr[]): Expr => ({tag: "Choic
 export const makeRepeat = (expr: Expr, count: number): Expr => makeRange(expr, count, count)
 export const makeRange = (expr: Expr, min: number, max: number): Expr => ({
     tag: "Quantifier",
-    term: expr,
+    expr: expr,
     min: min,
     max: max
 });
@@ -209,34 +212,65 @@ export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = t
     useWeights: useWeights,
 })
 
-export const simpleGrammar: Grammar = makeGrammar("Word", [
-        makeRule(
-            "Vowel",
-            makeChoice(["a", "e", "i", "o", "u"].map(makeAtom)),
-            [],
-            []
-        ),
-        makeRule(
-            "Consonant",
-            makeChoice(["p", "k", "t", "s", "m", "n", "l", "w", "j"].map(makeAtom)),
-            [],
-            []
-        ),
-        makeRule(
-            "Nasal",
-            makeChoice(["n"].map(makeAtom)),
-            [],
-            []
-        ),
-        makeRule(
-            "Word",
-            makeSeq([
-                makeRange(makeRef("Consonant"), 0, 1),
-                makeRef("Vowel"),
-                makeRange(makeRef("Nasal"), 0, 1),
-            ]),
-            [],
-            []
-        ),
-    ],
-);
+export const countCombinations = (g: Grammar): number => {
+    return countCombinationsRule(g, g.rules.find(r => r.name === g.root)!)
+}
+
+const countCombinationsRule = (g: Grammar, r: Rule): number => {
+    return countCombinationsExpr(g, r.expr)
+}
+
+const countCombinationsExpr = (g: Grammar, e: Expr): number => {
+    switch (e.tag) {
+        case "Atom":
+            return 1;
+        case "Ref":
+            return countCombinationsRule(g, g.rules.find(r => r.name === e.rule)!);
+        case "Seq":
+            return e.items.reduce((acc, it) => acc * countCombinationsExpr(g, it), 1);
+        case "Choice":
+            return e.items.reduce((acc, it) => acc + countCombinationsExpr(g, it.expr), 0);
+        case "Quantifier": {
+            let count = 0
+            const exprCount = countCombinationsExpr(g, e.expr)
+
+            for (let i = e.min; i <= e.max; i++) {
+                count += Math.pow(exprCount, i)
+            }
+
+            return count;
+        }
+
+
+    }
+}
+
+// detect cycles
+
+const getExprEdges = (e: Expr): string[] => {
+    switch (e.tag) {
+        case "Atom":
+            return [];
+        case "Ref":
+            return [e.rule];
+        case "Seq":
+            return e.items.flatMap(getExprEdges);
+        case "Choice":
+            return e.items.map(o => o.expr).flatMap(getExprEdges);
+        case "Quantifier":
+            return getExprEdges(e.expr);
+
+    }
+}
+
+export const getRuleEdges = (r: Rule): string[] => {
+    return getExprEdges(r.expr)
+}
+
+export const detectCycle = (g: Grammar): string[] | null | undefined => {
+
+    const edges: { [key: string]: string[] } = g.rules.reduce((acc, r) => ({...acc, [r.name]: getRuleEdges(r)}), {})
+    const getConnectedNodes = (node: string): string[] => edges[node]
+
+    return findDirectedCycle([g.root], getConnectedNodes)
+}
