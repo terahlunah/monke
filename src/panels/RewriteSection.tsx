@@ -5,16 +5,10 @@ import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
 import {ChevronDoubleRightIcon, EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
-import {Rule} from "./RuleInstance.tsx";
+import {RewritePattern, Rule} from "../models/ui.ts";
 import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
 import {uid} from "uid";
-
-export type RewritePattern = {
-    id: string
-    match: string,
-    replace: string
-}
 
 
 export type RewriteSectionProps = {
@@ -76,10 +70,10 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
                             onDragEnd={onRewritePatternDragEnd}>
                     <SortableContext items={rule.rewrites} strategy={horizontalListSortingStrategy}>
                         {rule.rewrites.map((r, index) =>
-                            <RewritePattern rewrite={r}
-                                            onChange={onRewritePatternChangeIndex(index)}
-                                            onDelete={onRewritePatternDeleteIndex(index)}
-                                            enableSerif={enableSerif}/>
+                            <RewritePatternItem rewrite={r}
+                                                onChange={onRewritePatternChangeIndex(index)}
+                                                onDelete={onRewritePatternDeleteIndex(index)}
+                                                enableSerif={enableSerif}/>
                         )}
                     </SortableContext>
                 </DndContext>
@@ -100,13 +94,13 @@ type RewritePatternProps = {
     onDelete?: () => void
     enableSerif?: boolean
 }
-export const RewritePattern = ({
-                                   className,
-                                   rewrite,
-                                   onChange,
-                                   onDelete,
-                                   enableSerif,
-                               }: GenericProps<RewritePatternProps>) => {
+export const RewritePatternItem = ({
+                                       className,
+                                       rewrite,
+                                       onChange,
+                                       onDelete,
+                                       enableSerif,
+                                   }: GenericProps<RewritePatternProps>) => {
 
     const {
         listeners,

@@ -7,7 +7,7 @@ export const App = () => {
             <Router basename={import.meta.env.BASE_URL}>
                 <Routes>
                     <Route path="/" element={<Home/>}/>
-                    <Route path="/:config" element={<Home/>}/>
+                    <Route path="/:urlConfig" element={<Home/>}/>
                 </Routes>
             </Router>
         </>

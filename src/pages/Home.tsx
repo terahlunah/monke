@@ -1,16 +1,17 @@
-// import {useParams} from 'react-router-dom'
 import {Linear} from "../components/Linear.tsx";
 import {Guide} from "../panels/Guide.tsx";
 import {Configuration} from "../panels/Configuration.tsx";
 import {Generator} from "../panels/Generator.tsx";
-import {useMemo, useState} from "react";
-import {Rule} from "../panels/RuleInstance.tsx";
+import {useEffect, useMemo, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 import {Col} from "../components/Col.tsx";
 import {Row} from "../components/Row.tsx";
-import {tokiPonaRoot, tokiPonaRules} from "../defaults.ts";
+import {tokiPonaRoot, tokiPonaRules} from "../logic/defaults.ts";
 import {FaGithub} from "react-icons/fa";
-import {configToGrammar} from "../parser.ts";
+import {configToGrammar} from "../logic/parser.ts";
+import {Rule} from "../models/ui.ts";
+import {useParams} from "react-router-dom";
+import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
 
 export type Config = {
     rules: Rule[],
@@ -19,17 +20,48 @@ export type Config = {
     enableSerif: boolean,
 }
 
-
 export const Home = () => {
 
-    // const params = useParams();
+    const {urlConfig} = useParams();
 
     const [config, setConfig] = useState<Config>({
-        rules: tokiPonaRules,
-        root: tokiPonaRoot,
+        rules: [],
+        root: null,
         enableWeights: false,
         enableSerif: false,
     })
+
+    useEffect(() => {
+        const updateUrl = async () => {
+            const data = await encodeConfig(config)
+            window.history.replaceState("", "", `/monke/${data}`);
+        }
+
+        updateUrl().catch(console.error);
+    }, [config])
+
+
+    useEffect(() => {
+        const updateConfigFromUrl = async () => {
+            console.log(urlConfig)
+
+            if (urlConfig) {
+                const config = await decodeConfig(urlConfig)
+                console.log(config)
+                setConfig(config)
+            } else {
+                setConfig({
+                    rules: tokiPonaRules,
+                    root: tokiPonaRoot,
+                    enableWeights: false,
+                    enableSerif: false,
+                })
+            }
+        }
+
+        updateConfigFromUrl().catch(console.error);
+    }, [urlConfig])
+
 
     const setEnableWeights = (value: boolean) => {
         setConfig({...config, enableWeights: value})
@@ -95,7 +127,8 @@ export const Home = () => {
                                grammar={grammar}
                                error={error}
                                setEnableWeights={setEnableWeights}
-                               setEnableSerif={setEnableSerif}/>
+                               setEnableSerif={setEnableSerif}
+                               setConfig={setConfig}/>
                 </Linear>
             </Col>
         </>

@@ -6,14 +6,9 @@ import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
 import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
-import {Rule} from "./RuleInstance.tsx";
 import cloneDeep from "lodash.clonedeep";
 import {uid} from "uid";
-
-export type ExclusionPattern = {
-    id: string
-    match: string,
-}
+import {ExclusionPattern, Rule} from "../models/ui.ts";
 
 
 export type ExclusionSectionProps = {
@@ -75,10 +70,10 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
                             onDragEnd={onExclusionPatternDragEnd}>
                     <SortableContext items={rule.exclusions} strategy={horizontalListSortingStrategy}>
                         {rule.exclusions.map((e, index) =>
-                            <ExclusionPattern exclusion={e}
-                                              onChange={onExclusionPatternChangeIndex(index)}
-                                              onDelete={onExclusionPatternDeleteIndex(index)}
-                                              enableSerif={enableSerif}/>
+                            <ExclusionPatternItem exclusion={e}
+                                                  onChange={onExclusionPatternChangeIndex(index)}
+                                                  onDelete={onExclusionPatternDeleteIndex(index)}
+                                                  enableSerif={enableSerif}/>
                         )}
                     </SortableContext>
                 </DndContext>
@@ -100,13 +95,13 @@ export type ExclusionPatternProps = {
     enableSerif?: boolean
 }
 
-export const ExclusionPattern = ({
-                                     className,
-                                     exclusion,
-                                     onChange,
-                                     onDelete,
-                                     enableSerif,
-                                 }: GenericProps<ExclusionPatternProps>) => {
+export const ExclusionPatternItem = ({
+                                         className,
+                                         exclusion,
+                                         onChange,
+                                         onDelete,
+                                         enableSerif,
+                                     }: GenericProps<ExclusionPatternProps>) => {
 
     const {
         listeners,

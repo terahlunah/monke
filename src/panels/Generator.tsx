@@ -3,11 +3,14 @@ import {SwitchLabel} from "../components/SwitchLabel.tsx";
 import {Row} from "../components/Row.tsx";
 import {ArrowDownTrayIcon, ArrowUpTrayIcon, ClipboardDocumentListIcon, LinkIcon} from "@heroicons/react/24/outline";
 import {ChangeEvent, useMemo, useState} from "react";
-import {countCombinations, detectCycle, generate, Grammar} from "../wordgen.ts";
+import {countCombinations, detectCycle, generate} from "../logic/wordgen.ts";
 import {Config} from "../pages/Home.tsx";
 import clipboard from "clipboardy";
 import {toast} from "react-toastify";
-
+import {Grammar} from "../models/grammar.ts";
+import {saveAs} from 'file-saver';
+import {useFilePicker} from "use-file-picker";
+import {decodeConfig, encodeConfig} from "../logic/sharing.ts";
 
 type GeneratorProps = {
     config: Config
@@ -15,15 +18,32 @@ type GeneratorProps = {
     error: string | null
     setEnableWeights: (enable: boolean) => void
     setEnableSerif: (enable: boolean) => void
+    setConfig: (config: Config) => void
 }
 
-export const Generator = ({config, grammar, error, setEnableWeights, setEnableSerif}: GeneratorProps) => {
+export const Generator = ({config, grammar, error, setEnableWeights, setEnableSerif, setConfig}: GeneratorProps) => {
 
     const [generatedWords, setGeneratedWords] = useState<string[]>([])
     const [wordCount, setWordCount] = useState("50")
     const [outputList, setOutputList] = useState(false)
     const [filterDuplicates, setFilterDuplicates] = useState(false)
     const [generationError, setGenerationError] = useState<string | null>(null)
+
+
+    const {openFilePicker} = useFilePicker({
+        accept: '.monke',
+        onFilesRejected: ({errors}) => {
+            console.log('Failed to import config', errors);
+            toast("Failed to import config")
+        },
+        // @ts-ignore
+        onFilesSuccessfullySelected: ({filesContent}) => {
+            const data: string = filesContent[0].content
+            const newConfig = decodeConfig(data)
+            setConfig({...config, ...newConfig})
+            toast("Config imported")
+        },
+    });
 
     const filteredWords = useMemo(
         () => {
@@ -104,6 +124,22 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
         toast("Words copied to clipboard!")
     }
 
+    const onExport = () => {
+        const data = encodeConfig(config)
+        // @ts-ignore
+        const file = new File([data], "config.monke", {type: "text/plain;charset=utf-8"});
+        saveAs(file);
+    }
+
+    const onImport = () => {
+        openFilePicker()
+    }
+
+    const onCopyLink = async () => {
+        await clipboard.write(window.location.href)
+        toast("Link copied to clipboard!")
+    }
+
     return (
         <>
             <Col className="grow bg-primary/5 md:w-1/2">
@@ -127,19 +163,19 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
                     <div className="border-t border-white/20"/>
 
                     <Row className="gap-4">
-                        <button className="grow bg-gray-600/30 rounded p-2" title={"Not yet implemented"}>
+                        <button className="grow bg-secondary rounded p-2" onClick={onCopyLink}>
                             <Row className="items-center justify-center gap-2">
                                 <h1>Share link</h1>
                                 <LinkIcon className="h-5"/>
                             </Row>
                         </button>
-                        <button className="grow bg-gray-600/30 rounded p-2" title={"Not yet implemented"}>
+                        <button className="grow bg-secondary rounded p-2" onClick={onExport}>
                             <Row className="items-center justify-center gap-2">
                                 <h1>Export Config</h1>
                                 <ArrowUpTrayIcon className="h-5"/>
                             </Row>
                         </button>
-                        <button className="grow bg-gray-600/30 rounded p-2" title={"Not yet implemented"}>
+                        <button className="grow bg-secondary rounded p-2" onClick={onImport}>
                             <Row className="items-center justify-center gap-2">
                                 <h1>Import Config</h1>
                                 <ArrowDownTrayIcon className="h-5"/>

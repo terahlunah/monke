@@ -6,21 +6,12 @@ import {ChangeEvent} from "react";
 import {Col} from "../components/Col.tsx";
 import {ToggleLabel} from "../components/ToggleLabel.tsx";
 import {useSortable} from "@dnd-kit/sortable";
-import {ExclusionPattern, ExclusionSection} from "./ExclusionSection.tsx";
-import {RewritePattern, RewriteSection} from "./RewriteSection.tsx";
-import {RulePattern, RuleSection} from "./RuleSection.tsx";
 import {CSS} from "@dnd-kit/utilities";
+import {Rule} from "../models/ui.ts";
+import {RuleSection} from "./RuleSection.tsx";
+import {RewriteSection} from "./RewriteSection.tsx";
+import {ExclusionSection} from "./ExclusionSection.tsx";
 
-export type Rule = {
-    id: string
-    name: string
-    patterns: RulePattern[]
-    rewrites: RewritePattern[]
-    exclusions: ExclusionPattern[]
-    terminalOnly: boolean
-    showRewrites: boolean
-    showExclusions: boolean
-}
 
 export type RuleInstanceProps = {
     rule: Rule

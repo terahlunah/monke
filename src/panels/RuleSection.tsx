@@ -5,16 +5,10 @@ import {CSS} from "@dnd-kit/utilities";
 import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
-import {Rule} from "./RuleInstance.tsx";
 import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
 import {uid} from "uid";
-
-export type RulePattern = {
-    id: string
-    pattern: string
-    weight: number
-}
+import {Rule, RulePattern} from "../models/ui.ts";
 
 
 export type RuleSectionProps = {
@@ -71,12 +65,12 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ge
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRulePatternDragEnd}>
                 <SortableContext items={rule.patterns} strategy={horizontalListSortingStrategy}>
                     {rule.patterns.map((p, index) =>
-                        <RulePattern pattern={p}
-                                     onChange={onRuleChangeIndex(index)}
-                                     terminalOnly={rule.terminalOnly}
-                                     onDelete={onRuleDeleteIndex(index)}
-                                     enableWeight={enableWeights}
-                                     enableSerif={enableSerif}/>
+                        <RulePatternItem pattern={p}
+                                         onChange={onRuleChangeIndex(index)}
+                                         terminalOnly={rule.terminalOnly}
+                                         onDelete={onRuleDeleteIndex(index)}
+                                         enableWeight={enableWeights}
+                                         enableSerif={enableSerif}/>
                     )}
                 </SortableContext>
             </DndContext>
@@ -104,15 +98,15 @@ function isNumber(value?: string | number): boolean {
         !isNaN(Number(value.toString())));
 }
 
-export const RulePattern = ({
-                                className,
-                                pattern,
-                                onChange,
-                                terminalOnly,
-                                onDelete,
-                                enableWeight,
-                                enableSerif,
-                            }: GenericProps<RulePatternProps>) => {
+export const RulePatternItem = ({
+                                    className,
+                                    pattern,
+                                    onChange,
+                                    terminalOnly,
+                                    onDelete,
+                                    enableWeight,
+                                    enableSerif,
+                                }: GenericProps<RulePatternProps>) => {
 
     const [weightValue, setWeightValue] = useState(pattern.weight.toString())
 

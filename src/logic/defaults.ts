@@ -1,5 +1,5 @@
 import {uid} from "uid";
-import {Rule} from "./panels/RuleInstance.tsx";
+import {Rule} from "../models/ui.ts";
 
 
 export const tokiPonaRoot = "Word"

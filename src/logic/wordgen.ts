@@ -1,30 +1,5 @@
 import findDirectedCycle from "find-cycle/directed"
-
-export type Expr =
-    | { tag: 'Atom', value: string }
-    | { tag: 'Ref', rule: string }
-    | { tag: 'Seq', items: Expr[] }
-    | { tag: 'Choice', items: WeightedExpr[] }
-    | { tag: 'Quantifier', expr: Expr, min: number, max: number }
-
-
-export type WeightedExpr = {
-    expr: Expr
-    weight: number
-}
-
-export interface Rule {
-    name: string;
-    expr: Expr;
-    exclusions: Expr[];
-    rewrites: [Expr, Expr][];
-}
-
-export interface Grammar {
-    rules: Rule[];
-    root: string;
-    useWeights: boolean
-}
+import {Expr, Grammar, Rule} from "../models/grammar.ts";
 
 const matchSeq = (g: Grammar, items: Expr[], s: string): number | null => {
     if (items.length === 0) return 0;
@@ -185,32 +160,6 @@ export const generate = (g: Grammar): string => {
     if (!rootRule) throw new Error(`Root rule ${g.root} not found`);
     return generateRule(g, rootRule);
 };
-
-export const makeAtom = (atom: string): Expr => ({tag: "Atom", value: atom});
-export const makeRef = (rule: string): Expr => ({tag: "Ref", rule: rule});
-export const makeSeq = (items: Expr[]): Expr => ({tag: "Seq", items: items});
-
-export const makeWeighted = (expr: Expr, weight: number | null): WeightedExpr => ({expr: expr, weight: weight ?? 1.0})
-export const makeChoice = (items: Expr[]): Expr => ({tag: "Choice", items: items.map(makeWeighted)});
-export const makeWeightedChoice = (items: WeightedExpr[]): Expr => ({tag: "Choice", items: items});
-export const makeRepeat = (expr: Expr, count: number): Expr => makeRange(expr, count, count)
-export const makeRange = (expr: Expr, min: number, max: number): Expr => ({
-    tag: "Quantifier",
-    expr: expr,
-    min: min,
-    max: max
-});
-export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][]): Rule => ({
-    name: name,
-    expr: expr,
-    exclusions: exclusions,
-    rewrites: rewrites
-})
-export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = true): Grammar => ({
-    rules: rules,
-    root: root,
-    useWeights: useWeights,
-})
 
 export const countCombinations = (g: Grammar): number => {
     return countCombinationsRule(g, g.rules.find(r => r.name === g.root)!)

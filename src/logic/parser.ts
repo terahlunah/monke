@@ -1,5 +1,7 @@
+import {Config} from "../pages/Home.tsx";
+import {Rule as ConfigRule} from "../models/ui.tsx";
 import {
-    Expr, getRuleEdges, Grammar,
+    Expr, Grammar,
     makeAtom, makeGrammar,
     makeRange,
     makeRef, makeRule,
@@ -7,10 +9,9 @@ import {
     makeWeighted,
     makeWeightedChoice, Rule,
     WeightedExpr
-} from "./wordgen.ts";
-import {Config} from "./pages/Home.tsx";
-import {Rule as ConfigRule} from "./panels/RuleInstance.tsx";
-import {RulePattern} from "./panels/RuleSection.tsx";
+} from "../models/grammar.ts";
+import {getRuleEdges} from "./wordgen.ts";
+import {RulePattern} from "../models/ui.ts";
 
 export class Parser {
     private currentPosition: number = 0;
@@ -324,7 +325,7 @@ export const configToGrammar = (config: Config): Grammar | null => {
 
         for (const e of edges) {
             if (!rulesNames.includes(e)) {
-                throw new Error(`Uknown rule ${e}`)
+                throw new Error(`Unknown rule ${e}`)
             }
         }
     }

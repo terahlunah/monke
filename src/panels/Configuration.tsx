@@ -1,5 +1,5 @@
 import {Col} from "../components/Col.tsx";
-import {Rule, RuleInstance} from "./RuleInstance.tsx";
+import {RuleInstance} from "./RuleInstance.tsx";
 import {uid} from "uid";
 import cloneDeep from "lodash.clonedeep";
 import {Row} from "../components/Row.tsx";
@@ -7,10 +7,11 @@ import {closestCenter, DndContext, DragEndEvent, useSensor, useSensors} from "@d
 import {arrayMove, SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import {SmartPointerSensor} from "../components/SmartPointerSensor.ts";
 import {Config} from "../pages/Home.tsx";
-import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../defaults.ts";
+import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
 import {Listbox, Transition} from "@headlessui/react";
 import {Fragment} from "react";
 import {CheckIcon, ChevronUpDownIcon} from "@heroicons/react/24/outline";
+import {Rule} from "../models/ui.ts";
 
 type ConfigurationProps = {
     config: Config
