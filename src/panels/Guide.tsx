@@ -33,6 +33,11 @@ export const Guide = () => {
             </Row>
             <p>Here the letter "a" and "u" have each 50% chance of being used when generating this Terminal
                 Rule.</p>
+            <Row className="gap-4">
+                <GuideTerminal value="ch"/>
+                <GuideTerminal value="好"/>
+            </Row>
+            <p>The terminals can contain multiple letters and non-ascii characters.</p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
                 <h1 className="font-bold text-xl">Rule</h1>
@@ -47,7 +52,7 @@ export const Guide = () => {
             <Row className="gap-4">
                 <GuidePattern value="Consonant.Vowel.('n')"/>
             </Row>
-            <p>Each Pattern contains a single Expression.</p>
+            <p>Each Pattern contains a single Expression. Here it's "Consonant.Vowel.('n')".</p>
 
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
@@ -76,7 +81,7 @@ export const Guide = () => {
                     <b>Terminal</b>
                     <Col className="gap-2 my-2">
                         <p>They can be used to generate a single terminal without needing to create a
-                            dedicated terminal rule for it.</p>
+                            dedicated terminal rule for it. You MUST surround the terminal by single quotes.</p>
                         <Row className="gap-4">
                             <GuidePattern value="'a'"/>
                             <GuidePattern value="'u'"/>
@@ -205,28 +210,28 @@ export const Guide = () => {
                          enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
             <p>When enabled, each rule pattern will display a editable weight next to the expression.</p>
             <Row className="gap-4">
-                <GuideTerminal value="'a'" weight="1.0"/>
-                <GuidePattern value="Vowel" weight="1.0"/>
+                <GuideTerminal value="a" weight="1"/>
+                <GuidePattern value="Vowel" weight="1"/>
             </Row>
             <p>Weights have default value of 1 and are taken into account when pick different patterns.</p>
             <p>Weights can also be specified in choices using "*" after the expression.</p>
             <Row className="gap-4">
-                <GuideTerminal value="'a' / 'b'*2"/>
+                <GuidePattern value="'a' / 'b'*2"/>
             </Row>
             <p>This pattern is the equivalent of the following patterns</p>
             <Row className="gap-4">
-                <GuideTerminal value="'a'" weight="1"/>
-                <GuideTerminal value="'b'" weight="2"/>
+                <GuidePattern value="'a'" weight="1"/>
+                <GuidePattern value="'b'" weight="2"/>
             </Row>
             <p>Weight are relatives and not absolute, so the following patterns are equivalents. Choose the simplest
                 form for your needs.</p>
             <Row className="gap-4">
-                <GuideTerminal value="'a' / 'b'*2"/>
-                <GuideTerminal value="'a'*0.5 / 'b'"/>
+                <GuidePattern value="'a' / 'b'*2"/>
+                <GuidePattern value="'a'*0.5 / 'b'"/>
             </Row>
             <p>Tip: If you want to temporarily disable a pattern, just set its weight to 0.</p>
             <Row className="gap-4">
-                <GuideTerminal value="'a'" weight="0"/>
+                <GuidePattern value="'a'" weight="0"/>
             </Row>
         </Col>
     )
