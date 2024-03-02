@@ -196,7 +196,7 @@ export const Guide = () => {
                 <GuideExclusion match="'a'"/>
             </Row>
             <p>The "match" expression will try to match a subset of the generated output of a rule at any position. For
-                example, if the output of a rule is "nap". This exclusion would not allow this output.</p>
+                example, if the output of a rule is "nap". This 'a' exclusion would not allow this output.</p>
             <p>Any expression can be used in the "match".</p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
