@@ -111,14 +111,9 @@ function isInteractiveElement(element: HTMLElement | null) {
         "select",
         "option",
     ];
-    if (
-        element?.tagName &&
-        interactiveElements.includes(element.tagName.toLowerCase())
-    ) {
-        return true;
-    }
-
-    return false;
+    return !!(element?.tagName &&
+        interactiveElements.includes(element.tagName.toLowerCase()));
+    
 }
 
 function shouldHandleEvent(element: HTMLElement | null) {

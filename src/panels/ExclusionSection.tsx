@@ -20,7 +20,12 @@ export type ExclusionSectionProps = {
 export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProps<ExclusionSectionProps>) => {
 
     const sensors = useSensors(
-        useSensor(TouchSensor), useSensor(MouseSensor)
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        }), useSensor(MouseSensor)
     );
 
     const onExclusionPatternChangeIndex = (index: number) => {

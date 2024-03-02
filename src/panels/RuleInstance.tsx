@@ -59,34 +59,36 @@ export const RuleInstance = ({
     return (
         <div ref={setNodeRef} style={style} key={rule.id} id={rule.id} {...attributes}>
             <Col className={`${className} rounded bg-surface px-2 pb-2 gap-2`}>
-                <Row className="items-center justify-between pt-2 touch-none" {...listeners}>
-                    <Row className="gap-4 items-center justify-start">
-                        <div className="rounded overflow-clip">
-                            <AutowidthInput value={rule.name} onInput={onRuleNameInput}
-                                            className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
-                        </div>
-                        {
-                            !rule.terminalOnly ?
-                                <>
-                                    <div className="w-0.5 h-8 bg-white/10"/>
-                                    <Row className="gap-2 items-center">
-                                        <ToggleLabel label="Rw" checked={rule.showRewrites}
-                                                     onChange={onRuleToggleRewrites}
-                                                     enabledColor="bg-accent-warning"
-                                                     disabledColor="bg-accent-warning/20"/>
-                                        <ToggleLabel label="Ex" checked={rule.showExclusions}
-                                                     onChange={onRuleToggleExclusions}
-                                                     enabledColor="bg-accent-caution"
-                                                     disabledColor="bg-accent-caution/20"/>
-                                    </Row>
-                                </>
-                                : null
-                        }
+                <div {...listeners} className="touch-none">
+                    <Row className="items-center justify-between pt-2">
+                        <Row className="gap-4 items-center justify-start">
+                            <div className="rounded overflow-clip">
+                                <AutowidthInput value={rule.name} onInput={onRuleNameInput}
+                                                className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
+                            </div>
+                            {
+                                !rule.terminalOnly ?
+                                    <>
+                                        <div className="w-0.5 h-8 bg-white/10"/>
+                                        <Row className="gap-2 items-center">
+                                            <ToggleLabel label="Rw" checked={rule.showRewrites}
+                                                         onChange={onRuleToggleRewrites}
+                                                         enabledColor="bg-accent-warning"
+                                                         disabledColor="bg-accent-warning/20"/>
+                                            <ToggleLabel label="Ex" checked={rule.showExclusions}
+                                                         onChange={onRuleToggleExclusions}
+                                                         enabledColor="bg-accent-caution"
+                                                         disabledColor="bg-accent-caution/20"/>
+                                        </Row>
+                                    </>
+                                    : null
+                            }
+                        </Row>
+                        <button onClick={onDelete} className="bg-accent-danger/50 rounded p-1">
+                            <XMarkIcon className="h-5"/>
+                        </button>
                     </Row>
-                    <button onClick={onDelete} className="bg-accent-danger/50 rounded p-1">
-                        <XMarkIcon className="h-5"/>
-                    </button>
-                </Row>
+                </div>
                 <Row className="items-baseline justify-between gap-4">
                     <div>{rule.terminalOnly ? "Terminals" : "Patterns"}</div>
                     <div className="h-0.5 bg-white/10 grow"/>

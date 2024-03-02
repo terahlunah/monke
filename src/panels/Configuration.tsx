@@ -69,7 +69,12 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
     }
 
     const sensors = useSensors(
-        useSensor(SmartMouseSensor), useSensor(SmartTouchSensor)
+        useSensor(SmartMouseSensor), useSensor(SmartTouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        })
     );
 
     const onRulePatternDragEnd = (event: DragEndEvent) => {

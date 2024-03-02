@@ -20,7 +20,12 @@ export type RewriteSectionProps = {
 export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<RewriteSectionProps>) => {
 
     const sensors = useSensors(
-        useSensor(TouchSensor), useSensor(MouseSensor)
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        }), useSensor(MouseSensor)
     );
 
     const onRewritePatternChangeIndex = (index: number) => {

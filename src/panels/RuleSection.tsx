@@ -21,7 +21,12 @@ export type RuleSectionProps = {
 export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: GenericProps<RuleSectionProps>) => {
 
     const sensors = useSensors(
-        useSensor(TouchSensor), useSensor(MouseSensor)
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
+            },
+        }), useSensor(MouseSensor)
     );
 
     const onRuleChangeIndex = (index: number) => {

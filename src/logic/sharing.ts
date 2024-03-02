@@ -1,4 +1,3 @@
-// @ts-ignore
 import {Config} from '../pages/Home.tsx'
 import {ExclusionPattern, RewritePattern, Rule, RulePattern} from "../models/ui.ts";
 import {uid} from "uid";
@@ -42,26 +41,20 @@ export const encodeConfig = async (config: Config): Promise<string> => {
         }
     }
 
-    const data = await buf.toBase64()
-
-    console.log(data)
-    return data
+    return await buf.toBase64()
 }
 
 export const decodeConfig = async (data: string): Promise<Config> => {
-
-
     const buf = await ByteBuffer.fromBase64(data)
 
-    // @ts-ignore
-    const _version = buf.readInt8()
+    buf.readInt8() // version
     const root = buf.readString()
     const enableWeights = buf.readInt8() === 1
     const enableSerif = buf.readInt8() === 1
 
 
     const ruleCount = buf.readInt8()
-    let rules: Rule[] = []
+    const rules: Rule[] = []
 
     for (let i = 0; i < ruleCount; i++) {
 
@@ -71,13 +64,13 @@ export const decodeConfig = async (data: string): Promise<Config> => {
         const showExclusions = buf.readInt8() === 1
 
         const patternCount = buf.readInt8()
-        let patterns: RulePattern[] = []
+        const patterns: RulePattern[] = []
         for (let n = 0; n < patternCount; n++) {
             patterns.push({id: uid(), pattern: buf.readString(), weight: buf.readFloat32()})
         }
 
-        let rewrites: RewritePattern[] = []
-        let exclusions: ExclusionPattern[] = []
+        const rewrites: RewritePattern[] = []
+        const exclusions: ExclusionPattern[] = []
 
         if (!terminalOnly) {
             const rewriteCount = buf.readInt8()
@@ -105,12 +98,10 @@ export const decodeConfig = async (data: string): Promise<Config> => {
 
     }
 
-    const config = {
+    return {
         root: root,
         rules: rules,
         enableWeights: enableWeights,
         enableSerif: enableSerif,
     }
-
-    return config
 }
