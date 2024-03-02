@@ -142,10 +142,10 @@ type NavbarProps = {
 }
 
 const DesktopNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
-    const tabStyle = (t: string): string => t === tab ? "text-primary font-bold text-xl" : "text-white text-xl"
+    const tabStyle = (t: string): string => t === tab ? "bg-primary/40 text-xl rounded p-1 px-2" : "text-white text-xl p-1 px-2"
 
     return (
-        <Row className={`${className} gap-4 p-2 items-center justify-between mx-2`}>
+        <Row className={`${className} gap-4 items-center justify-between mx-2`}>
             <Row className="gap-4 p-2 items-center justify-start">
                 <h1 className="text-xl font-bold">Monke</h1>
                 <div className="border-l border-white/20 h-8"/>
@@ -169,7 +169,7 @@ const DesktopNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
         </Row>)
 }
 const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
-    const tabStyle = (t: string): string => t === tab ? "text-primary font-bold" : "text-white"
+    const tabStyle = (t: string): string => t === tab ? "text-primary text-left" : "text-white text-left"
 
     return (
 
@@ -186,8 +186,8 @@ const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
                     <Bars3Icon className="h-6"/>
                 </Menu.Button>
                 <Menu.Items
-                    className="z-20 absolute right-0 top-12 flex flex-col shadow bg-background text-text rounded overflow-hidden divide-y divide-neutral-200">
-                    <Col className="gap-4 p-4 items-center justify-center">
+                    className="z-20 absolute right-0 top-12 flex flex-col shadow bg-background rounded overflow-hidden divide-y divide-white/20">
+                    <Col className="gap-4 p-4">
                         <Menu.Item>
                             <button className={`${tabStyle("generator")}`} onClick={() => setTab("generator")}>Generator
                             </button>
@@ -199,10 +199,13 @@ const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
                             <button className={`${tabStyle("faq")}`} onClick={() => setTab("faq")}>FAQ</button>
                         </Menu.Item>
                     </Col>
-                    <Col className="gap-4 p-2 items-center justify-center">
-                        <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
-                            Github
-                        </a>
+                    <Col className="gap-4 p-4">
+                        <Menu.Item>
+                            <a className="text-left" href="https://github.com/terahlunah/monke" target="_blank"
+                               rel="noreferrer noopener">
+                                Github
+                            </a>
+                        </Menu.Item>
                     </Col>
                 </Menu.Items>
             </div>

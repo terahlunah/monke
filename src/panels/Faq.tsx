@@ -14,7 +14,7 @@ export const Faq = () => {
                 I chose the name <b className="text-primary">Monke</b> because the generation of random words reminded
                 me of the <a
                 className="text-primary underline"
-                href="https://en.wikipedia.org/wiki/Infinite_monkey_theorem" target="_blank" rel="noreferrer noopener">Infinite
+                href="https://en.wikipedia.org/wiki/Infinite_monkey_theorem" target="_blank" rel="noreferrer noopener">infinite
                 monkey theorem.</a>
             </FaqItem>
             <FaqItem title="Can I use it for my own conlang ?">
@@ -36,7 +36,7 @@ export const Faq = () => {
                 target="_blank"
                 rel="noreferrer noopener">Github</a> page.
             </FaqItem>
-            <FaqItem title="This tool is a bit complex, can I have something simpler ?">
+            <FaqItem title="This tool is a bit complex, are there alternatives ?">
                 I understand the expressions may be a bit intimidating at first, but try to give it a shot. If it's
                 really not for you, you can try <a
                 className="text-primary underline"

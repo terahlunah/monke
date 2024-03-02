@@ -112,7 +112,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                             enableWeights: false
                         })}>
                     <Row className="items-center justify-center gap-2">
-                        <span>Toki Pona preset</span>
+                        <span>Toki Pona example</span>
                     </Row>
                 </button>
                 <button className="bg-accent-danger rounded p-2 w-1/3"
@@ -123,7 +123,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                             enableWeights: true
                         })}>
                     <Row className="items-center justify-center gap-2">
-                        <span>Weighted Toki Pona preset</span>
+                        <span>Weighted Toki Pona example</span>
                     </Row>
                 </button>
             </Row>

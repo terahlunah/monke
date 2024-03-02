@@ -16,7 +16,7 @@ export default {
         'on-surface': '#ffffff',
         surface: '#2c2b2b',
         background: '#1f1f1f',
-        primary: '#1f7e7e',
+        primary: '#1c8f8f',
         secondary: '#3b4c9d',
         'accent-warning': '#b78426',
         'accent-caution': '#b76028',
