@@ -100,7 +100,7 @@ export class Parser {
         let expr = this.parseSequence();
 
         // If the next token is a ChoiceOperator, handle choice
-        if (this.peek() === '/' || this.peek() === '%') {
+        if (this.peek() === '/' || this.peek() === '*') {
             expr = this.parseChoice(expr);
         }
 
@@ -136,7 +136,7 @@ export class Parser {
     private parseChoice(firstExpr: Expr): Expr {
 
         let firstWeight = 1.0
-        if (this.consume('%')) {
+        if (this.consume('*')) {
             firstWeight = this.parseWeight()
         }
 
@@ -146,7 +146,7 @@ export class Parser {
             const expr = this.parseSequence()
 
             let weight = 1.0
-            if (this.consume('%')) {
+            if (this.consume('*')) {
                 weight = this.parseWeight()
             }
 
@@ -341,8 +341,8 @@ const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
         return makeRule(rule.name, ruleExpr, [], [])
     } else {
         const ruleExpr = rulePatternsToExpr(rule.patterns)
-        const exclusions = rule.exclusions.map(p => parse(p.match))
-        const rewrites: [Expr, Expr][] = rule.rewrites.map(p => [parse(p.match), parse(p.replace)])
+        const exclusions = rule.showExclusions ? rule.exclusions.map(p => parse(p.match)) : []
+        const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => [parse(p.match), parse(p.replace)]) : []
         return makeRule(rule.name, ruleExpr, exclusions, rewrites)
     }
 

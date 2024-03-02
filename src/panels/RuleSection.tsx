@@ -5,7 +5,7 @@ import {CSS} from "@dnd-kit/utilities";
 import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
-import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
 import {uid} from "uid";
 import {Rule, RulePattern} from "../models/ui.ts";
@@ -21,7 +21,7 @@ export type RuleSectionProps = {
 export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: GenericProps<RuleSectionProps>) => {
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(TouchSensor), useSensor(MouseSensor)
     );
 
     const onRuleChangeIndex = (index: number) => {
@@ -157,8 +157,6 @@ export const RulePatternItem = ({
                                 minWidth={15}/>
                 {enableWeight ? (
                     <>
-                        {/*<button className="bg-accent-warning p-1 h-8"><ArrowsUpDownIcon className="h-4"/></button>*/}
-                        {/*<button className="bg-accent-warning p-1 h-8">%</button>*/}
                         <AutowidthInput value={weightValue}
                                         onInput={onWeightInput}
                                         onBlur={onWeightBlur}

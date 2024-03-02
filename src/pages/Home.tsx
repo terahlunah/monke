@@ -12,6 +12,10 @@ import {configToGrammar} from "../logic/parser.ts";
 import {Rule} from "../models/ui.ts";
 import {useParams} from "react-router-dom";
 import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
+import {Faq} from "../panels/Faq.tsx";
+import {Menu} from "@headlessui/react";
+import {Bars3Icon} from "@heroicons/react/24/outline";
+import {GenericProps} from "../components/GenericProps.tsx";
 
 export type Config = {
     rules: Rule[],
@@ -23,6 +27,8 @@ export type Config = {
 export const Home = () => {
 
     const {urlConfig} = useParams();
+
+    const [tab, setTab] = useState<"generator" | "guide" | "faq">("generator")
 
     const [config, setConfig] = useState<Config>({
         rules: [],
@@ -91,7 +97,6 @@ export const Home = () => {
 
     return (
         <>
-            {/*<p>Home {params.config}</p>*/}
             <ToastContainer
                 position="bottom-center"
                 autoClose={2000}
@@ -105,32 +110,102 @@ export const Home = () => {
                 theme="dark"
                 transition={Bounce}
             />
-            <Col className="bg-background text-on-surface justify-stretch h-screen">
-                <Row className="gap-4 p-2 items-center justify-between">
-                    <Row className="ml-2 gap-4 p-2 items-center">
-                        <h1 className="text-xl font-bold">Monke</h1>
-                        <div className="border-l border-white/20 h-8"/>
-                        <h2 className="text-lg text-on-surface/80">A grammar based word generator</h2>
-                    </Row>
-                    <Row className="mr-2 gap-4 p-2 items-center">
-                        <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
-                            <FaGithub className="size-8"/>
-                        </a>
-                    </Row>
-                </Row>
-                <Linear className="overflow-auto grow">
-                    <Guide/>
-                    <Configuration config={config}
-                                   setRules={setRules}
-                                   setConfig={setConfig}/>
-                    <Generator config={config}
-                               grammar={grammar}
-                               error={error}
-                               setEnableWeights={setEnableWeights}
-                               setEnableSerif={setEnableSerif}
-                               setConfig={setConfig}/>
-                </Linear>
+            <Col className="bg-surface text-on-surface justify-stretch h-screen">
+                <DesktopNavbar className="hidden md:flex" tab={tab} setTab={setTab}/>
+                <MobileNavbar className="md:hidden" tab={tab} setTab={setTab}/>
+                {
+                    tab === "generator" ?
+                        <Linear className="md:overflow-auto grow">
+                            <Configuration config={config}
+                                           setRules={setRules}
+                                           setConfig={setConfig}/>
+                            <Generator config={config}
+                                       grammar={grammar}
+                                       error={error}
+                                       setEnableWeights={setEnableWeights}
+                                       setEnableSerif={setEnableSerif}
+                                       setConfig={setConfig}/>
+                        </Linear> : null
+                }
+                {tab === "guide" ? <Guide/> : null}
+                {tab === "faq" ? <Faq/> : null}
+
             </Col>
         </>
+    )
+}
+
+
+type NavbarProps = {
+    tab: string
+    setTab: (tab: "generator" | "guide" | "faq") => void
+}
+
+const DesktopNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
+    const tabStyle = (t: string): string => t === tab ? "text-primary font-bold text-xl" : "text-white text-xl"
+
+    return (
+        <Row className={`${className} gap-4 p-2 items-center justify-between mx-2`}>
+            <Row className="gap-4 p-2 items-center justify-start">
+                <h1 className="text-xl font-bold">Monke</h1>
+                <div className="border-l border-white/20 h-8"/>
+                <h2 className="text-lg text-on-surface/80">A grammar based word generator</h2>
+            </Row>
+            <Row className="gap-4 p-2 items-center justify-center">
+                <button className={`${tabStyle("generator")}`} onClick={() => setTab("generator")}>Generator
+                </button>
+                <div className="border-l border-white/20 h-8"/>
+                <button className={`${tabStyle("guide")}`} onClick={() => setTab("guide")}>Guide</button>
+                <div className="border-l border-white/20 h-8"/>
+                <button className={`${tabStyle("faq")}`} onClick={() => setTab("faq")}>FAQ</button>
+            </Row>
+            <Row className=" gap-4 p-2 items-center w-1/3 justify-end">
+                <h2 className="text-lg text-on-surface/80">Made by Terah</h2>
+                <div className="border-l border-white/20 h-8"/>
+                <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
+                    <FaGithub className="size-8"/>
+                </a>
+            </Row>
+        </Row>)
+}
+const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
+    const tabStyle = (t: string): string => t === tab ? "text-primary font-bold" : "text-white"
+
+    return (
+
+        <Menu as="nav" className={`${className} gap-4 p-2 items-center flex flex-row justify-between`}>
+
+            <Row className="ml-2 gap-4 p-2 items-center justify-start">
+                <h1 className="text-xl font-bold">Monke</h1>
+                <div className="border-l border-white/20 h-8"/>
+                <h2 className="text-lg text-on-surface/80">Word generator</h2>
+            </Row>
+
+            <div className="py-4 mr-2 relative">
+                <Menu.Button className="">
+                    <Bars3Icon className="h-6"/>
+                </Menu.Button>
+                <Menu.Items
+                    className="z-20 absolute right-0 top-12 flex flex-col shadow bg-background text-text rounded overflow-hidden divide-y divide-neutral-200">
+                    <Col className="gap-4 p-4 items-center justify-center">
+                        <Menu.Item>
+                            <button className={`${tabStyle("generator")}`} onClick={() => setTab("generator")}>Generator
+                            </button>
+                        </Menu.Item>
+                        <Menu.Item>
+                            <button className={`${tabStyle("guide")}`} onClick={() => setTab("guide")}>Guide</button>
+                        </Menu.Item>
+                        <Menu.Item>
+                            <button className={`${tabStyle("faq")}`} onClick={() => setTab("faq")}>FAQ</button>
+                        </Menu.Item>
+                    </Col>
+                    <Col className="gap-4 p-2 items-center justify-center">
+                        <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
+                            Github
+                        </a>
+                    </Col>
+                </Menu.Items>
+            </div>
+        </Menu>
     )
 }

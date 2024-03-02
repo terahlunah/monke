@@ -48,6 +48,7 @@ export const RuleInstance = ({
         setNodeRef,
         transform,
         transition,
+        attributes
     } = useSortable({id: rule.id});
 
     const style = {
@@ -56,9 +57,9 @@ export const RuleInstance = ({
     };
 
     return (
-        <div ref={setNodeRef} style={style} key={rule.id} id={rule.id} {...listeners}>
-            <Col className={`${className} rounded bg-surface p-2 gap-2`}>
-                <Row className="items-center justify-between">
+        <div ref={setNodeRef} style={style} key={rule.id} id={rule.id} {...attributes}>
+            <Col className={`${className} rounded bg-surface px-2 pb-2 gap-2`}>
+                <Row className="items-center justify-between pt-2 touch-none" {...listeners}>
                     <Row className="gap-4 items-center justify-start">
                         <div className="rounded overflow-clip">
                             <AutowidthInput value={rule.name} onInput={onRuleNameInput}
@@ -87,7 +88,7 @@ export const RuleInstance = ({
                     </button>
                 </Row>
                 <Row className="items-baseline justify-between gap-4">
-                    <div>Patterns</div>
+                    <div>{rule.terminalOnly ? "Terminals" : "Patterns"}</div>
                     <div className="h-0.5 bg-white/10 grow"/>
                 </Row>
                 <RuleSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}

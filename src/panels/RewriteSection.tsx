@@ -6,7 +6,7 @@ import {Row} from "../components/Row.tsx";
 import {ChevronDoubleRightIcon, EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "../models/ui.ts";
-import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
 import {uid} from "uid";
 
@@ -20,7 +20,7 @@ export type RewriteSectionProps = {
 export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<RewriteSectionProps>) => {
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(TouchSensor), useSensor(MouseSensor)
     );
 
     const onRewritePatternChangeIndex = (index: number) => {

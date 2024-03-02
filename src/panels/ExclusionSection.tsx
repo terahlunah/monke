@@ -5,7 +5,7 @@ import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
-import {closestCenter, DndContext, DragEndEvent, PointerSensor, useSensor, useSensors} from "@dnd-kit/core";
+import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
 import {uid} from "uid";
 import {ExclusionPattern, Rule} from "../models/ui.ts";
@@ -20,7 +20,7 @@ export type ExclusionSectionProps = {
 export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProps<ExclusionSectionProps>) => {
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(TouchSensor), useSensor(MouseSensor)
     );
 
     const onExclusionPatternChangeIndex = (index: number) => {

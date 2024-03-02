@@ -141,99 +141,94 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
     }
 
     return (
-        <>
-            <Col className="grow bg-primary/5 md:w-1/2">
-                <div className="bg-primary p-4">Generator</div>
+        <Col
+            className="grow bg-background md:w-1/2 p-6 gap-4 md:overflow-auto md:no-scrollbar md:border-l-8 border-l-surface">
 
-                <Col className="p-6 gap-4 overflow-auto no-scrollbar">
+            <SwitchLabel checked={config.enableWeights} onChange={setEnableWeights}
+                         label="Enable probability weights"
+                         enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
+            <SwitchLabel checked={config.enableSerif} onChange={setEnableSerif}
+                         label="Enable serifs (For IPA characters readability)"
+                         enabledColor="bg-primary" disabledColor="bg-primary/30"/>
+            <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}
+                         label="Filter Duplicates"
+                         enabledColor="bg-accent-caution" disabledColor="bg-accent-caution/30"/>
+            <SwitchLabel checked={outputList} onChange={setOutputList}
+                         label="Output as list"
+                         enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
 
-                    <SwitchLabel checked={config.enableWeights} onChange={setEnableWeights}
-                                 label="Enable probability weights"
-                                 enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
-                    <SwitchLabel checked={config.enableSerif} onChange={setEnableSerif}
-                                 label="Enable serifs (For IPA characters readability)"
-                                 enabledColor="bg-primary" disabledColor="bg-primary/30"/>
-                    <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}
-                                 label="Filter Duplicates"
-                                 enabledColor="bg-accent-caution" disabledColor="bg-accent-caution/30"/>
-                    <SwitchLabel checked={outputList} onChange={setOutputList}
-                                 label="Output as list"
-                                 enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
+            <div className="border-t border-white/20"/>
 
-                    <div className="border-t border-white/20"/>
-
-                    <Row className="gap-4">
-                        <button className="grow bg-secondary rounded p-2" onClick={onCopyLink}>
-                            <Row className="items-center justify-center gap-2">
-                                <h1>Share link</h1>
-                                <LinkIcon className="h-5"/>
-                            </Row>
-                        </button>
-                        <button className="grow bg-secondary rounded p-2" onClick={onExport}>
-                            <Row className="items-center justify-center gap-2">
-                                <h1>Export Config</h1>
-                                <ArrowUpTrayIcon className="h-5"/>
-                            </Row>
-                        </button>
-                        <button className="grow bg-secondary rounded p-2" onClick={onImport}>
-                            <Row className="items-center justify-center gap-2">
-                                <h1>Import Config</h1>
-                                <ArrowDownTrayIcon className="h-5"/>
-                            </Row>
-                        </button>
+            <Row className="gap-4">
+                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onCopyLink}>
+                    <Row className="items-center justify-center gap-2">
+                        <h1>Share link</h1>
+                        <LinkIcon className="h-5"/>
                     </Row>
-
-                    <div className="border-t border-white/20"/>
-
-                    <h3 className="text-gray-300">
-                        {grammar ?
-                            (cycle.length != 0 ?
-                                `Grammar has at least cycle one cycle: ${cycle}` :
-                                `Grammar has ${combinations} possible branches`) :
-                            `Invalid grammar: ${error}`
-                        }
-                    </h3>
-
-                    <div className="border-t border-white/20"/>
-
-                    <Row className="gap-4">
-                        <Row className="items-center justify-start grow">
-                            <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3">Generate
-                            </button>
-                            <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
-                                   className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
-                        </Row>
-                        <button className="grow bg-primary rounded p-2" onClick={onCopy}>
-                            <Row className="items-center justify-center gap-2">
-                                <h1>Copy</h1>
-                                <ClipboardDocumentListIcon className="h-5"/>
-                            </Row>
-                        </button>
+                </button>
+                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onExport}>
+                    <Row className="items-center justify-center gap-2">
+                        <h1>Export Config</h1>
+                        <ArrowUpTrayIcon className="h-5"/>
                     </Row>
+                </button>
+                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onImport}>
+                    <Row className="items-center justify-center gap-2">
+                        <h1>Import Config</h1>
+                        <ArrowDownTrayIcon className="h-5"/>
+                    </Row>
+                </button>
+            </Row>
 
-                    {
-                        filterDuplicates && generatedWords.length != 0 ?
-                            <h3 className="text-center italic text-gray-300">
-                                Showing {filteredWords.length} unique words out of {generatedWords.length} generated
-                            </h3> :
-                            null
-                    }
+            <div className="border-t border-white/20"/>
 
-                    {
-                        generationError ?
-                            <h3 className="text-center italic text-accent-danger">
-                                {generationError}
-                            </h3> :
-                            null
-                    }
+            <h3 className="text-gray-300">
+                {grammar ?
+                    (cycle.length != 0 ?
+                        `Grammar has at least cycle one cycle: ${cycle}` :
+                        `Grammar has ${combinations} possible branches`) :
+                    `Invalid grammar: ${error}`
+                }
+            </h3>
+
+            <div className="border-t border-white/20"/>
+
+            <Row className="gap-4">
+                <Row className="items-center justify-start grow">
+                    <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3">Generate
+                    </button>
+                    <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
+                           className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
+                </Row>
+                <button className="grow bg-primary rounded p-2" onClick={onCopy}>
+                    <Row className="items-center justify-center gap-2">
+                        <h1>Copy</h1>
+                        <ClipboardDocumentListIcon className="h-5"/>
+                    </Row>
+                </button>
+            </Row>
+
+            {
+                filterDuplicates && generatedWords.length != 0 ?
+                    <h3 className="text-center italic text-gray-300">
+                        Showing {filteredWords.length} unique words out of {generatedWords.length} generated
+                    </h3> :
+                    null
+            }
+
+            {
+                generationError ?
+                    <h3 className="text-center italic text-accent-danger">
+                        {generationError}
+                    </h3> :
+                    null
+            }
 
 
-                    <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
-                        {text}
-                    </p>
+            <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
+                {text}
+            </p>
 
-                </Col>
-            </Col>
-        </>
+        </Col>
     )
 }
