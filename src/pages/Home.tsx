@@ -18,6 +18,7 @@ import {Bars3Icon} from "@heroicons/react/24/outline";
 import {GenericProps} from "../components/GenericProps.tsx";
 
 export type Config = {
+    language: string,
     rules: Rule[],
     root: string | null
     enableWeights: boolean,
@@ -31,6 +32,7 @@ export const Home = () => {
     const [tab, setTab] = useState<"generator" | "guide" | "faq">("generator")
 
     const [config, setConfig] = useState<Config>({
+        language: "",
         rules: [],
         root: null,
         enableWeights: false,
@@ -57,6 +59,7 @@ export const Home = () => {
                 setConfig(config)
             } else {
                 setConfig({
+                    language: "toki pona",
                     rules: tokiPonaRules,
                     root: tokiPonaRoot,
                     enableWeights: false,

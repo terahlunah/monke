@@ -35,8 +35,7 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
             console.log('Failed to import config', errors);
             toast("Failed to import config")
         },
-        // @ts-ignore
-        onFilesSuccessfullySelected: ({filesContent}) => {
+        onFilesSuccessfullySelected: ({filesContent}: { filesContent: { content: string }[] }) => {
             const data: string = filesContent[0].content
             const newConfig = JSON.parse(data)
             setConfig({...config, ...newConfig})
@@ -125,7 +124,8 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
 
     const onExport = async () => {
         const data = JSON.stringify(config, null, 4)
-        const file = new File([data], "config.monke", {type: "text/plain;charset=utf-8"});
+        const name = config.language.length != 0 ? config.language.replace(" ", "_") : "config"
+        const file = new File([data], `${name}.monke`, {type: "text/plain;charset=utf-8"});
         saveAs(file);
     }
 

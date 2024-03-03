@@ -9,6 +9,7 @@ export const encodeConfig = async (config: Config): Promise<string> => {
     const buf = new ByteBuffer()
 
     buf.writeInt8(1) // Version
+    buf.writeString(config.language ?? "")
     buf.writeString(config.root ?? "")
     buf.writeInt8(config.enableWeights ? 1 : 0)
     buf.writeInt8(config.enableSerif ? 1 : 0)
@@ -48,6 +49,7 @@ export const decodeConfig = async (data: string): Promise<Config> => {
     const buf = await ByteBuffer.fromBase64(data)
 
     buf.readInt8() // version
+    const language = buf.readString()
     const root = buf.readString()
     const enableWeights = buf.readInt8() === 1
     const enableSerif = buf.readInt8() === 1
@@ -99,6 +101,7 @@ export const decodeConfig = async (data: string): Promise<Config> => {
     }
 
     return {
+        language: language,
         root: root,
         rules: rules,
         enableWeights: enableWeights,
