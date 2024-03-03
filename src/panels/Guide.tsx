@@ -147,15 +147,14 @@ export const Guide = () => {
                             <GuidePattern value="'a'{2:2}"/>
                             <GuidePattern value="'a'{2}"/>
                         </Row>
-                        <p>These expressions are equivalent, when min equals max, it can be shorted to just the number.
-                            It means "the
-                            letter 'a' repeated exactly 2 times"</p>
+                        <p>These expressions are equivalent, when min equals max, it can be shortened to just the
+                            number. It means "the letter 'a' repeated exactly 2 times"</p>
                     </Col>
                 </li>
                 <li>
                     <b>Option</b>
                     <Col className="gap-2 my-2">
-                        <p>Option allow to mark an expression an optional in the generation. Similar to a group, the
+                        <p>Option allow to mark an expression as optional in the generation. Similar to a group, the
                             expression just needs to be surrounded by "(" and ")"</p>
                         <GuidePattern value="('a')"/>
                         <p>It is equivalent to the following quantifier syntax.</p>
