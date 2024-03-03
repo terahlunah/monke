@@ -2,7 +2,7 @@
   "name": "monke",
   "private": true,
   "version": "0.1.0",
-  "homepage": "https://terahlunah.github.io/monke",
+  "homepage": "https://github.com/terahlunah/monke",
   "type": "module",
   "scripts": {
     "dev": "vite",
