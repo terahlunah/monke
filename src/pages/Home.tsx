@@ -40,7 +40,7 @@ export const Home = () => {
     useEffect(() => {
         const updateUrl = async () => {
             const data = await encodeConfig(config)
-            window.history.replaceState("", "", `/monke/${data}`);
+            window.history.replaceState("", "", `/${data}`);
         }
 
         updateUrl().catch(console.error);
