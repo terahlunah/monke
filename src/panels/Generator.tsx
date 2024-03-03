@@ -10,7 +10,6 @@ import {toast} from "react-toastify";
 import {Grammar} from "../models/grammar.ts";
 import {saveAs} from 'file-saver';
 import {useFilePicker} from "use-file-picker";
-import {decodeConfig, encodeConfig} from "../logic/sharing.ts";
 
 type GeneratorProps = {
     config: Config
@@ -39,7 +38,7 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
         // @ts-ignore
         onFilesSuccessfullySelected: ({filesContent}) => {
             const data: string = filesContent[0].content
-            const newConfig = decodeConfig(data)
+            const newConfig = JSON.parse(data)
             setConfig({...config, ...newConfig})
             toast("Config imported")
         },
@@ -124,9 +123,8 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
         toast("Words copied to clipboard!")
     }
 
-    const onExport = () => {
-        const data = encodeConfig(config)
-        // @ts-ignore
+    const onExport = async () => {
+        const data = JSON.stringify(config, null, 4)
         const file = new File([data], "config.monke", {type: "text/plain;charset=utf-8"});
         saveAs(file);
     }
