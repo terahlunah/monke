@@ -68,12 +68,20 @@ const checkRuleExclusions = (g: Grammar, r: Rule, gen: string) => {
     return false;
 };
 
-const randomPick = <T>(array: T[]): T => {
+const randomPick = <T>(array: T[]): T | null => {
+    if (array.length === 0) {
+        return null
+    }
+
     const random = Math.floor(Math.random() * array.length);
     return array[random]
 };
 
-const weightedPick = <T>(array: [T, number][]): T => {
+const weightedPick = <T>(array: [T, number][]): T | null => {
+    if (array.length === 0) {
+        return null
+    }
+
     const totalWeight = array.reduce((acc, [, weight]) => acc + weight, 0);
 
     let random = Math.random() * totalWeight;
@@ -104,6 +112,11 @@ const generateExpr = (g: Grammar, e: Expr): string => {
             const choice = g.useWeights ?
                 weightedPick(e.items.map(c => [c.expr, c.weight])) :
                 randomPick(e.items.map(c => c.expr))
+
+            if (!choice) {
+                return ""
+            }
+
             return generateExpr(g, choice)
         }
         case "Quantifier": {

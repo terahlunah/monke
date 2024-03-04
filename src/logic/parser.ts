@@ -161,7 +161,6 @@ export class Parser {
 
         if (!char) {
             return makeAtom("")
-            // throw new Error("Expected an expression");
         }
 
 
@@ -340,7 +339,12 @@ const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
         const ruleExpr = terminalPatternsToExpr(rule.patterns)
         return makeRule(rule.name, ruleExpr, [], [])
     } else {
+        if (rule.patterns.length === 0) {
+            throw new Error(`Rule "${rule.name}" is empty`)
+        }
+
         const ruleExpr = rulePatternsToExpr(rule.patterns)
+
         const exclusions = rule.showExclusions ? rule.exclusions.map(p => parse(p.match)) : []
         const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => [parse(p.match), parse(p.replace)]) : []
         return makeRule(rule.name, ruleExpr, exclusions, rewrites)
