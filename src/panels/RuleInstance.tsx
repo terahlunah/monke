@@ -1,6 +1,6 @@
 import {GenericProps} from "../components/GenericProps.tsx";
 import {Row} from "../components/Row.tsx";
-import {XMarkIcon} from "@heroicons/react/24/outline";
+import {EllipsisVerticalIcon, XMarkIcon} from "@heroicons/react/24/outline";
 import AutowidthInput from "react-autowidth-input";
 import {ChangeEvent} from "react";
 import {Col} from "../components/Col.tsx";
@@ -48,7 +48,8 @@ export const RuleInstance = ({
         setNodeRef,
         transform,
         transition,
-        attributes
+        attributes,
+        isDragging,
     } = useSortable({id: rule.id});
 
     const style = {
@@ -57,38 +58,40 @@ export const RuleInstance = ({
     };
 
     return (
-        <div ref={setNodeRef} style={style} key={rule.id} id={rule.id} {...attributes}>
+        <div ref={setNodeRef} style={style} key={rule.id} id={rule.id}
+             className={`${isDragging ? "z-30 shadow border-white/20 border-2" : ""}`}>
             <Col className={`${className} rounded bg-surface px-2 pb-2 gap-2`}>
-                <div {...listeners} className="touch-none">
-                    <Row className="items-center justify-between pt-2">
-                        <Row className="gap-4 items-center justify-start">
-                            <div className="rounded overflow-clip">
-                                <AutowidthInput value={rule.name} onInput={onRuleNameInput}
-                                                className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
-                            </div>
-                            {
-                                !rule.terminalOnly ?
-                                    <>
-                                        <div className="w-0.5 h-8 bg-white/10"/>
-                                        <Row className="gap-2 items-center">
-                                            <ToggleLabel label="Rw" checked={rule.showRewrites}
-                                                         onChange={onRuleToggleRewrites}
-                                                         enabledColor="bg-accent-warning"
-                                                         disabledColor="bg-accent-warning/20"/>
-                                            <ToggleLabel label="Ex" checked={rule.showExclusions}
-                                                         onChange={onRuleToggleExclusions}
-                                                         enabledColor="bg-accent-caution"
-                                                         disabledColor="bg-accent-caution/20"/>
-                                        </Row>
-                                    </>
-                                    : null
-                            }
-                        </Row>
-                        <button onClick={onDelete} className="bg-accent-danger/50 rounded p-1">
-                            <XMarkIcon className="h-5"/>
-                        </button>
+                <Row className="items-center justify-between pt-2">
+                    <Row className="items-center justify-start">
+                        <div className="p-2 touch-none" {...listeners} {...attributes}>
+                            <EllipsisVerticalIcon className="h-5"/>
+                        </div>
+                        <div className="rounded overflow-clip mr-4">
+                            <AutowidthInput value={rule.name} onInput={onRuleNameInput}
+                                            className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
+                        </div>
+                        {
+                            !rule.terminalOnly ?
+                                <>
+                                    <div className="w-0.5 h-8 bg-white/10"/>
+                                    <Row className="gap-2 items-center">
+                                        <ToggleLabel label="Rw" checked={rule.showRewrites}
+                                                     onChange={onRuleToggleRewrites}
+                                                     enabledColor="bg-accent-warning"
+                                                     disabledColor="bg-accent-warning/20"/>
+                                        <ToggleLabel label="Ex" checked={rule.showExclusions}
+                                                     onChange={onRuleToggleExclusions}
+                                                     enabledColor="bg-accent-caution"
+                                                     disabledColor="bg-accent-caution/20"/>
+                                    </Row>
+                                </>
+                                : null
+                        }
                     </Row>
-                </div>
+                    <button onClick={onDelete} className="bg-accent-danger/50 rounded p-1">
+                        <XMarkIcon className="h-5"/>
+                    </button>
+                </Row>
                 <Row className="items-baseline justify-between gap-4">
                     <div>{rule.terminalOnly ? "Terminals" : "Patterns"}</div>
                     <div className="h-0.5 bg-white/10 grow"/>
