@@ -29,6 +29,17 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
         }
     }
 
+    const onRuleCloneIndex = (index: number) => {
+        return () => {
+            const rule = cloneDeep(config.rules[index])
+            rule.name = `${rule.name} clone`
+
+            const newRules = cloneDeep(config.rules)
+            newRules.splice(index + 1, 0, rule)
+            setRules(config.root, newRules)
+        }
+    }
+
     const onRuleDeleteIndex = (index: number) => {
         return () => {
 
@@ -214,7 +225,9 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                                               onRuleChange={onRuleChangeIndex(index)}
                                               onDelete={onRuleDeleteIndex(index)}
                                               enableWeights={config.enableWeights}
-                                              enableSerif={config.enableSerif}/>)}
+                                              enableSerif={config.enableSerif}
+                                              onClone={onRuleCloneIndex(index)}
+                                />)}
                         </SortableContext>
                     </DndContext>
 
