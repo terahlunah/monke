@@ -95,12 +95,12 @@ export class Parser {
         }
     }
 
-    public parseExpr(): Expr {
+    public parseExpr(option: boolean = false): Expr {
         // Start by parsing a sequence, as it has the highest precedence after quantification
         let expr = this.parseSequence();
 
         // If the next token is a ChoiceOperator, handle choice
-        if (this.peek() === '/' || this.peek() === '*') {
+        if (!option && (this.peek() === '/' || this.peek() === '*')) {
             expr = this.parseChoice(expr);
         }
 
@@ -183,13 +183,18 @@ export class Parser {
             throw new Error("Expected '(' at the start of an optional expression");
         }
 
-        const expr = this.parseExpr(); // Parse the base term (could be an Atom, Ref, or a nested expression)
+        const expr = this.parseExpr(true); // Parse the base term (could be an Atom, Ref, or a nested expression)
+
+        let weight = 0.5
+        if (this.consume('*')) {
+            weight = this.parseWeight()
+        }
 
         if (!this.consume(")")) {
             throw new Error("Expected ')' at the end of an optional expression");
         }
 
-        return makeRange(expr, 0, 1);
+        return makeWeightedChoice([makeWeighted(expr, weight), makeWeighted(makeAtom(""), 1 - weight)])
     }
 
     private parseGroup(): Expr {

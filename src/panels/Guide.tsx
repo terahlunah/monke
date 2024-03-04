@@ -48,11 +48,12 @@ export const Guide = () => {
                 referenced by other rules.</p>
             <span className=" rounded bg-secondary/40 py-2 px-4 w-min">Vowel</span>
             <p>Patterns can be added to a Rule, they will be chosen at random when this rule is
-                generated like for Terminal Rules.</p>
+                generated like for Terminal Rules. Patterns define what is generated be a rule.</p>
             <Row className="gap-4">
                 <GuidePattern value="Consonant.Vowel.('n')"/>
             </Row>
             <p>Each Pattern contains a single Expression. Here it's "Consonant.Vowel.('n')".</p>
+            <p>Rules MUST contain at least one pattern.</p>
 
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
@@ -126,6 +127,23 @@ export const Guide = () => {
                     </Col>
                 </li>
                 <li>
+                    <b>Option</b>
+                    <Col className="gap-2 my-2">
+                        <p>Option allow to mark an expression as optional in the generation. Similar to a group, the
+                            expression just needs to be surrounded by "(" and ")"</p>
+                        <GuidePattern value="('a')"/>
+                        <p>It is equivalent to the following choice syntax.</p>
+                        <GuidePattern value="['a'/'']"/>
+                        <p>But since it's so common, it's easier to use the Option syntax.</p>
+                        <p>A probability weight between 0 and 1 can be specified to override the default 0.5 chance.</p>
+                        <Row className="gap-4">
+                            <GuidePattern value="('a')"/>
+                            <GuidePattern value="('a'*0.5)"/>
+                        </Row>
+                        <p>These two expressions are equivalent.</p>
+                    </Col>
+                </li>
+                <li>
                     <b>Quantifier</b>
                     <Col className="gap-2 my-2">
                         <p>Quantifiers makes it easier to repeat an expression multiple times with randomness. They have
@@ -149,17 +167,6 @@ export const Guide = () => {
                         </Row>
                         <p>These expressions are equivalent, when min equals max, it can be shortened to just the
                             number. It means "the letter 'a' repeated exactly 2 times"</p>
-                    </Col>
-                </li>
-                <li>
-                    <b>Option</b>
-                    <Col className="gap-2 my-2">
-                        <p>Option allow to mark an expression as optional in the generation. Similar to a group, the
-                            expression just needs to be surrounded by "(" and ")"</p>
-                        <GuidePattern value="('a')"/>
-                        <p>It is equivalent to the following quantifier syntax.</p>
-                        <GuidePattern value="'a'{:1}"/>
-                        <p>But since it's so common, it's easier to use the Option syntax.</p>
                     </Col>
                 </li>
             </Col>
