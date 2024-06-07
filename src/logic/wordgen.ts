@@ -1,22 +1,22 @@
 import findDirectedCycle from "find-cycle/directed"
 import {Expr, Grammar, Rule} from "../models/grammar.ts";
 
-const matchSeq = (g: Grammar, items: Expr[], s: string): number | null => {
-    if (items.length === 0) return 0;
+const matchSeq = (g: Grammar, items: Expr[], s: string): number[] | null => {
+    if (items.length === 0) return [0];
 
     for (let i = 1; i <= s.length; i++) {
         const sub = s.substring(0, i);
         const exprMatch = matchExpr(g, items[0], sub);
         if (exprMatch !== null) {
-            const restMatch = matchSeq(g, items.slice(1), s.substring(exprMatch));
-            if (restMatch !== null) return exprMatch + restMatch;
+            const restMatch = matchSeq(g, items.slice(1), s.substring(exprMatch[0]));
+            if (restMatch !== null) return [...exprMatch, ...restMatch];
         }
     }
 
     return null;
 };
 
-const matchChoice = (g: Grammar, choices: Expr[], s: string): number | null => {
+const matchChoice = (g: Grammar, choices: Expr[], s: string): number[] | null => {
     for (const e of choices) {
         const match = matchExpr(g, e, s);
         if (match !== null) return match;
@@ -24,7 +24,7 @@ const matchChoice = (g: Grammar, choices: Expr[], s: string): number | null => {
     return null;
 };
 
-const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: string): number | null => {
+const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: string): number[] | null => {
     for (let i = min; i <= max; ++i) {
         const match = matchSeq(g, Array(i).fill(expr), s)
         if (match !== null) return match;
@@ -32,14 +32,17 @@ const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: st
     return null
 };
 
-const matchExpr = (g: Grammar, e: Expr, s: string): number | null => {
+const matchExpr = (g: Grammar, e: Expr, s: string): number[] | null => {
     switch (e.tag) {
         case 'Atom':
-            return s === e.value ? e.value.length : null
+            return s === e.value ? [e.value.length] : null
         case 'Ref': {
             const rule = g.rules.find(r => r.name === e.rule);
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
             return matchExpr(g, rule.expr, s)
+        }
+        case 'Match': {
+            throw new Error(`Encountered ambiguous match expression #${e.index}#`)
         }
         case "Seq":
             return matchSeq(g, e.items, s)
@@ -97,7 +100,7 @@ const weightedPick = <T>(array: [T, number][]): T | null => {
     return array[array.length - 1][0];
 };
 
-const generateExpr = (g: Grammar, e: Expr): string => {
+const generateExpr = (g: Grammar, e: Expr, matches?: string[]): string => {
     switch (e.tag) {
         case 'Atom':
             return e.value;
@@ -106,8 +109,13 @@ const generateExpr = (g: Grammar, e: Expr): string => {
             if (!rule) throw new Error(`Rule ${e.rule} not found`);
             return generateRule(g, rule);
         }
+        case 'Match': {
+            if (matches === undefined)
+                throw new Error(`Encountered ambiguous match expression #${e.index}#`);
+            return matches[e.index];
+        }
         case "Seq":
-            return e.items.map(t => generateExpr(g, t)).join('')
+            return e.items.map(t => generateExpr(g, t, matches)).join('')
         case "Choice": {
             const choice = g.useWeights ?
                 weightedPick(e.items.map(c => [c.expr, c.weight])) :
@@ -117,13 +125,13 @@ const generateExpr = (g: Grammar, e: Expr): string => {
                 return ""
             }
 
-            return generateExpr(g, choice)
+            return generateExpr(g, choice, matches)
         }
         case "Quantifier": {
             const n = Math.floor(Math.random() * (1 + e.max - e.min) + e.min)
             let s = ""
             for (let i = 0; i < n; i++) {
-                s += generateExpr(g, e.expr)
+                s += generateExpr(g, e.expr, matches)
             }
             return s
         }
@@ -155,9 +163,16 @@ const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
                 const s = result.slice(i, j);
                 const exprMatch = matchExpr(g, match, s);
                 if (exprMatch !== null) {
+                    let matchEnd = 0;
+                    const matches = exprMatch.map(l => {
+                        const newMatchEnd = matchEnd + l;
+                        const match = s.slice(matchEnd, newMatchEnd);
+                        matchEnd = newMatchEnd;
+                        return match;
+                    });
                     const head = result.slice(0, i);
-                    const tail = result.slice(i + exprMatch);
-                    const gen = generateExpr(g, replace);
+                    const tail = result.slice(i + matchEnd);
+                    const gen = generateExpr(g, replace, matches);
 
                     result = head + gen + tail;
                 }
@@ -188,6 +203,8 @@ const countCombinationsExpr = (g: Grammar, e: Expr): number => {
             return 1;
         case "Ref":
             return countCombinationsRule(g, g.rules.find(r => r.name === e.rule)!);
+        case "Match":
+            throw new Error('Match syntax used outside replacement expression');
         case "Seq":
             return e.items.reduce((acc, it) => acc * countCombinationsExpr(g, it), 1);
         case "Choice":
@@ -215,6 +232,8 @@ const getExprEdges = (e: Expr): string[] => {
             return [];
         case "Ref":
             return [e.rule];
+        case "Match":
+            return [];
         case "Seq":
             return e.items.flatMap(getExprEdges);
         case "Choice":
