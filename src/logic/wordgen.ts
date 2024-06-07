@@ -35,7 +35,7 @@ const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: st
 const matchExpr = (g: Grammar, e: Expr, s: string): number[] | null => {
     switch (e.tag) {
         case 'Atom':
-            return s === e.value ? [e.value.length] : null
+            return s === e.value || e.value === "" ? [e.value.length] : null
         case 'Ref': {
             const rule = g.rules.find(r => r.name === e.rule);
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
@@ -170,6 +170,7 @@ const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
                         matchEnd = newMatchEnd;
                         return match;
                     });
+                    console.log(matches);
                     const head = result.slice(0, i);
                     const tail = result.slice(i + matchEnd);
                     const gen = generateExpr(g, replace, matches);
