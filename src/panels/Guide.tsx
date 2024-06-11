@@ -187,7 +187,34 @@ export const Guide = () => {
                 example, if the output of a rule is "nap". This rewrite would match the 'a' part and change it using the
                 output of the "replacement" part to 'u' to
                 produce "nup".</p>
-            <p>Any expression can be used in both the "match" and the "replacement".</p>
+            <p>Any expression can be used in both the "match" and the "replacement". In addition, the "replacement" part
+                of a rewrite supports an indexing syntax to refer back to components of the matched substring. An index
+                expression consists of a numerical string bookended by number signs "#". The number refers to sequence
+                elements and is zero-indexed.
+            </p>
+            <p>Here are some common use cases:</p>
+            <Row className="gap-4">
+                <GuideRewrite match="'p'.'a'" replace="#1#.#0#"/>
+            </Row>
+            <p>This rewrite means "swap the first and second matched expressions", and will replace "pa" with "ap".</p>
+            <Row className="gap-4">
+                <GuideRewrite match="'p'.'a'" replace="#0#.'r'.#1#"/>
+            </Row>
+            <p>This rewrite means "insert an 'r' between the first and second matched expressions", and will replace
+                "pa" with "pra".</p>
+            <Row className="gap-4">
+                <GuideRewrite match="'p'.'a'" replace="#0#.#1#{2}"/>
+            </Row>
+            <p>This rewrite means "repeat the second matched expression twice", and will replace "pa" with "paa".</p>
+            <Row className="gap-4">
+                <GuideRewrite match="'p'.'a'" replace="#1#"/>
+            </Row>
+            <p>This rewrite means "only keep the second match espression", and will replace "pa" with "a".</p>
+            <p>Note that indexes can refer to any type of expression, not just terminals. Also keep in mind that the
+                indexing syntax relies on sequence expressions in the "match" part. For example, if we had written 'pa'
+                instead of 'p'.'a', then there would only be one indexable matched expression, namely 'pa', referenced
+                with "#0#".
+            </p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
                 <h1 className="font-bold text-xl">Exclusion</h1>

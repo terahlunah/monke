@@ -14,6 +14,7 @@ export type Rule = {
 export type Expr =
     | { tag: 'Atom', value: string }
     | { tag: 'Ref', rule: string }
+    | { tag: 'Match', index: number }
     | { tag: 'Seq', items: Expr[] }
     | { tag: 'Choice', items: WeightedExpr[] }
     | { tag: 'Quantifier', expr: Expr, min: number, max: number }
@@ -25,9 +26,10 @@ export type WeightedExpr = {
 
 // Utility functions
 
-export const makeAtom = (atom: string): Expr => ({tag: "Atom", value: atom});
-export const makeRef = (rule: string): Expr => ({tag: "Ref", rule: rule});
-export const makeSeq = (items: Expr[]): Expr => ({tag: "Seq", items: items});
+export const makeAtom = (value: string): Expr => ({tag: "Atom", value});
+export const makeRef = (rule: string): Expr => ({tag: "Ref", rule});
+export const makeMatch = (index: number): Expr => ({tag: "Match", index});
+export const makeSeq = (items: Expr[]): Expr => ({tag: "Seq", items});
 
 export const makeWeighted = (expr: Expr, weight: number | null): WeightedExpr => ({expr: expr, weight: weight ?? 1.0})
 export const makeChoice = (items: Expr[]): Expr => ({tag: "Choice", items: items.map(makeWeighted)});

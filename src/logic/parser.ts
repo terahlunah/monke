@@ -3,6 +3,7 @@ import {Rule as ConfigRule} from "../models/ui.tsx";
 import {
     Expr, Grammar,
     makeAtom, makeGrammar,
+    makeMatch,
     makeRange,
     makeRef, makeRule,
     makeSeq,
@@ -81,6 +82,32 @@ export class Parser {
         }
 
         return makeRef(refName);
+    }
+
+    private parseMatch(): Expr {
+        let indexString = ''
+
+        if (!this.consume('#')) {
+            throw new Error("Expected number sign to start match");
+        }
+
+        while (this.hasMoreInput()) {
+            const char = this.peek()!;
+
+            if (char === '#') {
+                break
+            } else {
+                // Part of the index; append the character and advance
+                indexString += char;
+                this.advancePosition(false);
+            }
+        }
+
+        if (!this.consume('#')) {
+            throw new Error("Expected number sign to end match");
+        }
+
+        return makeMatch(parseInt(indexString));
     }
 
     private isRefCharacter(char: string | null, lead: boolean | null = null): boolean {
@@ -170,6 +197,8 @@ export class Parser {
             return this.parseOption();
         } else if (char === "[") {
             return this.parseGroup();
+        } else if (char === "#") {
+            return this.parseMatch();
         } else if (this.isRefCharacter(char)) {
             return this.parseRef();
         } else {
