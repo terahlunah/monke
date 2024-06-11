@@ -205,7 +205,7 @@ export const Guide = () => {
             <Row className="gap-4">
                 <GuideRewrite match="'p'.'a'" replace="#0#.#1#{2}"/>
             </Row>
-            <p>This rewrite means "repeat the second matched expression twice", and will replace "nap" with "naap".</p>
+            <p>This rewrite means "repeat the second matched expression twice", and will replace "pa" with "paa".</p>
             <Row className="gap-4">
                 <GuideRewrite match="'p'.'a'" replace="#1#"/>
             </Row>
