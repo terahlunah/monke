@@ -35,7 +35,7 @@ const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: st
 const matchExpr = (g: Grammar, e: Expr, s: string): number[] | null => {
     switch (e.tag) {
         case 'Atom':
-            return s === e.value || e.value === "" ? [e.value.length] : null
+            return s.startsWith(e.value) ? [e.value.length] : null
         case 'Ref': {
             const rule = g.rules.find(r => r.name === e.rule);
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
@@ -159,24 +159,22 @@ const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
     for (const [match, replace] of rule.rewrites) {
 
         for (let i = 0; i < result.length; i++) {
-            for (let j = i + 1; j <= result.length; j++) {
-                const s = result.slice(i, j);
-                const exprMatch = matchExpr(g, match, s);
-                if (exprMatch !== null) {
-                    let matchEnd = 0;
-                    const matches = exprMatch.map(l => {
-                        const newMatchEnd = matchEnd + l;
-                        const match = s.slice(matchEnd, newMatchEnd);
-                        matchEnd = newMatchEnd;
-                        return match;
-                    });
-                    console.log(matches);
-                    const head = result.slice(0, i);
-                    const tail = result.slice(i + matchEnd);
-                    const gen = generateExpr(g, replace, matches);
+            const s = result.slice(i);
+            const exprMatch = matchExpr(g, match, s);
+            if (exprMatch !== null) {
+                let matchEnd = 0;
+                const matches = exprMatch.map(l => {
+                    const newMatchEnd = matchEnd + l;
+                    const match = s.slice(matchEnd, newMatchEnd);
+                    matchEnd = newMatchEnd;
+                    return match;
+                });
+                console.log(matches);
+                const head = result.slice(0, i);
+                const tail = result.slice(i + matchEnd);
+                const gen = generateExpr(g, replace, matches);
 
-                    result = head + gen + tail;
-                }
+                result = head + gen + tail;
             }
         }
     }
