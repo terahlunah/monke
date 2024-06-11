@@ -196,7 +196,7 @@ export const Guide = () => {
             <Row className="gap-4">
                 <GuideRewrite match="'p'.'a'" replace="#1#.#0#"/>
             </Row>
-            <p>This rewrite means "swap the first and second matched expressions", and will replace "nap" with "apn".</p>
+            <p>This rewrite means "swap the first and second matched expressions", and will replace "pa" with "ap".</p>
             <Row className="gap-4">
                 <GuideRewrite match="'p'.'a'" replace="#0#.'r'.#1#"/>
             </Row>
