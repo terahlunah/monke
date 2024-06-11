@@ -209,7 +209,7 @@ export const Guide = () => {
             <Row className="gap-4">
                 <GuideRewrite match="'p'.'a'" replace="#1#"/>
             </Row>
-            <p>This rewrite means "remove the first matched expression", and will replace "nap" with "ap".</p>
+            <p>This rewrite means "only keep the second match espression", and will replace "pa" with "a".</p>
             <p>Note that indexes can refer to any type of expression, not just terminals. Also keep in mind that the
                 indexing syntax relies on sequence expressions in the "match" part. For example, if we had written 'pa'
                 instead of 'p'.'a', then there would only be one indexable matched expression, namely 'pa', referenced
