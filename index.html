@@ -1,6 +1,20 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E30C8XJMHD"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'G-E30C8XJMHD');
+    </script>
+    
     <meta charset="UTF-8"/>
 
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
@@ -22,5 +36,8 @@
 <body>
 <div id="root"></div>
 <script type="module" src="/src/main.tsx"></script>
+<!-- Cloudflare Web Analytics -->
+<script defer src='https://static.cloudflareinsights.com/beacon.min.js'
+        data-cf-beacon='{"token": "32327daf45ce469da36079484080aa70"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
