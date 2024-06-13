@@ -84,7 +84,8 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
                 </DndContext>
 
                 <button onClick={onRewritePatternAdd}
-                        className={`bg-accent-warning  mr-4 rounded p-1`}>
+                        className={`bg-accent-warning  mr-4 rounded p-1`}
+                        aria-label="Add rewrite pattern">
                     <PlusIcon className="h-6"/>
                 </button>
             </Row>
@@ -132,7 +133,7 @@ export const RewritePatternItem = ({
     return (
         <div ref={setNodeRef} style={style} key={rewrite.id} id={rewrite.id}>
             <Row className={`${className} rounded overflow-clip w-min h-8 items-center`}>
-                <button className={`bg-accent-warning p-1 h-8`} {...listeners}>
+                <button className={`bg-accent-warning p-1 h-8`} {...listeners} aria-label="Drag rewrite pattern">
                     <EllipsisVerticalIcon className="h-4"/>
                 </button>
                 <AutowidthInput value={rewrite.match}
@@ -140,7 +141,9 @@ export const RewritePatternItem = ({
                                 className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                 type="text"
                                 minWidth={15}/>
-                <button className="bg-accent-warning p-1 h-8"><ChevronDoubleRightIcon className="h-4"/></button>
+                <button className="bg-accent-warning p-1 h-8" aria-disabled={true} disabled={true} aria-label="">
+                    <ChevronDoubleRightIcon className="h-4"/>
+                </button>
                 <AutowidthInput value={rewrite.replace}
                                 onChange={onReplaceInput}
                                 className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}

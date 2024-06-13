@@ -158,19 +158,19 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
             <div className="border-t border-white/20"/>
 
             <Row className="gap-4">
-                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onCopyLink}>
+                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onCopyLink} aria-label="Share link">
                     <Row className="items-center justify-center gap-2">
                         <h1>Share link</h1>
                         <LinkIcon className="h-5"/>
                     </Row>
                 </button>
-                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onExport}>
+                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onExport} aria-label="Export config">
                     <Row className="items-center justify-center gap-2">
                         <h1>Export Config</h1>
                         <ArrowUpTrayIcon className="h-5"/>
                     </Row>
                 </button>
-                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onImport}>
+                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onImport} aria-label="Import config">
                     <Row className="items-center justify-center gap-2">
                         <h1>Import Config</h1>
                         <ArrowDownTrayIcon className="h-5"/>
@@ -193,12 +193,12 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
 
             <Row className="gap-4">
                 <Row className="items-center justify-start grow">
-                    <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3">Generate
+                    <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3" aria-label="Generate">Generate
                     </button>
                     <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
                            className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
                 </Row>
-                <button className="grow bg-primary rounded p-2" onClick={onCopy}>
+                <button className="grow bg-primary rounded p-2" onClick={onCopy} aria-label="Copy words">
                     <Row className="items-center justify-center gap-2">
                         <h1>Copy</h1>
                         <ClipboardDocumentListIcon className="h-5"/>

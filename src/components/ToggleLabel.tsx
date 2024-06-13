@@ -18,10 +18,12 @@ export const ToggleLabel = ({
                                 enabledColor,
                                 disabledColor
                             }: GenericProps<ToggleLabelProps>) => {
+
     return (
         <>
             <button onClick={() => onChange(!checked)}
-                    className={`${className} ${checked ? enabledColor : disabledColor} p-1 rounded min-w-8`}>{label}</button>
+                    className={`${className} ${checked ? enabledColor : disabledColor} p-1 rounded min-w-8`}
+                    aria-label={label}>{label}</button>
         </>
 
     )

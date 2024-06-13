@@ -65,13 +65,14 @@ export const RuleInstance = ({
             <Col className={`${className} rounded bg-surface px-2 pb-2 gap-2`}>
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
-                        <div className="pl-2 pr-3 touch-none" {...listeners} {...attributes}>
+                        <div className="pl-2 pr-3 touch-none" {...listeners} {...attributes} aria-label="Reorder rule">
                             <EllipsisVerticalIcon className="h-5"/>
                         </div>
-                        <button onClick={onClone} className="border-white/30 border rounded p-2">
+                        <button onClick={onClone} className="border-white/30 border rounded p-2"
+                                aria-label="Duplicate rule">
                             <DocumentDuplicateIcon className="h-5"/>
                         </button>
-                        <div className="rounded overflow-clip mx-4">
+                        <div className="rounded overflow-clip mx-4" aria-label="Edit rule name">
                             <AutowidthInput value={rule.name} onInput={onRuleNameInput}
                                             className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
                         </div>
@@ -93,7 +94,7 @@ export const RuleInstance = ({
                                 : null
                         }
                     </Row>
-                    <button onClick={onDelete} className="bg-accent-danger/50 rounded p-1">
+                    <button onClick={onDelete} className="bg-accent-danger/50 rounded p-1" aria-label="Delete rule">
                         <XMarkIcon className="h-5"/>
                     </button>
                 </Row>

@@ -24,6 +24,7 @@ export const SwitchLabel = ({
     return (
         <Row className={`${className} items-center gap-2`}>
             <Switch
+                aria-label={`${checked ? "Disable" : "Enable"} '${label}'`}
                 checked={checked}
                 onChange={onChange}
                 className={`${

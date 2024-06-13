@@ -84,7 +84,8 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
                 </DndContext>
 
                 <button onClick={onExclusionPatternAdd}
-                        className={`bg-accent-caution  mr-4 rounded p-1`}>
+                        className={`bg-accent-caution  mr-4 rounded p-1`}
+                        aria-label="Add exclusion pattern">
                     <PlusIcon className="h-6"/>
                 </button>
             </Row>
@@ -128,7 +129,7 @@ export const ExclusionPatternItem = ({
     return (
         <div ref={setNodeRef} style={style} key={exclusion.id} id={exclusion.id}>
             <Row className={`${className} rounded overflow-clip w-min h-8 items-center`}>
-                <button className={`bg-accent-caution p-1 h-8`} {...listeners}>
+                <button className={`bg-accent-caution p-1 h-8`} {...listeners} aria-label="Drag exclusion pattern">
                     <EllipsisVerticalIcon className="h-4"/>
                 </button>
                 <AutowidthInput value={exclusion.match}
@@ -136,7 +137,8 @@ export const ExclusionPatternItem = ({
                                 className={`bg-accent-caution/20 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                 type="text"
                                 minWidth={15}/>
-                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/></button>
+                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
+                        aria-label="Delete exclusion pattern"><XMarkIcon className="h-4"/></button>
             </Row>
         </div>
     );

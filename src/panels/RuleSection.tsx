@@ -80,7 +80,8 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ge
                 </SortableContext>
             </DndContext>
             <button onClick={onRuleAdd}
-                    className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded p-1`}>
+                    className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded p-1`}
+                    aria-label="Add pattern">
                 <PlusIcon className="h-6"/>
             </button>
         </Row>
@@ -152,7 +153,8 @@ export const RulePatternItem = ({
     return (
         <div ref={setNodeRef} style={style} key={pattern.id} id={pattern.id}>
             <Row className={`${className} rounded overflow-clip w-min h-8 items-center`}>
-                <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...listeners}>
+                <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...listeners}
+                        aria-label="Drag pattern">
                     <EllipsisVerticalIcon className="h-4"/>
                 </button>
                 <AutowidthInput value={pattern.pattern}
@@ -171,7 +173,8 @@ export const RulePatternItem = ({
                     </>
                 ) : null
                 }
-                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/></button>
+                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8" aria-label="Delete pattern">
+                    <XMarkIcon className="h-4"/></button>
             </Row>
         </div>
     );
