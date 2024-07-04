@@ -11,6 +11,7 @@ import {Rule} from "../models/ui.ts";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";
+import {ChevronDownIcon, ChevronUpIcon} from "@heroicons/react/24/solid";
 
 
 export type RuleInstanceProps = {
@@ -45,6 +46,10 @@ export const RuleInstance = ({
         onRuleChange({...rule, showExclusions: showExclusions});
     }
 
+    const onRuleToggleCollapse = () => {
+        onRuleChange({...rule, collapsed: !rule.collapsed});
+    }
+
     const {
         listeners,
         setNodeRef,
@@ -68,7 +73,14 @@ export const RuleInstance = ({
                         <div className="pl-2 pr-3 touch-none" {...listeners} {...attributes} aria-label="Reorder rule">
                             <EllipsisVerticalIcon className="h-5"/>
                         </div>
-                        <button onClick={onClone} className="border-white/30 border rounded p-2"
+                        <button onClick={onRuleToggleCollapse} className="border border-white/30 rounded p-2 mr-2"
+                                aria-label={rule.collapsed ? "Expand Rule" : "Collapse rule"}>
+                            {
+                                rule.collapsed ?
+                                    <ChevronDownIcon className="h-5"/> : <ChevronUpIcon className="h-5"/>
+                            }
+                        </button>
+                        <button onClick={onClone} className="border border-white/30 rounded p-2"
                                 aria-label="Duplicate rule">
                             <DocumentDuplicateIcon className="h-5"/>
                         </button>
@@ -98,19 +110,24 @@ export const RuleInstance = ({
                         <XMarkIcon className="h-5"/>
                     </button>
                 </Row>
-                <Row className="items-baseline justify-between gap-4">
-                    <div>{rule.terminalOnly ? "Terminals" : "Patterns"}</div>
-                    <div className="h-0.5 bg-white/10 grow"/>
-                </Row>
-                <RuleSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}
-                             enableWeights={enableWeights}/>
-                {rule.showRewrites && !rule.terminalOnly ? (
-                    <RewriteSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}/>
-                ) : null
-                }
-                {rule.showExclusions && !rule.terminalOnly ? (
-                    <ExclusionSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}/>
-                ) : null
+                {
+                    rule.collapsed ? <></> :
+                        <>
+                            <Row className="items-baseline justify-between gap-4">
+                                <div>{rule.terminalOnly ? "Terminals" : "Patterns"}</div>
+                                <div className="h-0.5 bg-white/10 grow"/>
+                            </Row>
+                            <RuleSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}
+                                         enableWeights={enableWeights}/>
+                            {rule.showRewrites && !rule.terminalOnly ? (
+                                <RewriteSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}/>
+                            ) : null
+                            }
+                            {rule.showExclusions && !rule.terminalOnly ? (
+                                <ExclusionSection rule={rule} onRuleChange={onRuleChange} enableSerif={enableSerif}/>
+                            ) : null
+                            }
+                        </>
                 }
             </Col>
         </div>

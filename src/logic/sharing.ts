@@ -95,6 +95,7 @@ export const decodeConfig = async (data: string): Promise<Config> => {
             patterns: patterns,
             exclusions: exclusions,
             rewrites: rewrites,
+            collapsed: false,
         })
 
 

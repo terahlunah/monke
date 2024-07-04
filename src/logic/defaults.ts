@@ -20,6 +20,7 @@ export const tokiPonaRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Consonant",
@@ -40,6 +41,7 @@ export const tokiPonaRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Syllable",
@@ -52,6 +54,7 @@ export const tokiPonaRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Word",
@@ -72,6 +75,7 @@ export const tokiPonaRules: Rule[] = [
             {match: "'ti'", id: uid()},
         ],
         showExclusions: true,
+        collapsed: false,
     },
 ]
 export const tokiPonaWeightedRules: Rule[] = [
@@ -90,6 +94,7 @@ export const tokiPonaWeightedRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Consonant",
@@ -110,6 +115,7 @@ export const tokiPonaWeightedRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Coda",
@@ -122,6 +128,7 @@ export const tokiPonaWeightedRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Rime",
@@ -135,6 +142,7 @@ export const tokiPonaWeightedRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
     {
         name: "Full",
@@ -147,6 +155,7 @@ export const tokiPonaWeightedRules: Rule[] = [
         showRewrites: false,
         exclusions: [],
         showExclusions: false,
+        collapsed: false,
     },
 
     {
@@ -169,5 +178,6 @@ export const tokiPonaWeightedRules: Rule[] = [
             {match: "'ti'", id: uid()},
         ],
         showExclusions: true,
+        collapsed: false,
     },
 ]

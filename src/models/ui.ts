@@ -7,6 +7,7 @@ export type Rule = {
     terminalOnly: boolean
     showRewrites: boolean
     showExclusions: boolean
+    collapsed: boolean
 }
 
 export type RulePattern = {
