@@ -8,11 +8,12 @@ export const encodeConfig = async (config: Config): Promise<string> => {
 
     const buf = new ByteBuffer()
 
-    buf.writeInt8(1) // Version
+    buf.writeInt8(2) // Version
     buf.writeString(config.language ?? "")
     buf.writeString(config.root ?? "")
     buf.writeInt8(config.enableWeights ? 1 : 0)
     buf.writeInt8(config.enableSerif ? 1 : 0)
+
 
     // Rules
     buf.writeInt8(config.rules.length)
@@ -21,6 +22,7 @@ export const encodeConfig = async (config: Config): Promise<string> => {
         buf.writeInt8(rule.terminalOnly ? 1 : 0)
         buf.writeInt8(rule.showRewrites ? 1 : 0)
         buf.writeInt8(rule.showExclusions ? 1 : 0)
+        buf.writeInt8(rule.collapsed ? 1 : 0)
 
         buf.writeInt8(rule.patterns.length)
         for (const p of rule.patterns) {
@@ -48,7 +50,7 @@ export const encodeConfig = async (config: Config): Promise<string> => {
 export const decodeConfig = async (data: string): Promise<Config> => {
     const buf = await ByteBuffer.fromBase64(data)
 
-    buf.readInt8() // version
+    const version = buf.readInt8()
     const language = buf.readString()
     const root = buf.readString()
     const enableWeights = buf.readInt8() === 1
@@ -64,6 +66,7 @@ export const decodeConfig = async (data: string): Promise<Config> => {
         const terminalOnly = buf.readInt8() === 1
         const showRewrites = buf.readInt8() === 1
         const showExclusions = buf.readInt8() === 1
+        const collapsed = version >= 2 ? buf.readInt8() === 1 : false
 
         const patternCount = buf.readInt8()
         const patterns: RulePattern[] = []
@@ -95,6 +98,7 @@ export const decodeConfig = async (data: string): Promise<Config> => {
             patterns: patterns,
             exclusions: exclusions,
             rewrites: rewrites,
+            collapsed: collapsed,
         })
 
 

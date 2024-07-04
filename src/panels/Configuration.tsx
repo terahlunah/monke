@@ -63,6 +63,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
             terminalOnly: false,
             showRewrites: false,
             showExclusions: false,
+            collapsed: false,
         }])
     }
 
@@ -76,6 +77,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
             terminalOnly: true,
             showRewrites: false,
             showExclusions: false,
+            collapsed: false,
         }])
     }
 
