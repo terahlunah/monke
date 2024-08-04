@@ -189,7 +189,9 @@ export const generate = (g: Grammar): string => {
 };
 
 export const countCombinations = (g: Grammar): number => {
-    return countCombinationsRule(g, g.rules.find(r => r.name === g.root)!)
+    const rootRule = g.rules.find(r => r.name === g.root);
+    if (!rootRule) throw new Error(`Root rule ${g.root} not found`);
+    return countCombinationsRule(g, rootRule)
 }
 
 const countCombinationsRule = (g: Grammar, r: Rule): number => {
@@ -200,8 +202,11 @@ const countCombinationsExpr = (g: Grammar, e: Expr): number => {
     switch (e.tag) {
         case "Atom":
             return 1;
-        case "Ref":
-            return countCombinationsRule(g, g.rules.find(r => r.name === e.rule)!);
+        case "Ref": {
+            const rule = g.rules.find(r => r.name === e.rule);
+            if (!rule) throw new Error(`Rule ${rule} not found`);
+            return countCombinationsRule(g, rule);
+        }
         case "Match":
             throw new Error('Match syntax used outside replacement expression');
         case "Seq":

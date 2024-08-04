@@ -66,7 +66,13 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
             if (grammar) {
                 const cycles = detectCycle(grammar) ?? []
 
-                const combinations = cycles.length != 0 ? 0 : countCombinations(grammar)
+                let combinations = 0;
+
+                try {
+                    combinations = cycles.length != 0 ? 0 : countCombinations(grammar)
+                } catch (e) {
+                    combinations = 0
+                }
 
                 return [cycles, combinations]
             } else {
@@ -193,7 +199,8 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
 
             <Row className="gap-4">
                 <Row className="items-center justify-start grow">
-                    <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3" aria-label="Generate">Generate
+                    <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3"
+                            aria-label="Generate">Generate
                     </button>
                     <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
                            className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
