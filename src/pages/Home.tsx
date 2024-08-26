@@ -40,9 +40,13 @@ export const Home = () => {
     })
 
     useEffect(() => {
+        document.title = `Monke - ${config.language}`;
+    }, [config]);
+
+    useEffect(() => {
         const updateUrl = async () => {
             const data = await encodeConfig(config)
-            window.history.replaceState("", "", `/${data}`);
+            window.history.pushState("", "", `/${data}`);
         }
 
         updateUrl().catch(console.error);
