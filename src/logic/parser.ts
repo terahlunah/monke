@@ -17,9 +17,15 @@ import {RulePattern} from "../models/ui.ts";
 export class Parser {
     private currentPosition: number = 0;
     private input: string;
+    private ruleName: string;
 
-    constructor(input: string) {
+    constructor(ruleName: string, input: string) {
+        this.ruleName = ruleName;
         this.input = input;
+    }
+
+    private error(message: string): never {
+        throw new Error(`${message} (rule : '${this.ruleName}')`);
     }
 
     private parseAtom(): Expr {
@@ -27,7 +33,7 @@ export class Parser {
         let escaping = false
 
         if (!this.consume("'")) {
-            throw new Error("Expected single quote to start atom");
+            this.error("Expected single quote to start atom");
         }
 
         while (this.hasMoreInput()) {
@@ -58,7 +64,7 @@ export class Parser {
         }
 
         if (!this.consume("'")) {
-            throw new Error("Expected single quote to end atom");
+            this.error("Expected single quote to end atom");
         }
 
         return makeAtom(atomValue);
@@ -78,7 +84,7 @@ export class Parser {
         }
 
         if (refName.length === 0) {
-            throw new Error("Expected a reference name");
+            this.error("Expected a reference name");
         }
 
         return makeRef(refName);
@@ -88,7 +94,7 @@ export class Parser {
         let indexString = ''
 
         if (!this.consume('#')) {
-            throw new Error("Expected number sign to start match");
+            this.error("Expected number sign to start match");
         }
 
         while (this.hasMoreInput()) {
@@ -104,7 +110,7 @@ export class Parser {
         }
 
         if (!this.consume('#')) {
-            throw new Error("Expected number sign to end match");
+            this.error("Expected number sign to end match");
         }
 
         return makeMatch(parseInt(indexString));
@@ -202,14 +208,14 @@ export class Parser {
         } else if (this.isRefCharacter(char)) {
             return this.parseRef();
         } else {
-            throw new Error(`Unexpected character \`${char}\``);
+            this.error(`Unexpected character \`${char}\``);
         }
     }
 
     private parseOption(): Expr {
 
         if (!this.consume("(")) {
-            throw new Error("Expected '(' at the start of an optional expression");
+            this.error("Expected '(' at the start of an optional expression");
         }
 
         const expr = this.parseExpr(true); // Parse the base term (could be an Atom, Ref, or a nested expression)
@@ -220,7 +226,7 @@ export class Parser {
         }
 
         if (!this.consume(")")) {
-            throw new Error("Expected ')' at the end of an optional expression");
+            this.error("Expected ')' at the end of an optional expression");
         }
 
         return makeWeightedChoice([makeWeighted(expr, weight), makeWeighted(makeAtom(""), 1 - weight)])
@@ -229,13 +235,13 @@ export class Parser {
     private parseGroup(): Expr {
 
         if (!this.consume("[")) {
-            throw new Error("Expected '[' at the start of a group");
+            this.error("Expected '[' at the start of a group");
         }
 
         const expr = this.parseExpr(); // Parse the base term (could be an Atom, Ref, or a nested expression)
 
         if (!this.consume("]")) {
-            throw new Error("Expected ']' at the end of a group");
+            this.error("Expected ']' at the end of a group");
         }
 
         return expr
@@ -244,7 +250,7 @@ export class Parser {
     private parseQuantifier(): [min: number, max: number] {
         // Ensure we are at the start of a quantifier expression
         if (!this.consume('{')) {
-            throw new Error("Expected '{' at the start of quantifier expression");
+            this.error("Expected '{' at the start of quantifier expression");
         }
 
         // Parse the minimum and maximum values
@@ -268,12 +274,12 @@ export class Parser {
             min = parts[0] === "" ? 0 : parseInt(parts[0], 10);
             max = parseInt(parts[1], 10);
         } else {
-            throw new Error("Invalid quantifier range");
+            this.error("Invalid quantifier range");
         }
 
         // Validate min and max
         if (isNaN(min) || isNaN(max) || min < 0 || max < min) {
-            throw new Error("Invalid quantifier bounds");
+            this.error("Invalid quantifier bounds");
         }
 
         return [min, max]
@@ -288,7 +294,7 @@ export class Parser {
 
         const weight = parseFloat(weightStr);
         if (isNaN(weight) || weight < 0) {
-            throw new Error("Invalid weight value");
+            this.error("Invalid weight value");
         }
 
         return weight;
@@ -340,7 +346,7 @@ export class Parser {
         const expr = this.parseExpr();
 
         if (this.currentPosition < this.input.length) {
-            throw new Error(`Unexpected character \`${this.peek()}\``);
+            this.error(`Unexpected character \`${this.peek()}\``);
         }
 
         return expr;
@@ -358,7 +364,7 @@ export const configToGrammar = (config: Config): Grammar | null => {
 
         for (const e of edges) {
             if (!rulesNames.includes(e)) {
-                throw new Error(`Unknown rule ${e}`)
+                throw new Error(`Unknown rule '${e}'`)
             }
         }
     }
@@ -368,19 +374,22 @@ export const configToGrammar = (config: Config): Grammar | null => {
 }
 
 const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
+    if (!/^[A-Za-z_][A-Za-z_0-9]*$/.test(rule.name)) {
+        throw new Error(`Invalid rule name : '${rule.name}'`);
+    }
 
     if (rule.terminalOnly) {
         const ruleExpr = terminalPatternsToExpr(rule.patterns)
         return makeRule(rule.name, ruleExpr, [], [])
     } else {
         if (rule.patterns.length === 0) {
-            throw new Error(`Rule "${rule.name}" is empty`)
+            throw new Error(`Rule '${rule.name}' is empty`)
         }
 
-        const ruleExpr = rulePatternsToExpr(rule.patterns)
+        const ruleExpr = rulePatternsToExpr(rule.name, rule.patterns)
 
-        const exclusions = rule.showExclusions ? rule.exclusions.map(p => parse(p.match)) : []
-        const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => [parse(p.match), parse(p.replace)]) : []
+        const exclusions = rule.showExclusions ? rule.exclusions.map(p => parse(rule.name, p.match)) : []
+        const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => [parse(rule.name, p.match), parse(rule.name, p.replace)]) : []
         return makeRule(rule.name, ruleExpr, exclusions, rewrites)
     }
 
@@ -390,9 +399,9 @@ const terminalPatternsToExpr = (patterns: RulePattern[]): Expr => {
     return makeWeightedChoice(patterns.map(p => makeWeighted(makeAtom(p.pattern), p.weight)))
 }
 
-const rulePatternsToExpr = (patterns: RulePattern[]): Expr => {
-    return makeWeightedChoice(patterns.map(p => makeWeighted(parse(p.pattern), p.weight)))
+const rulePatternsToExpr = (ruleName: string, patterns: RulePattern[]): Expr => {
+    return makeWeightedChoice(patterns.map(p => makeWeighted(parse(ruleName, p.pattern), p.weight)))
 }
 
-const parse = (src: string): Expr => (new Parser(src)).parse()
+const parse = (ruleName: string, src: string): Expr => (new Parser(ruleName, src)).parse()
 
