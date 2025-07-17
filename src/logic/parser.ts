@@ -32,7 +32,7 @@ export class Parser {
         let atomValue = ""
         let escaping = false
 
-        if (!this.consume("'")) {
+        if (!this.consume("'", false)) {
             this.error("Expected single quote to start atom");
         }
 
@@ -309,10 +309,10 @@ export class Parser {
         return this.input[this.currentPosition];
     }
 
-    private consume(expected: string): boolean {
+    private consume(expected: string, skipWhitespace: boolean = true): boolean {
         // Check if the current character matches the expected value
         if (this.peek() === expected) {
-            this.advancePosition(); // Consume the character by advancing the position
+            this.advancePosition(skipWhitespace); // Consume the character by advancing the position
             return true;
         }
         return false; // The expected character does not match; do not advance
