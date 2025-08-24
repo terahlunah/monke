@@ -56,6 +56,11 @@ const matchExpr = (g: Grammar, e: Expr, s: string): number[] | null => {
 
 
 const checkRuleExclusions = (g: Grammar, r: Rule, gen: string) => {
+
+    if (r.exclusions.length == 0) {
+        return false;
+    }
+
     for (const e of r.exclusions) {
         for (let i = 0; i < gen.length; i++) {
             for (let j = i + 1; j <= gen.length; j++) {
@@ -169,7 +174,6 @@ const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
                     matchEnd = newMatchEnd;
                     return match;
                 });
-                console.log(matches);
                 const head = result.slice(0, i);
                 const tail = result.slice(i + matchEnd);
                 const gen = generateExpr(g, replace, matches);
