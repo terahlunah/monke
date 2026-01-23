@@ -266,7 +266,7 @@ export const tonalRules: Rule[] = [
     showRewrites: false,
     showExclusions: false,
     patterns: [
-      { id: uid(), pattern: "◌̄ ", weight: 1 },
+      { id: uid(), pattern: "◌̄", weight: 1 },
       { id: uid(), pattern: "◌́", weight: 1 },
       { id: uid(), pattern: "◌̀", weight: 1 },
     ],
