@@ -7,7 +7,7 @@ import {closestCenter, DndContext, DragEndEvent, useSensor, useSensors} from "@d
 import {arrayMove, SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
 import {SmartMouseSensor, SmartTouchSensor} from "../components/SmartSensor.ts";
 import {Config} from "../pages/Home.tsx";
-import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
+import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules, tonalRoot, tonalRules} from "../logic/defaults.ts";
 import {Listbox, Transition} from "@headlessui/react";
 import {ChangeEvent, Fragment} from "react";
 import {CheckIcon, ChevronUpDownIcon} from "@heroicons/react/24/outline";
@@ -141,6 +141,18 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                             language: "toki pona",
                             root: tokiPonaRoot,
                             rules: tokiPonaWeightedRules,
+                            enableWeights: true
+                        })}>
+                    <Row className="items-center justify-center gap-2">
+                        <span>Weighted toki pona example</span>
+                    </Row>
+                </button>
+                <button className="bg-accent-danger rounded p-2 w-1/3"
+                        onClick={() => setConfig({
+                            ...config,
+                            language: "Tonal example",
+                            root: tonalRoot,
+                            rules: tonalRules,
                             enableWeights: true
                         })}>
                     <Row className="items-center justify-center gap-2">
