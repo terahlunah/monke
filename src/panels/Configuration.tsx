@@ -156,7 +156,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                             enableWeights: true
                         })}>
                     <Row className="items-center justify-center gap-2">
-                        <span>Weighted toki pona example</span>
+                        <span>Tonal example</span>
                     </Row>
                 </button>
             </Row>
