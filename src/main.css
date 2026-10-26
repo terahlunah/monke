@@ -9,11 +9,13 @@
     --color-on-surface: #ffffff;
     --color-surface: #2c2b2b;
     --color-background: #1f1f1f;
-    --color-primary: #1c8f8f;
+    --color-primary: #198282;
+    --color-primary-text: #43a2a2;
     --color-secondary: #3b4c9d;
-    --color-accent-warning: #b78426;
-    --color-accent-caution: #b76028;
-    --color-accent-danger: #c45555;
+    --color-accent-warning: #966c1f;
+    --color-accent-caution: #b35e27;
+    --color-accent-danger: #be5252;
+    --color-accent-danger-text: #d27c7c;
 }
 
 @layer base {

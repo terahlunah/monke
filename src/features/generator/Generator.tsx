@@ -245,7 +245,7 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             {
                 generationError ?
-                    <p role="alert" className="text-center italic text-accent-danger">
+                    <p role="alert" className="text-center italic text-accent-danger-text">
                         {generationError}
                     </p> :
                     null

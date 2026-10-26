@@ -51,7 +51,7 @@ const DesktopNavbar = ({tab, setTab}: NavbarProps) => {
 // A disclosure rather than an ARIA menu: these are page links, and role=menu makes screen readers switch to
 // application mode and expect arrow-key navigation. Plain buttons in a list are navigated with Tab like the rest of the page.
 const MobileNavbar = ({tab, setTab}: NavbarProps) => {
-    const tabStyle = (t: Tab): string => t === tab ? "text-primary text-left" : "text-white text-left"
+    const tabStyle = (t: Tab): string => t === tab ? "text-primary-text text-left" : "text-white text-left"
     const [open, setOpen] = useState(false)
     const nav = useRef<HTMLElement>(null)
     const toggle = useRef<HTMLButtonElement>(null)
