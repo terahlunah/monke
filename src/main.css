@@ -19,10 +19,12 @@
 }
 
 @layer base {
-    /* Matches the app shell so no unstyled white can show if the document is ever scrolled or overscrolled. */
+    /* Matches the app shell so no unstyled white can show if the document is ever scrolled or overscrolled.
+       The text color matters for dialogs and toasts, which render in portals outside the app root. */
     html,
     body {
         background-color: var(--color-surface);
+        color: var(--color-on-surface);
     }
 
     /* Lucide defaults to a 2px stroke; the lighter 1.5px matches the weight the UI was designed with. */
