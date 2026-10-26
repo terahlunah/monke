@@ -8,6 +8,7 @@ import {SortableRow} from "@/components/SortableList.tsx";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
+import {useInvalidProps} from "./grammarError.ts";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";
@@ -34,6 +35,7 @@ export const RuleInstance = ({
                              }: RuleInstanceProps) => {
 
     const ruleId = rule.id
+    const invalid = useInvalidProps(ruleId)
 
     const onRuleNameInput = (e: FormEvent<HTMLInputElement>) => {
         dispatch({type: "renameRule", ruleId, name: e.currentTarget.value});
@@ -66,7 +68,7 @@ export const RuleInstance = ({
                             <CopyIcon className="size-5"/>
                         </button>
                         <div className="rounded-sm overflow-clip mx-2 md:mx-4">
-                            <AutowidthInput value={rule.name} onInput={onRuleNameInput} aria-label="Rule name"
+                            <AutowidthInput value={rule.name} onInput={onRuleNameInput} aria-label="Rule name" {...invalid}
                                             className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-3 md:px-4 text-lg`}/>
                         </div>
                         {

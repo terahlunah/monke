@@ -10,6 +10,7 @@ import {ConfigAction} from "@/engine/configReducer.ts";
 import {toast} from "react-toastify";
 import {Grammar} from "@/engine/grammar.ts";
 import {parseConfigFile} from "@/engine/configfile.ts";
+import {GRAMMAR_ERROR_ID} from "@/features/config/grammarError.ts";
 
 const MAX_WORD_COUNT = 10000
 
@@ -185,14 +186,18 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             <div className="border-t border-white/20"/>
 
-            <h3 className="text-gray-300">
-                {grammar ?
-                    (cycle ?
-                        `Grammar has at least one cycle: ${cycle.join(" > ")}` :
-                        `Grammar has ${combinations} possible branches`) :
-                    (error ? `Invalid grammar: ${error}` : "No grammar: choose a start rule")
-                }
-            </h3>
+            {error ?
+                // Inserted on error so assistive tech announces it; inputs at fault reference it via aria-describedby.
+                <p id={GRAMMAR_ERROR_ID} role="alert" className="text-gray-300">Invalid grammar: {error}</p> :
+                <p className="text-gray-300">
+                    {grammar ?
+                        (cycle ?
+                            `Grammar has at least one cycle: ${cycle.join(" > ")}` :
+                            `Grammar has ${combinations} possible branches`) :
+                        "No grammar: choose a start rule"
+                    }
+                </p>
+            }
 
             <div className="border-t border-white/20"/>
 

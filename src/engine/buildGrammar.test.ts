@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {configToGrammar} from "./buildGrammar.ts"
+import {configToGrammar, GrammarError} from "./buildGrammar.ts"
 import {makeAtom, makeChoice, makeWeighted, makeWeightedChoice} from "./grammar.ts"
 import {makeConfig, makeRule} from "./test-helpers.ts"
 
@@ -87,5 +87,35 @@ describe("configToGrammar", () => {
 
     it("rejects non-terminal rules without patterns, naming the rule", () => {
         expect(() => configToGrammar(makeConfig("Empty", [makeRule("Empty", [])]))).toThrow(/Empty/)
+    })
+
+    describe("error location", () => {
+        const failure = (config: ReturnType<typeof makeConfig>): GrammarError => {
+            try {
+                configToGrammar(config)
+            } catch (e) {
+                return e as GrammarError
+            }
+            throw new Error("expected a GrammarError")
+        }
+
+        it("points at the pattern with a syntax error", () => {
+            const e = failure(makeConfig("R", [makeRule("R", ["'a'", "'oops"])]))
+            expect(e).toBeInstanceOf(GrammarError)
+            expect([e.ruleId, e.itemId]).toEqual(["R", "R1"])
+        })
+
+        it("points at the exclusion or rewrite with an error", () => {
+            const bad = makeRule("R", ["'a'"], {showExclusions: true, exclusions: [{id: "x", match: "("}]})
+            expect(failure(makeConfig("R", [bad])).itemId).toBe("x")
+            const rw = makeRule("R", ["'a'"], {showRewrites: true, rewrites: [{id: "w", match: "'a'", replace: "#2#"}]})
+            expect(failure(makeConfig("R", [rw])).itemId).toBe("w")
+        })
+
+        it("points at the rule itself when no single item is at fault", () => {
+            const e = failure(makeConfig("A", [makeRule("A", ["'a'"]), makeRule("B", ["Nope"])]))
+            expect([e.ruleId, e.itemId]).toEqual(["B", undefined])
+            expect(failure(makeConfig("Empty", [makeRule("Empty", [])])).ruleId).toBe("Empty")
+        })
     })
 })

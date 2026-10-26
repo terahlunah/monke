@@ -1,6 +1,7 @@
 import {Dispatch, FormEvent, useState} from "react";
 import {Row} from "@/components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
+import {useInvalidProps} from "./grammarError.ts";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {lowerFirst} from "@/components/text.ts";
 import AutowidthInput from "react-autowidth-input";
@@ -28,6 +29,7 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
                 {rule.patterns.map((p, index) =>
                     <RulePatternItem key={p.id}
                                      label={`${rule.terminalOnly ? "Terminal" : "Pattern"} ${index + 1} of rule ${rule.name}`}
+                                     ruleId={ruleId}
                                      pattern={p}
                                      index={index}
                                      total={rule.patterns.length}
@@ -50,6 +52,7 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
 
 
 type RulePatternProps = {
+    ruleId: string
     // Accessible name that locates the item, e.g. "Pattern 2 of rule Vowel".
     label: string
     index: number
@@ -70,6 +73,7 @@ function isNumber(value?: string | number): boolean {
 }
 
 export const RulePatternItem = ({
+                                    ruleId,
                                     label,
                                     index,
                                     total,
@@ -82,6 +86,7 @@ export const RulePatternItem = ({
                                     enableSerif,
                                 }: RulePatternProps) => {
 
+    const invalid = useInvalidProps(ruleId, pattern.id)
     const [weightValue, setWeightValue] = useState(pattern.weight.toString())
 
     // Resync the text field when the pattern changes, during render rather than in an effect to avoid a cascading render.
@@ -121,7 +126,7 @@ export const RulePatternItem = ({
                                  buttonClassName={`${terminalOnly ? "bg-primary/70" : "bg-secondary/70"} p-1 h-8 disabled:opacity-40`}
                                  iconClassName="size-4"/>
                     <AutowidthInput value={pattern.pattern}
-                                    aria-label={label}
+                                    aria-label={label} {...invalid}
                                     onChange={onGroupInput}
                                     className={`${terminalOnly ? "bg-primary/40" : "bg-secondary/40"} px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"

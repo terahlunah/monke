@@ -1,6 +1,7 @@
 import {ChangeEvent, Dispatch} from "react";
 import {Row} from "@/components/Row.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
+import {useInvalidProps} from "./grammarError.ts";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {lowerFirst} from "@/components/text.ts";
 import AutowidthInput from "react-autowidth-input";
@@ -32,6 +33,7 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
                     {rule.rewrites.map((r, index) =>
                         <RewritePatternItem key={r.id}
                                             label={`Rewrite ${index + 1} of rule ${rule.name}`}
+                                            ruleId={ruleId}
                                             rewrite={r}
                                             index={index}
                                             total={rule.rewrites.length}
@@ -54,6 +56,7 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
 
 
 type RewritePatternProps = {
+    ruleId: string
     label: string
     index: number
     total: number
@@ -64,6 +67,7 @@ type RewritePatternProps = {
     enableSerif?: boolean
 }
 export const RewritePatternItem = ({
+                                       ruleId,
                                        label,
                                        index,
                                        total,
@@ -74,6 +78,7 @@ export const RewritePatternItem = ({
                                        enableSerif,
                                    }: RewritePatternProps) => {
 
+    const invalid = useInvalidProps(ruleId, rewrite.id)
     const onMatchInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
         onChange({match: v})
@@ -94,7 +99,7 @@ export const RewritePatternItem = ({
                                  buttonClassName="bg-accent-warning/70 p-1 h-8 disabled:opacity-40"
                                  iconClassName="size-4"/>
                     <AutowidthInput value={rewrite.match}
-                                    aria-label={`${label}, match`}
+                                    aria-label={`${label}, match`} {...invalid}
                                     onChange={onMatchInput}
                                     className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"
@@ -103,7 +108,7 @@ export const RewritePatternItem = ({
                         <ChevronsRightIcon className="size-4"/>
                     </span>
                     <AutowidthInput value={rewrite.replace}
-                                    aria-label={`${label}, replacement`}
+                                    aria-label={`${label}, replacement`} {...invalid}
                                     onChange={onReplaceInput}
                                     className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"

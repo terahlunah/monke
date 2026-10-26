@@ -1,6 +1,7 @@
 import {ChangeEvent, Dispatch} from "react";
 import {Row} from "@/components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
+import {useInvalidProps} from "./grammarError.ts";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {lowerFirst} from "@/components/text.ts";
 import AutowidthInput from "react-autowidth-input";
@@ -32,6 +33,7 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
                     {rule.exclusions.map((e, index) =>
                         <ExclusionPatternItem key={e.id}
                                               label={`Exclusion ${index + 1} of rule ${rule.name}`}
+                                              ruleId={ruleId}
                                               exclusion={e}
                                               index={index}
                                               total={rule.exclusions.length}
@@ -54,6 +56,7 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
 
 
 export type ExclusionPatternProps = {
+    ruleId: string
     label: string
     index: number
     total: number
@@ -65,6 +68,7 @@ export type ExclusionPatternProps = {
 }
 
 export const ExclusionPatternItem = ({
+                                         ruleId,
                                          label,
                                          index,
                                          total,
@@ -75,6 +79,7 @@ export const ExclusionPatternItem = ({
                                          enableSerif,
                                      }: ExclusionPatternProps) => {
 
+    const invalid = useInvalidProps(ruleId, exclusion.id)
     const onGroupInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
         onChange({match: v})
@@ -91,7 +96,7 @@ export const ExclusionPatternItem = ({
                                  buttonClassName="bg-accent-caution/70 p-1 h-8 disabled:opacity-40"
                                  iconClassName="size-4"/>
                     <AutowidthInput value={exclusion.match}
-                                    aria-label={label}
+                                    aria-label={label} {...invalid}
                                     onChange={onGroupInput}
                                     className={`bg-accent-caution/20 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"

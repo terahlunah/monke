@@ -2,7 +2,8 @@ import {useEffect, useMemo, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 import {Linear} from "@/components/Linear.tsx";
 import {Col} from "@/components/Col.tsx";
-import {configToGrammar} from "@/engine/buildGrammar.ts";
+import {configToGrammar, GrammarError} from "@/engine/buildGrammar.ts";
+import {ErrorLocation, GrammarErrorContext} from "@/features/config/grammarError.ts";
 import {Configuration} from "@/features/config/Configuration.tsx";
 import {Generator} from "@/features/generator/Generator.tsx";
 import {Guide} from "@/features/docs/Guide.tsx";
@@ -19,15 +20,17 @@ export const Home = () => {
         document.title = `Monke - ${config.language}`;
     }, [config]);
 
-    const [grammar, error] = useMemo(() => {
+    const [grammar, error, errorLocation] = useMemo(() => {
             let grammar = null
             let error = null
+            let location: ErrorLocation | null = null
             try {
                 grammar = configToGrammar(config)
             } catch (e) {
                 error = (e as Error).message
+                if (e instanceof GrammarError) location = {ruleId: e.ruleId, itemId: e.itemId}
             }
-            return [grammar, error]
+            return [grammar, error, location]
         },
         [config]
     )
@@ -52,13 +55,15 @@ export const Home = () => {
                 <MobileNavbar className="md:hidden" tab={tab} setTab={setTab}/>
                 {
                     tab === "generator" && synced ?
-                        <Linear className="md:overflow-auto grow">
-                            <Configuration config={config} dispatch={dispatch}/>
-                            <Generator config={config}
-                                       grammar={grammar}
-                                       error={error}
-                                       dispatch={dispatch}/>
-                        </Linear> : null
+                        <GrammarErrorContext value={errorLocation}>
+                            <Linear className="md:overflow-auto grow">
+                                <Configuration config={config} dispatch={dispatch}/>
+                                <Generator config={config}
+                                           grammar={grammar}
+                                           error={error}
+                                           dispatch={dispatch}/>
+                            </Linear>
+                        </GrammarErrorContext> : null
                 }
                 {tab === "guide" ? <Guide/> : null}
                 {tab === "faq" ? <Faq/> : null}
