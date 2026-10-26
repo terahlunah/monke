@@ -13,7 +13,7 @@ Monke is a client-only word generator for conlang creators (React 19 + TypeScrip
 - `npm run preview:cf` — `cf dev`, local Workers runtime
 - `npm test` — Vitest (jsdom), single run; `npm run test:watch` for watch mode
 
-Tests are colocated as `*.test.ts(x)`: engine tests (pattern, buildGrammar, generate, configReducer, sharing) plus a few UI smoke tests in `src/app/Home.test.tsx`. `src/test-setup.ts` polyfills jsdom gaps.
+Tests are colocated as `*.test.ts(x)`: engine tests (pattern, buildGrammar, generate, configReducer, sharing) plus UI tests in `src/app/` (`Home`, `reorder`, `semantics`, `a11y`). `src/test-setup.ts` polyfills jsdom gaps.
 
 ## Architecture
 
@@ -27,7 +27,20 @@ Data flows: UI config → grammar AST → generated words.
 - **Generator**: `generate.ts` does recursive random expansion from the root rule (weighted picks only if `useWeights`) and takes an injectable `rng` (default `Math.random`); tests use the seeded `mulberry32` from `test-helpers.ts`. Per rule, rewrites are applied to the output, then it is retried if it matches an exclusion. `match.ts` is the backtracking matcher (a generator yielding per-sub-expression match lengths that feed `#n#`); empty overall matches are ignored when scanning. `analysis.ts` has `countCombinations` and `detectCycle` (DFS from the root). `Grammar.ruleMap` is the name lookup for `Ref`s.
 - **Sharing** (`sharing.ts`, `bytebuffer.ts`): the whole `Config` is serialized to a versioned binary format, compressed to base64, and kept in the URL path (`/<data>`). `useUrlConfig` decodes the path on load and on `popstate`, and mirrors config changes into the URL with a debounced `history.pushState`, so browser Back/Forward act as undo/redo. Decoding dispatches on the version byte through a per-version table; encoding always writes the latest. Changing `Config` or rule fields requires a new version: add a decoder (never edit shipped ones), bump `LATEST_VERSION`, update `encodeConfig`, and add a frozen-link test. `notFoundHandling: "single-page-application"` in `cloudflare.config.ts` serves `index.html` for all paths.
 - **Config files**: `configfile.ts` validates `.monke` files imported from the Generator panel. The Toki Pona example grammar and `emptyConfig`/`defaultConfig` are in `defaults.ts`. State updates are immutable (`patchById`/`removeById`/`moveItem` in `list.ts`).
-- **Main dependencies**: React, dnd-kit (sorting), Headless UI (listbox, switch, menu), lucide-react (icons; brand icons are inlined), react-toastify, react-autowidth-input, base64-compressor (share links).
+- **Main dependencies**: React, dnd-kit (sorting), Headless UI (listbox, switch), lucide-react (icons; brand icons are inlined), react-toastify, react-autowidth-input, base64-compressor (share links).
+
+## Accessibility
+
+Screen reader users (NVDA, TalkBack) are core users. Every change must keep these true:
+
+- **Names**: every control has an accessible name that locates it (`Delete pattern 2 of rule Vowel`, not `Delete`). Names stay constant when state changes; state goes in `aria-checked`, `aria-pressed` or `aria-expanded`. Icon-only buttons need `aria-label`; visible text must be part of the name.
+- **Keyboard**: everything is operable with the keyboard and has a visible focus ring (global `:focus-visible` in `main.css`).
+- **No drag-only features**: anything draggable also has buttons. Sortable items get `MoveButtons` and the list a `describe` for dnd-kit announcements.
+- **Announcements**: results and state changes that appear without focus moving go through a live region (`role="status"` for results, `role="alert"` for errors). Announce a summary, never a long list. Grammar errors also set `aria-invalid` and `aria-describedby` on the input at fault (`useInvalidProps`).
+- **Structure**: one `h1`, no skipped heading levels, landmarks (`header`, `nav`, `main`). Examples in the Guide are static (`role="img"` with a text alternative), not fake controls.
+- **No hacks for character reading**: do not insert spaces or separators between letters. Screen readers have character modes.
+
+Verify: `npm run lint` (jsx-a11y, no disables without a stated reason) and `npm test`. `src/app/a11y.test.tsx` runs axe on each main view and state; add a case for any new view or state. jsdom can't compute colour contrast, so check it in a real browser by running axe-core there, and drive the page with a screen reader or Playwright `ariaSnapshot()` for names and order. Known gap: some palette colours with white text are below WCAG AA (4.5:1).
 
 ## Deployment
 
