@@ -86,7 +86,28 @@ const generateRule = (g: Grammar, r: Rule, rng: Rng): string => {
     throw new Error("Exclusion rules are too restrictive")
 };
 
+const MAX_REWRITE_PASSES = 32
+// A growing rewrite like 'a' → 'aa' doubles the output each pass, so the pass cap alone would not stop it in time.
+const MAX_REWRITE_LENGTH = 10_000
+
+// With repeatRewrites, whole ordered passes run until one changes nothing, so a rewrite can act on text another
+// rewrite produced. The caps turn rewrites that keep changing the word (ping-pong, growth) into an error.
 const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string, rng: Rng): string => {
+    if (!g.repeatRewrites || rule.rewrites.length === 0) return rewritePass(g, rule, gen, rng)
+
+    let result = gen
+    for (let pass = 0; pass < MAX_REWRITE_PASSES; pass++) {
+        const next = rewritePass(g, rule, result, rng)
+        if (next === result) return result
+        if (next.length > MAX_REWRITE_LENGTH) {
+            throw new Error(`Rewrites of rule '${rule.name}' did not settle: the output grew past ${MAX_REWRITE_LENGTH} characters`)
+        }
+        result = next
+    }
+    throw new Error(`Rewrites of rule '${rule.name}' did not settle after ${MAX_REWRITE_PASSES} passes`)
+}
+
+const rewritePass = (g: Grammar, rule: Rule, gen: string, rng: Rng): string => {
     let result = gen
 
     for (const [match, replace] of rule.rewrites) {

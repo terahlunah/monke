@@ -70,5 +70,6 @@ export const parseConfigFile = (text: string): Config => {
         rules,
         enableWeights: optional(data, "enableWeights", false, bool, "config"),
         enableSerif: optional(data, "enableSerif", false, bool, "config"),
+        repeatRewrites: optional(data, "repeatRewrites", false, bool, "config"),
     }
 }

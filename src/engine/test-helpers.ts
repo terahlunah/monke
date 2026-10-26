@@ -20,6 +20,7 @@ export const makeConfig = (root: string, rules: Rule[], extra: Partial<Config> =
     rules,
     enableWeights: false,
     enableSerif: false,
+    repeatRewrites: false,
     ...extra,
 })
 

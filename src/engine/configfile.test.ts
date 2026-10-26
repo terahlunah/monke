@@ -24,9 +24,11 @@ describe("parseConfigFile", () => {
             language: undefined,
             enableSerif: undefined,
             enableWeights: undefined,
+            repeatRewrites: undefined,
             rules: valid.rules.map(r => ({...r, collapsed: undefined})),
         }
         const parsed = parseConfigFile(JSON.stringify(old))
+        expect(parsed.repeatRewrites).toBe(false)
         expect(parsed.language).toBe("")
         expect(parsed.enableSerif).toBe(false)
         expect(parsed.enableWeights).toBe(false)

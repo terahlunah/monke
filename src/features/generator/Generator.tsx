@@ -170,6 +170,9 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             <SwitchLabel checked={config.enableWeights} onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
                          label="Enable probability weights"
                          enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
+            <SwitchLabel checked={config.repeatRewrites} onChange={enabled => dispatch({type: "setRepeatRewrites", enabled})}
+                         label="Repeat rewrites until nothing changes"
+                         enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
             <SwitchLabel checked={config.enableSerif} onChange={enabled => dispatch({type: "setEnableSerif", enabled})}
                          label="Enable serifs (For IPA characters readability)"
                          enabledColor="bg-primary" disabledColor="bg-primary/30"/>

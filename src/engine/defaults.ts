@@ -186,6 +186,7 @@ export const emptyConfig: Config = {
     root: null,
     enableWeights: false,
     enableSerif: false,
+    repeatRewrites: false,
 }
 
 export const defaultConfig: Config = {
@@ -194,4 +195,5 @@ export const defaultConfig: Config = {
     root: tokiPonaRoot,
     enableWeights: false,
     enableSerif: false,
+    repeatRewrites: false,
 }

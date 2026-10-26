@@ -11,6 +11,7 @@ export type ConfigAction =
     | { type: "setRoot", root: string | null }
     | { type: "setEnableWeights", enabled: boolean }
     | { type: "setEnableSerif", enabled: boolean }
+    | { type: "setRepeatRewrites", enabled: boolean }
     // Rules
     | { type: "addRule", terminalOnly: boolean }
     | { type: "removeRule", ruleId: string }
@@ -77,6 +78,7 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
                 root: defaultConfig.root,
                 rules: action.weighted ? tokiPonaWeightedRules : defaultConfig.rules,
                 enableWeights: action.weighted,
+                repeatRewrites: defaultConfig.repeatRewrites,
             }
         case "setLanguage":
             return {...config, language: action.language}
@@ -86,6 +88,8 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
             return {...config, enableWeights: action.enabled}
         case "setEnableSerif":
             return {...config, enableSerif: action.enabled}
+        case "setRepeatRewrites":
+            return {...config, repeatRewrites: action.enabled}
 
         case "addRule":
             return {...config, rules: [...config.rules, newRule(action.terminalOnly)]}

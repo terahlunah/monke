@@ -28,7 +28,7 @@ describe("sharing", () => {
             }),
             makeRule("Empty", [], {terminalOnly: true}),
             makeRule("Blank", [""], {terminalOnly: true}),
-        ], {language: "tëst ✨", enableWeights: true, enableSerif: true})
+        ], {language: "tëst ✨", enableWeights: true, enableSerif: true, repeatRewrites: true})
         config.rules[0].patterns[0].weight = 0.25
         expect(await roundTrip(config)).toEqual(stripIds(config))
     })
@@ -68,6 +68,22 @@ describe("sharing", () => {
             makeRule("C", ["k", "t"], {terminalOnly: true}),
             makeRule("V", ["a", "i"], {terminalOnly: true, collapsed: true}),
         ], {language: "frozen", enableWeights: true})
+        expect(stripIds(await decodeConfig(link))).toEqual(stripIds(expected))
+    })
+
+    // Frozen link from format version 4. Same rule: fix the decoder, not the fixture.
+    it("decodes a frozen version 4 link", async () => {
+        const link = "H4sIAAAAAAAACj2MOwqAMBBE35roRSzSBTyBRe6gtaCCBAwEKyuPLqvGZpi_bYA1p3PZLTCmPAtiKAIRKgwQ_ABXL8BHasBF5weN266VZ-VidFoKChWKsQyP_0FA3nAq3qbkBq3ja2iQAAAA"
+        const expected = makeConfig("Word", [
+            makeRule("Word", ["C.V", "V"], {
+                showRewrites: true,
+                showExclusions: true,
+                rewrites: [{id: "", match: "'k'.V", replace: "#1#"}],
+                exclusions: [{id: "", match: "'kk'"}],
+            }),
+            makeRule("C", ["k", "t"], {terminalOnly: true}),
+            makeRule("V", ["a", "i"], {terminalOnly: true, collapsed: true}),
+        ], {language: "frozen", enableWeights: true, repeatRewrites: true})
         expect(stripIds(await decodeConfig(link))).toEqual(stripIds(expected))
     })
 

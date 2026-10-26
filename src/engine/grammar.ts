@@ -3,6 +3,7 @@ export type Grammar = {
     ruleMap: Map<string, Rule>;
     root: string;
     useWeights: boolean
+    repeatRewrites: boolean
 }
 
 export type Rule = {
@@ -47,12 +48,12 @@ export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites:
     exclusions: exclusions,
     rewrites: rewrites
 })
-export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = true): Grammar => {
+export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = true, repeatRewrites: boolean = false): Grammar => {
     const ruleMap = new Map<string, Rule>()
     for (const r of rules) {
         if (!ruleMap.has(r.name)) ruleMap.set(r.name, r)
     }
-    return {rules, ruleMap, root, useWeights}
+    return {rules, ruleMap, root, useWeights, repeatRewrites}
 }
 
 const getExprEdges = (e: Expr): string[] => {

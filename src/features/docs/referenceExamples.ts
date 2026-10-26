@@ -18,6 +18,7 @@ export type ReferenceExample = {
     title: string
     root: string
     weights?: boolean
+    repeatRewrites?: boolean
     rules: ExampleRule[]
 }
 
@@ -29,6 +30,7 @@ export const exampleToConfig = (example: ReferenceExample, enableSerif = false):
     root: example.root,
     enableWeights: example.weights ?? false,
     enableSerif,
+    repeatRewrites: example.repeatRewrites ?? false,
     rules: example.rules.map((r): Rule => ({
         id: crypto.randomUUID(),
         name: r.name,
@@ -87,18 +89,28 @@ export type RewriteDemo = {
     output: string
     note: string
     rules?: ExampleRule[]
+    // Runs with "Repeat rewrites until nothing changes" turned on.
+    repeat?: boolean
 }
 
 export const rewriteDemos: RewriteDemo[] = [
     {rewrites: [["'n'.['p' / 'b' / 'm']", "'m'.#1#"]], input: "anpa", output: "ampa", note: "Assimilation: n becomes m before p, b or m. #1# keeps the consonant that matched."},
     {rewrites: [["'k'.'s'", "#1#.#0#"]], input: "aksa", output: "aska", note: "Metathesis: swap the two matched parts."},
     {rewrites: [["'h'", "''"]], input: "ahah", output: "aa", note: "Deletion: replace with an empty atom."},
-    {rewrites: [["'a'", "'aa'"]], input: "ba", output: "baa", note: "Inserted text is not rewritten again, so this does not loop."},
+    {rewrites: [["'a'", "'aa'"]], input: "ba", output: "baa", note: "Inserted text is not rewritten again, so this does not loop. With Repeat rewrites on, every pass adds an a, so generation fails."},
     {rewrites: [["'s'", "'z'"], ["'z'", "'r'"]], input: "sasa", output: "rara", note: "The second rewrite sees the output of the first."},
     {
         rewrites: [["'x'.P.'c'", "#2#.#1#.#0#"]], input: "xabc", output: "cabx",
         note: "P counts as one part, whatever it contains: #0# is x, #1# is ab, #2# is c.",
         rules: [{name: "P", items: ["'a'.'b'"]}],
+    },
+    {
+        rewrites: [["'n'.'p'", "'m'.#1#"], ["'e'", "''"]], input: "anepa", output: "anpa",
+        note: "Rewrite 2 brings n and p together after rewrite 1 has already run, so the np stays.",
+    },
+    {
+        rewrites: [["'n'.'p'", "'m'.#1#"], ["'e'", "''"]], input: "anepa", output: "ampa", repeat: true,
+        note: "With Repeat rewrites on, a second pass runs rewrite 1 again on the new np. A third pass changes nothing, so it stops.",
     },
 ]
 

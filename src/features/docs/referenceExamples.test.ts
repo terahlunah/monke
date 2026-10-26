@@ -18,7 +18,8 @@ const sample = (example: ReferenceExample, n = 300) => {
     return Array.from({length: n}, () => generate(grammar, rng))
 }
 
-const demo = (rules: ExampleRule[]): ReferenceExample => ({id: "demo", title: "demo", root: "Demo", rules})
+const demo = (rules: ExampleRule[], repeatRewrites = false): ReferenceExample =>
+    ({id: "demo", title: "demo", root: "Demo", rules, repeatRewrites})
 
 describe("reference syntax table", () => {
     it.each(syntaxRows)("$syntax: $example parses and generates", ({example}) => {
@@ -39,9 +40,15 @@ describe("reference syntax table", () => {
 })
 
 describe("reference rewrite demos", () => {
-    it.each(rewriteDemos)("$input becomes $output", ({rewrites, input, output, rules = []}) => {
-        const words = sample(demo([...rules, {name: "Demo", items: [`'${input}'`], rewrites}]), 5)
+    it.each(rewriteDemos)("$input becomes $output", ({rewrites, input, output, rules = [], repeat}) => {
+        const words = sample(demo([...rules, {name: "Demo", items: [`'${input}'`], rewrites}], repeat), 5)
         expect(new Set(words)).toEqual(new Set([output]))
+    })
+
+    it("documents that a growing rewrite fails when repeated", () => {
+        const growing = rewriteDemos.find(d => d.input === "ba")!
+        const example = demo([{name: "Demo", items: ["'ba'"], rewrites: growing.rewrites}], true)
+        expect(() => sample(example, 1)).toThrow(/did not settle/)
     })
 })
 

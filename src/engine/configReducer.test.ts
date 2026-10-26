@@ -13,7 +13,12 @@ describe("whole-config actions", () => {
 
     it("clear empties the grammar but keeps the display flags", () => {
         const c = configReducer({...base(), enableWeights: true, enableSerif: true}, {type: "clear"})
-        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true})
+        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true, repeatRewrites: false})
+    })
+
+    it("loadExample turns repeated rewrites off, since the example relies on single passes", () => {
+        const c = configReducer({...base(), repeatRewrites: true}, {type: "loadExample", weighted: false})
+        expect(c.repeatRewrites).toBe(false)
     })
 
     it("loadExample installs the toki pona grammar and sets weights accordingly", () => {
@@ -29,8 +34,9 @@ describe("whole-config actions", () => {
             {type: "setRoot", root: "B"},
             {type: "setEnableWeights", enabled: true},
             {type: "setEnableSerif", enabled: true},
+            {type: "setRepeatRewrites", enabled: true},
         )
-        expect(c).toMatchObject({language: "x", root: "B", enableWeights: true, enableSerif: true})
+        expect(c).toMatchObject({language: "x", root: "B", enableWeights: true, enableSerif: true, repeatRewrites: true})
     })
 })
 

@@ -4,6 +4,8 @@ export type Config = {
     root: string | null
     enableWeights: boolean,
     enableSerif: boolean,
+    // Opt-in because repeating changes the output of grammars whose rewrites feed each other or grow their own match.
+    repeatRewrites: boolean,
 }
 
 export type Rule = {

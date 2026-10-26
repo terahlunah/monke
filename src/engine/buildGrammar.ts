@@ -42,7 +42,7 @@ export const configToGrammar = (config: Config): Grammar | null => {
         }
     }
 
-    return makeGrammar(config.root, rules, config.enableWeights)
+    return makeGrammar(config.root, rules, config.enableWeights, config.repeatRewrites)
 }
 
 const configRuleToGrammarRule = (rule: ConfigRule): Rule => {

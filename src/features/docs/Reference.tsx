@@ -112,6 +112,8 @@ export const Reference = () => {
                             probability above 1.</li>
                         <li><b>Exclusion rules are too restrictive</b> appears when generating if a rule's exclusions rejected
                             100 outputs in a row.</li>
+                        <li><b>Rewrites of rule … did not settle</b> appears when generating with repeated
+                            rewrites if they keep changing the output (see Rewrites).</li>
                     </ul>
                 </Section>
 
@@ -186,6 +188,12 @@ export const Reference = () => {
                         <li>Rewrites run in list order. Each one works on the output of the previous one.</li>
                         <li>Each rewrite scans the word from left to right. After a replacement, scanning continues after the
                             inserted text, so new text is never rewritten by the same rewrite.</li>
+                        <li>By default the list runs once, so an earlier rewrite never sees what a later one produced. Turn
+                            on <b>Repeat rewrites until nothing changes</b> in the generator panel to run the whole list
+                            again and again until a pass leaves the output unchanged. If the output still changes after 32
+                            passes, for example because two rewrites undo each other, or grows past 10000 characters
+                            because a rewrite keeps adding text, generation stops with <b>Rewrites of rule … did not
+                            settle</b>. A replacement with a random choice can also keep changing the output.</li>
                         <li>A match must contain at least one character; parts that can be empty, like optionals, only count
                             together with something else.</li>
                         <li>If several matches start at the same place, the first one found wins: alternatives are tried in
@@ -208,6 +216,7 @@ export const Reference = () => {
                     <ul className="flex flex-col gap-3">
                         {rewriteDemos.map((d, i) => (
                             <li key={i} className="rounded-sm bg-surface p-3 flex flex-col gap-1">
+                                {d.repeat && <p>With <b>Repeat rewrites until nothing changes</b> on</p>}
                                 {d.rules?.map(r => <p key={r.name}>With rule <Code>{r.name}</Code> = <Code>{r.items.map(itemText).join(" / ")}</Code></p>)}
                                 {d.rewrites.map(([m, r], j) => (
                                     <p key={j}>{d.rewrites.length > 1 ? `Rewrite ${j + 1}: ` : "Rewrite: "}
@@ -262,11 +271,14 @@ export const Reference = () => {
                         <li><b>Filter Duplicates</b> hides repeated words and shows how many are unique.</li>
                         <li><b>Output as list</b> shows one word per line instead of a paragraph. <b>Copy</b> copies the
                             words in the current layout.</li>
+                        <li><b>Repeat rewrites until nothing changes</b> runs each rule's rewrite list until it stops
+                            changing the output, instead of once (see Rewrites). It is saved in share links.</li>
                         <li><b>Enable serifs</b> switches to a serif font, which makes some IPA characters easier to read.</li>
                     </ul>
 
                     <Sub>Share links</Sub>
-                    <p>The whole configuration (rules, start rule, language name, weights and serif settings) is encoded in
+                    <p>The whole configuration (rules, start rule, language name, weights, repeated rewrites and serif
+                        settings) is encoded in
                         the page address and updated as you edit. <b>Share link</b> copies it. Anyone opening it gets your
                         grammar; nothing is stored on a server. Links made by older versions of Monke still open.</p>
 

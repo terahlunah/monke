@@ -186,6 +186,51 @@ describe("generate", () => {
         expect(generate(g)).toBe("aaaa")
     })
 
+    describe("repeated rewrites", () => {
+        // Rewrite 2 creates an 'np' that rewrite 1 only sees on a later pass.
+        const feeding = (repeatRewrites: boolean) => makeGrammar("R", [makeRule("R", ["'anepa'"], {
+            showRewrites: true,
+            rewrites: [{id: "a", match: "'n'.'p'", replace: "'m'.#1#"}, {id: "b", match: "'e'", replace: "''"}],
+        })], {repeatRewrites})
+
+        it("runs the list once when off", () => {
+            expect(generate(feeding(false))).toBe("anpa")
+        })
+
+        it("repeats the list until the output settles when on", () => {
+            expect(generate(feeding(true))).toBe("ampa")
+        })
+
+        it("still does not rewrite just-inserted text within a pass", () => {
+            const g = makeGrammar("R", [makeRule("R", ["'xxx'"], {
+                showRewrites: true,
+                rewrites: [{id: "a", match: "'xx'", replace: "'x'"}],
+            })], {repeatRewrites: true})
+            expect(generate(g)).toBe("x")
+        })
+
+        it("fails with a clear error when rewrites ping-pong past the cap", () => {
+            const g = makeGrammar("R", [makeRule("R", ["'a'"], {
+                showRewrites: true,
+                // Each pass swaps a and b (through c), so the output alternates forever.
+                rewrites: [
+                    {id: "a", match: "'a'", replace: "'c'"},
+                    {id: "b", match: "'b'", replace: "'a'"},
+                    {id: "c", match: "'c'", replace: "'b'"},
+                ],
+            })], {repeatRewrites: true})
+            expect(() => generate(g)).toThrow("Rewrites of rule 'R' did not settle after 32 passes")
+        })
+
+        it("fails quickly when a rewrite keeps growing the output", () => {
+            const g = makeGrammar("R", [makeRule("R", ["'a'"], {
+                showRewrites: true,
+                rewrites: [{id: "a", match: "'a'", replace: "'aa'"}],
+            })], {repeatRewrites: true})
+            expect(() => generate(g)).toThrow(/Rewrites of rule 'R' did not settle: the output grew past/)
+        })
+    })
+
     it("allows optional items to match empty inside a sequence", () => {
         const g = makeGrammar("R", [makeRule("R", ["'tb'"], {
             showRewrites: true,
