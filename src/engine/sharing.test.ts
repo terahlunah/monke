@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {decodeConfig, encodeConfig} from "./sharing.ts"
 import {Config} from "./config.ts"
+import {ByteBuffer} from "./bytebuffer.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
 import {makeConfig, makeRule} from "./test-helpers.ts"
 
@@ -86,6 +87,12 @@ describe("sharing", () => {
         const long = "'" + "ŋ".repeat(500) + "'"
         const config = makeConfig("R", [makeRule("R", [long])], {language: "l".repeat(400)})
         expect(await roundTrip(config)).toEqual(stripIds(config))
+    })
+
+    it("rejects a link from an unknown future version with a clear error", async () => {
+        const buf = new ByteBuffer()
+        buf.writeInt8(99)
+        await expect(decodeConfig(await buf.toBase64())).rejects.toThrow("Unsupported share link version 99")
     })
 
     it("rejects garbage input", async () => {
