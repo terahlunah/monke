@@ -1,6 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {generate} from "./generate.ts"
 import {countCombinations, detectCycle} from "./analysis.ts"
+import {matchesExclusion} from "./match.ts"
 import {makeGrammar, makeRule, mulberry32, sequenceRng} from "./test-helpers.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
 
@@ -94,6 +95,22 @@ describe("generate", () => {
             exclusions: [{id: "e", match: "'b'"}],
         }), makeRule("C", ["'a' / 'b'"])])
         expect(new Set(sample(g))).toEqual(new Set(["aaa"]))
+    })
+
+    // Issue #22: a shorter alternative listed first ('b') must not hide a longer one ('bb') that completes the match.
+    it("explores every alternative of a referenced choice when matching exclusions", () => {
+        const g = makeGrammar("Word", [
+            makeRule("Choice", ["b", "bb", "cc", "c"], {terminalOnly: true}),
+            makeRule("Word", ["'abba'", "'acca'"], {
+                showExclusions: true,
+                exclusions: [{id: "e", match: "'a'.Choice.'a'"}],
+            }),
+        ])
+        const word = g.ruleMap.get("Word")!
+        expect(matchesExclusion(g, word, "abba")).toBe(true)
+        expect(matchesExclusion(g, word, "acca")).toBe(true)
+        expect(matchesExclusion(g, word, "abca")).toBe(false)
+        expect(() => generate(g)).toThrow(/too restrictive/)
     })
 
     it("fails when exclusions rule out everything", () => {
