@@ -32,19 +32,21 @@ export const ScrollRegion = ({label, className, children}: ScrollRegionProps) =>
     }
 
     return (
-        // relative: contains the absolutely positioned sr-only text, which would otherwise extend the document past the shell.
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard users must be able to scroll this region
-        <div ref={region} data-scroll-region tabIndex={0} className={`relative min-h-0 overflow-auto ${className}`}>
-            {children}
+        // The button is anchored to this non-scrolling wrapper rather than made sticky inside the scrolled content,
+        // which placed it relative to the content flow instead of the visible bottom edge.
+        <div className="relative min-h-0 grow flex flex-col">
+            {/* relative: contains the absolutely positioned sr-only text, which would otherwise extend the document past the shell. */}
+            {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard users must be able to scroll this region */}
+            <div ref={region} data-scroll-region tabIndex={0} className={`relative min-h-0 grow overflow-auto ${className}`}>
+                {children}
+            </div>
             {/* Unmounted rather than hidden when near the top, so it never takes a tab stop. */}
             {scrolled ? (
-                <div className="sticky bottom-4 h-0 flex justify-end">
-                    <button onClick={backToTop} aria-label={`Back to top of ${label}`}
-                            className="absolute bottom-0 right-0 flex items-center gap-1.5 rounded-sm bg-primary px-3 py-2 shadow-sm">
-                        <ArrowUpIcon className="size-5" aria-hidden="true"/>
-                        <span aria-hidden="true" className="hidden md:inline">Top</span>
-                    </button>
-                </div>
+                <button onClick={backToTop} aria-label={`Back to top of ${label}`}
+                        className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-sm bg-primary px-3 py-2 shadow-sm">
+                    <ArrowUpIcon className="size-5" aria-hidden="true"/>
+                    <span aria-hidden="true" className="hidden md:inline">Top</span>
+                </button>
             ) : null}
         </div>
     )

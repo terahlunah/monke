@@ -7,7 +7,7 @@ const linkClass = "text-primary-text underline"
 export const Faq = () => {
 
     return (
-        <ScrollRegion label="FAQ" className="flex flex-col bg-background grow p-4 md:p-8 gap-10 md:no-scrollbar justify-start">
+        <ScrollRegion label="FAQ" className="flex flex-col bg-background grow p-4 pb-20 md:p-8 gap-10 md:no-scrollbar justify-start">
             <FaqItem title="What is this tool?">
                 <b className="text-primary-text">Monke</b> is a word generator for conlang creators. You describe the
                 sound patterns of your language with rules, and it generates as many words as you need. The Reference explains

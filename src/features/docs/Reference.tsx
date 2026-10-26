@@ -353,7 +353,8 @@ const Section = ({id, children}: { id: SectionId, children: ReactNode }) => (
 const Sub = ({children}: { children: ReactNode }) => <h3 className="font-bold text-lg mt-2">{children}</h3>
 
 const Code = ({children}: { children: string }) => (
-    <code className="font-mono rounded-sm bg-white/10 px-1.5 py-0.5 [overflow-wrap:anywhere] whitespace-pre-wrap">{children}</code>
+    // Short tokens like 'text' never break; only long ones may wrap anywhere, so narrow table cells can't overflow.
+    <code className={`font-mono rounded-sm bg-white/10 px-1.5 py-0.5 ${children.length <= 12 ? "whitespace-pre" : "[overflow-wrap:anywhere] whitespace-pre-wrap"}`}>{children}</code>
 )
 
 const CodeBlock = ({children}: { children: string }) => (
