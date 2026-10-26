@@ -69,8 +69,9 @@ export const Reference = () => {
                 <Section id="reference-quick-start">
                     <ol className="list-decimal pl-6 flex flex-col gap-2">
                         <li>On the Generator page, press <b>toki pona example</b> to load a small working grammar.</li>
-                        <li>Press <b>Generate</b>. You get 50 words; change the number next to the button for more or fewer.</li>
-                        <li>Find the rule named <b>Vowel</b>, add a terminal such as <Code>y</Code> and generate again.
+                        <li>The words appear by themselves: 50 of them. Press <b>New words</b> for a fresh set, or change the
+                            word count for more or fewer.</li>
+                        <li>Find the rule named <b>Vowel</b> and add a terminal such as <Code>y</Code>.
                             The new vowel shows up in the words.</li>
                         <li>Made a mistake? Use your browser's <b>Back</b> button to undo the last edit.</li>
                     </ol>
@@ -309,7 +310,7 @@ export const Reference = () => {
                 <Section id="reference-output">
                     <Sub>Generator options</Sub>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li>The number next to <b>Generate</b> sets how many words to make, from 1 to 10000.</li>
+                        <li>The <b>Word count</b> field sets how many words to make, from 1 to 10000.</li>
                         <li><b>Filter Duplicates</b> hides repeated words and shows how many are unique.</li>
                         <li><b>Output as list</b> shows one word per line instead of a paragraph. <b>Copy</b> copies the
                             words in the current layout.</li>
@@ -318,20 +319,18 @@ export const Reference = () => {
                         <li><b>Enable serifs</b> switches to a serif font, which makes some IPA characters easier to read.</li>
                     </ul>
 
-                    <Sub>Seed</Sub>
-                    <p>The <b>Seed</b> field makes generation repeatable: the same seed and grammar always give the same
-                        words, in the same order, and the seed is saved in share links so others see your exact list. Any
-                        text works; the dice button picks a random one. Leave it empty to get new words on every{" "}
-                        <b>Generate</b>. For example, the first grammar above with the seed <Code>{seedDemo.seed}</Code>{" "}
-                        starts with <Code>{seedDemo.words.join(", ")}</Code>.</p>
-
-                    <Sub>Live preview</Sub>
-                    <p>With <b>Live preview</b> on (the default), the words update by themselves a quarter of a second
-                        after each edit that leaves the grammar valid. They use the seed, or when it is empty a seed fixed
-                        for the session (shown greyed in the field), so an edit shows how the same draws change rather than
-                        a new random list. Live updates are not announced by screen readers, to avoid talking over your
-                        typing; <b>Generate</b> still announces how many words it made. The setting is remembered in this
-                        browser and is not part of share links.</p>
+                    <Sub>Seed and automatic updates</Sub>
+                    <p>The words are decided entirely by the <b>Seed</b> field, the grammar and the word count: the same
+                        three always give the same words, in the same order. The seed is saved in share links, so others
+                        see your exact list. Every grammar always has a seed; any text works. <b>New words</b> picks a
+                        new random seed and so a new set of words. For example, the first grammar above with the seed{" "}
+                        <Code>{seedDemo.seed}</Code> starts with <Code>{seedDemo.words.join(", ")}</Code>.</p>
+                    <p>The words update by themselves, a quarter of a second after each edit that leaves the grammar
+                        valid, and straight away when you change the seed or word count. An edit therefore shows how the
+                        same draws change rather than a new random list. Screen readers are not told about these updates,
+                        to avoid talking over your typing; <b>New words</b> and <b>Generate all</b> announce how many
+                        words they made. Each <b>New words</b> press is an edit like any other, so Back restores the
+                        previous words. If a redraw takes more than a moment, the old words dim and the button shows a spinner until the new ones are ready.</p>
 
                     <Sub>Generate all</Sub>
                     <p><b>Generate all</b> lists every distinct word the start rule can make, sorted, instead of random

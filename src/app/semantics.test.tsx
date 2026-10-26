@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, it} from "vitest"
-import {render, screen, within} from "@testing-library/react"
+import {render, screen, waitFor, within} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {Home} from "./Home.tsx"
 
@@ -159,9 +159,20 @@ describe("generator output", () => {
         const status = generatorStatus()
         expect(status).toHaveTextContent("")
 
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
-        expect(status).toHaveTextContent("Generated 50 words")
+        await waitFor(() => expect(status).toHaveTextContent("Generated 50 words"))
+    })
+
+    it("does not announce automatic updates", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const status = generatorStatus()
+
+        await user.type(screen.getByLabelText("Word count"), "0")
+
+        await waitFor(() => expect(screen.getByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"}).textContent!.split(" ")).toHaveLength(500))
+        expect(status).toHaveTextContent("")
     })
 
     it("keeps announcing when the same summary repeats", async () => {
@@ -169,12 +180,13 @@ describe("generator output", () => {
         await renderApp()
         const status = generatorStatus()
 
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
+        await waitFor(() => expect(status).toHaveTextContent("Generated 50 words"))
         const first = status.firstElementChild
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
+        await waitFor(() => expect(status.firstElementChild).not.toBe(first))
         expect(status).toHaveTextContent("Generated 50 words")
-        expect(status.firstElementChild).not.toBe(first)
     })
 
     it("includes the unique count when duplicates are filtered", async () => {
@@ -182,9 +194,9 @@ describe("generator output", () => {
         await renderApp()
         await user.click(screen.getByRole("switch", {name: "Filter Duplicates"}))
 
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
-        expect(generatorStatus()).toHaveTextContent(/^Generated 50 words, \d+ unique$/)
+        await waitFor(() => expect(generatorStatus()).toHaveTextContent(/^Generated 50 words, \d+ unique$/))
     })
 
     it("renders a list when output as list is on", async () => {
@@ -192,10 +204,9 @@ describe("generator output", () => {
         await renderApp()
         await user.click(screen.getByRole("switch", {name: "Output as list"}))
 
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
-        const list = screen.getByRole("list")
-        expect(within(list).getAllByRole("listitem")).toHaveLength(50)
+        await waitFor(() => expect(within(screen.getByRole("list")).getAllByRole("listitem")).toHaveLength(50))
     })
 })
 

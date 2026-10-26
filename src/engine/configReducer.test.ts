@@ -8,12 +8,18 @@ const apply = (...actions: ConfigAction[]) => actions.reduce(configReducer, base
 
 describe("whole-config actions", () => {
     it("load replaces everything", () => {
-        expect(configReducer(base(), {type: "load", config: emptyConfig})).toBe(emptyConfig)
+        expect(configReducer(base(), {type: "load", config: {...emptyConfig, seed: "s"}})).toEqual({...emptyConfig, seed: "s"})
     })
 
-    it("clear empties the grammar but keeps the display flags", () => {
+    it("load gives a config without a seed a random one", () => {
+        const c = configReducer(base(), {type: "load", config: {...emptyConfig, seed: ""}})
+        expect(c.seed).toMatch(/^[a-z2-9]{6}$/)
+    })
+
+    it("clear empties the grammar, keeps the display flags and picks a new seed", () => {
         const c = configReducer({...base(), enableWeights: true, enableSerif: true, seed: "s"}, {type: "clear"})
-        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true, repeatRewrites: false, seed: "s"})
+        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true, repeatRewrites: false, seed: c.seed})
+        expect(c.seed).toMatch(/^[a-z2-9]{6}$/)
     })
 
     it("loadExample turns repeated rewrites off, since the example relies on single passes", () => {

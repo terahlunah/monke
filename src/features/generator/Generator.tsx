@@ -1,11 +1,10 @@
 
 import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 import {Row} from "@/components/Row.tsx";
-import {ClipboardListIcon, DicesIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
+import {ClipboardListIcon, DicesIcon, DownloadIcon, LinkIcon, LoaderCircleIcon, UploadIcon} from "lucide-react";
 import {ChangeEvent, Dispatch, FormEvent, useEffect, useMemo, useRef, useState} from "react";
-import {generate, Rng} from "@/engine/generate.ts";
-import {randomSeed, seededRng} from "@/engine/seed.ts";
-import {setLivePreview, useLivePreview} from "./livePreviewPref.ts";
+import {randomSeed} from "@/engine/seed.ts";
+import {drawAsync} from "./drawAsync.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
@@ -23,22 +22,10 @@ const MAX_WORD_COUNT = 10000
 const LIST_ALL_MAX_BRANCHES = 1_000_000
 const LIST_ALL_HINT_ID = "list-all-hint"
 
-const LIVE_PREVIEW_DELAY = 250
-const SEED_HINT_ID = "seed-hint"
-
-// Used by the live preview when no seed is set, so edits show how the same draws change instead of reshuffling.
-// Module-level so it survives switching tabs.
-const sessionSeed = randomSeed()
-
-const draw = (grammar: Grammar, rng: Rng, count: number): { words: string[], error: string | null } => {
-    const words: string[] = []
-    try {
-        for (let i = 0; i < count; i++) words.push(generate(grammar, rng))
-    } catch (e) {
-        return {words, error: (e as Error).message}
-    }
-    return {words, error: null}
-}
+// Debounce for grammar edits only; seed and word count changes redraw immediately.
+const EDIT_DELAY = 250
+// Instant redraws are the norm; the busy look only appears when one is slow enough to be worth explaining.
+const SLOW_AFTER = 300
 
 const formatCount = (n: number) => n.toLocaleString("en-US")
 
@@ -75,10 +62,9 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     const [wordCount, setWordCount] = useState("50")
     const [outputList, setOutputList] = useState(false)
     const [filterDuplicates, setFilterDuplicates] = useState(false)
-    // Live failures are shown but not put in an alert: they would interrupt on every keystroke.
+    // Redraw failures are shown but not put in an alert: they would interrupt on every keystroke.
     const [generationError, setGenerationError] = useState<{ message: string, live: boolean } | null>(null)
-    const livePreview = useLivePreview()
-    // Announced politely after each run. The result is deliberately not read out: it can be thousands of words,
+    // Announced politely after "New words" and "Generate all". The result is deliberately not read out: it can be thousands of words,
     // and screen reader users browse it as text or a list instead.
     const [announcement, setAnnouncement] = useState({text: "", run: 0})
 
@@ -159,31 +145,67 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
         setWordCount(String(clampWordCount(wordCount)))
     }
 
-    const onGenerate = () => {
-        if (!grammar) return
-        const count = clampWordCount(wordCount)
-        setWordCount(String(count))
+    // Set by "New words" so the redraw it causes is announced; edits redraw silently because announcing on every
+    // keystroke would talk over the user's typing, and the words are one Tab away.
+    const announceNext = useRef(false)
+    // Identifies the latest scheduled redraw so results of superseded ones are dropped.
+    const drawSeq = useRef(0)
+    // The inputs the shown words were drawn from; any difference from the current ones means a redraw is pending.
+    const [drawnFor, setDrawnFor] = useState<{ grammar: Grammar, seed: string, count: number } | null>(null)
+    const [listing, setListing] = useState(false)
+    const [slow, setSlow] = useState(false)
+    const drawing = grammar !== null && (drawnFor === null || drawnFor.grammar !== grammar ||
+        drawnFor.seed !== config.seed || drawnFor.count !== clampWordCount(wordCount))
+    const busy = drawing || listing
+    const lastDrawInputs = useRef({seed: config.seed, wordCount})
 
-        const {words, error} = draw(grammar, config.seed ? seededRng(config.seed) : Math.random, count)
-        setGeneratedWords(words)
-        setGenerationError(error ? {message: error, live: false} : null)
-        // A failed run is announced by its error alert instead.
-        setAnnouncement(({run}) => ({text: error ? "" : summarize(words, filterDuplicates), run: run + 1}))
+    const onNewWords = () => {
+        if (!grammar) return
+        announceNext.current = true
+        dispatch({type: "setSeed", seed: randomSeed()})
     }
 
-    // Live updates are deliberately silent: announcing on every edit would talk over the user's typing, and the
-    // words are one Tab away. Explicit Generate still announces its summary.
+    // The words are a pure function of (grammar, seed, word count), so they are recomputed rather than requested.
     useEffect(() => {
-        if (!livePreview || !grammar) return
+        const id = ++drawSeq.current
+        if (!grammar) return
+        const last = lastDrawInputs.current
+        const immediate = last.seed !== config.seed || last.wordCount !== wordCount
+        lastDrawInputs.current = {seed: config.seed, wordCount}
+        const count = clampWordCount(wordCount)
         const timer = setTimeout(() => {
-            const {words, error} = draw(grammar, seededRng(config.seed || sessionSeed), clampWordCount(wordCount))
-            setGeneratedWords(words)
-            setGenerationError(error ? {message: error, live: true} : null)
-        }, LIVE_PREVIEW_DELAY)
+            drawAsync(grammar, config.seed, count).then(({words, error}) => {
+                if (id !== drawSeq.current) return
+                setGeneratedWords(words)
+                setGenerationError(error ? {message: error, live: true} : null)
+                setDrawnFor({grammar, seed: config.seed, count})
+                if (announceNext.current) {
+                    announceNext.current = false
+                    // A failed run is announced by its error alert instead.
+                    if (!error) setAnnouncement(({run}) => ({text: summarize(words, filterDuplicates), run: run + 1}))
+                }
+            }).catch(e => {
+                if (id !== drawSeq.current) return
+                setGenerationError({message: (e as Error).message, live: true})
+                setDrawnFor({grammar, seed: config.seed, count})
+                announceNext.current = false
+            })
+        }, immediate ? 0 : EDIT_DELAY)
         return () => clearTimeout(timer)
-    }, [livePreview, grammar, config.seed, wordCount])
+    }, [grammar, config.seed, wordCount, filterDuplicates])
 
-    const [listing, setListing] = useState(false)
+    // The pending look is delayed so the usual instant redraw never flickers. Only explicit actions say so aloud.
+    useEffect(() => {
+        if (!busy) return
+        const timer = setTimeout(() => {
+            setSlow(true)
+            if (announceNext.current || listing) setAnnouncement(({run}) => ({text: "Generating…", run: run + 1}))
+        }, SLOW_AFTER)
+        return () => {
+            clearTimeout(timer)
+            setSlow(false)
+        }
+    }, [busy, listing])
 
     // Why "Generate all" is unavailable, or null when it can run.
     const listAllBlocker = !grammar || error ? "Generate all needs a valid grammar" :
@@ -255,9 +277,6 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             <SwitchLabel checked={outputList} onChange={setOutputList}
                          label="Output as list"
                          enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
-            <SwitchLabel checked={livePreview} onChange={setLivePreview}
-                         label="Live preview"
-                         enabledColor="bg-primary" disabledColor="bg-primary/30"/>
             <SwitchLabel checked={alwaysShowReorder} onChange={setAlwaysShowReorder}
                          label="Always show reorder buttons"
                          enabledColor="bg-accent-danger" disabledColor="bg-accent-danger/30"/>
@@ -319,14 +338,29 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             <div className="border-t border-white/20"/>
 
+            <Row className="gap-2 items-center">
+                <label htmlFor="seed" className="shrink-0">Seed</label>
+                <input id="seed" value={config.seed}
+                       onChange={e => dispatch({type: "setSeed", seed: e.target.value})}
+                       // The output is driven by the seed, so it is never left empty.
+                       onBlur={() => {
+                           if (config.seed === "") dispatch({type: "setSeed", seed: randomSeed()})
+                       }}
+                       className="bg-primary/40 rounded-sm h-10 px-2 outline-0 w-28 shrink-0"/>
+                <button onClick={onNewWords} className="grow bg-primary rounded-sm p-2"
+                        aria-label="New words (new seed)">
+                    <Row className="items-center justify-center gap-2">
+                        <span>New words</span>
+                        {slow ?
+                            <LoaderCircleIcon className="size-5 animate-spin motion-reduce:animate-pulse"/> :
+                            <DicesIcon className="size-5"/>}
+                    </Row>
+                </button>
+            </Row>
+
             <Row className="gap-4 flex-wrap">
-                <Row className="items-center justify-start grow">
-                    <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3"
-                            aria-label="Generate">Generate
-                    </button>
-                    <input aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
-                           className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
-                </Row>
+                <input aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
+                       className="bg-primary/40 rounded-sm text-center h-10 outline-0 w-24"/>
                 {/* aria-disabled rather than disabled keeps it focusable, so keyboard and screen reader users can reach the reason. */}
                 <button onClick={onListAll} className="grow bg-primary rounded-sm p-2 aria-disabled:opacity-50"
                         aria-disabled={listAllBlocker !== null || listing}
@@ -340,22 +374,6 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                     </Row>
                 </button>
             </Row>
-
-            <Row className="gap-2 items-center">
-                <label htmlFor="seed" className="shrink-0">Seed</label>
-                <input id="seed" value={config.seed} placeholder={sessionSeed} aria-describedby={SEED_HINT_ID}
-                       onChange={e => dispatch({type: "setSeed", seed: e.target.value})}
-                       className="bg-primary/40 rounded-sm h-10 px-2 outline-0 grow min-w-0"/>
-                <button onClick={() => dispatch({type: "setSeed", seed: randomSeed()})}
-                        className="bg-primary rounded-sm p-2" aria-label="Randomize seed">
-                    <DicesIcon className="size-6"/>
-                </button>
-            </Row>
-            <p id={SEED_HINT_ID} className="text-sm text-gray-300">
-                {config.seed ?
-                    "The same seed and grammar always give the same words. Saved in share links." :
-                    `Empty: Generate draws new words each time; the live preview uses ${sessionSeed}.`}
-            </p>
 
             {listAllBlocker ?
                 <p id={LIST_ALL_HINT_ID} className="text-center italic text-gray-300">{listAllBlocker}</p> :
@@ -386,6 +404,8 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             </div>
 
             {generatedWords.length !== 0 ? <h3 className="sr-only">Generated words</h3> : null}
+            {/* Dimmed rather than hidden while stale, so the layout does not jump. */}
+            <div aria-busy={busy} className={slow ? "opacity-60" : ""}>
             {outputList ?
                 <ul className={config.enableSerif ? "font-serif" : ""}>
                     {filteredWords.map((word, i) => <li key={i}>{word}</li>)}
@@ -394,6 +414,7 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                     {text}
                 </p>
             }
+            </div>
 
         </section>
     )

@@ -2,6 +2,7 @@ import {useEffect, useReducer, useRef, useState} from "react";
 import {Config} from "@/engine/config.ts";
 import {configReducer} from "@/engine/configReducer.ts";
 import {defaultConfig, emptyConfig} from "@/engine/defaults.ts";
+import {withSeed} from "@/engine/seed.ts";
 import {decodeConfig, encodeConfig} from "@/engine/sharing.ts";
 
 // Owns the config state and mirrors it into the URL path, so every edit burst is a history entry
@@ -10,7 +11,7 @@ export const useUrlConfig = () => {
     // The URL path is only read once at startup; afterwards it just mirrors the config.
     const [urlConfig] = useState(() => window.location.pathname.slice(1))
 
-    const [config, dispatch] = useReducer(configReducer, urlConfig ? emptyConfig : defaultConfig)
+    const [config, dispatch] = useReducer(configReducer, undefined, () => withSeed(urlConfig ? emptyConfig : defaultConfig))
     // Holds back URL writes until a link in the path has been decoded, so it isn't overwritten by the empty config.
     const [synced, setSynced] = useState(!urlConfig)
 

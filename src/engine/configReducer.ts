@@ -1,5 +1,6 @@
 import {Config, ExclusionPattern, RewritePattern, Rule, RulePattern} from "./config.ts"
 import {defaultConfig, tokiPonaWeightedRules} from "./defaults.ts"
+import {randomSeed, withSeed} from "./seed.ts"
 import {moveItem, patchById, removeById} from "./list.ts"
 
 export type ConfigAction =
@@ -68,10 +69,10 @@ const updateRule = (config: Config, ruleId: string, change: (rule: Rule) => Part
 export const configReducer = (config: Config, action: ConfigAction): Config => {
     switch (action.type) {
         case "load":
-            return action.config
+            return withSeed(action.config)
         // Flags are preferences, not grammar content, so clearing leaves them alone.
         case "clear":
-            return {...config, language: "", root: null, rules: []}
+            return {...config, language: "", root: null, rules: [], seed: randomSeed()}
         case "loadExample":
             return {
                 ...config,
@@ -80,6 +81,7 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
                 rules: action.weighted ? tokiPonaWeightedRules : defaultConfig.rules,
                 enableWeights: action.weighted,
                 repeatRewrites: defaultConfig.repeatRewrites,
+                seed: randomSeed(),
             }
         case "setLanguage":
             return {...config, language: action.language}

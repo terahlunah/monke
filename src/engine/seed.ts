@@ -28,3 +28,7 @@ const SEED_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"
 // Short and free of look-alike characters, so it is easy to read out or retype.
 export const randomSeed = (): string =>
     Array.from({length: 6}, () => SEED_ALPHABET[Math.floor(Math.random() * SEED_ALPHABET.length)]).join("")
+
+// Output is driven entirely by the seed, so a config without one (old links and files, fresh state) gets one.
+export const withSeed = <T extends { seed: string }>(config: T): T =>
+    config.seed === "" ? {...config, seed: randomSeed()} : config

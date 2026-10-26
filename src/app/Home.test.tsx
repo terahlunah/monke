@@ -95,26 +95,21 @@ describe("Home", () => {
         expect(new Set(ids).size).toBe(ids.length)
     })
 
-    it("generates words when clicking Generate", async () => {
-        const user = userEvent.setup()
+    it("generates words automatically, without a Generate button", async () => {
         renderAt("/")
         await screen.findByText(/possible branches/)
         await waitFor(() => expect(document.title).toBe("Monke - toki pona"))
-
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        expect(screen.queryByRole("button", {name: "Generate"})).not.toBeInTheDocument()
 
         const output = await screen.findByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"})
         expect(output.textContent!.split(" ")).toHaveLength(50)
     })
 
     it("restores a config from the URL path", async () => {
-        const user = userEvent.setup()
         renderAt(`/${customLink}`)
         await waitFor(() => expect(document.title).toBe("Monke - frozen"))
         expect(await screen.findByText("Grammar has 6 possible branches")).toBeInTheDocument()
         expect(screen.queryByDisplayValue("Consonant")).not.toBeInTheDocument()
-
-        await user.click(screen.getByRole("button", {name: "Generate"}))
 
         const output = await screen.findByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"})
         for (const w of output.textContent!.split(" ")) expect(["a", "i", "ta", "ti"]).toContain(w)
@@ -131,7 +126,7 @@ describe("Home", () => {
         expect(screen.getByText("Listed 4 words")).toBeInTheDocument()
     })
 
-    // Words of the output paragraph, which the live preview fills without clicking Generate.
+    // Words of the output paragraph.
     const outputWords = async (pattern = /^[a-z]+( [a-z]+)*$/) =>
         (await screen.findByText(pattern, {selector: "p"})).textContent!.split(" ")
 
@@ -152,16 +147,48 @@ describe("Home", () => {
         const user = userEvent.setup()
         const view = renderAt(`/${customLink}`)
         await screen.findByText("Grammar has 6 possible branches")
+        await user.clear(screen.getByLabelText("Seed"))
         await user.type(screen.getByLabelText("Seed"), "monke")
         await waitFor(() => expect(window.location.pathname).not.toBe(`/${customLink}`))
-        await user.click(screen.getByRole("button", {name: "Generate"}))
         const first = await outputWords()
 
         const link = window.location.pathname
         view.unmount()
         renderAt(link)
         await waitFor(() => expect(screen.getByLabelText("Seed")).toHaveValue("monke"))
-        await user.click(screen.getByRole("button", {name: "Generate"}))
         expect(await outputWords()).toEqual(first)
+    })
+
+    it("gives a link saved without a seed a random one", async () => {
+        renderAt(`/${customLink}`)
+        await screen.findByText("Grammar has 6 possible branches")
+        await waitFor(() => expect((screen.getByLabelText("Seed") as HTMLInputElement).value).toMatch(/^[a-z2-9]{6}$/))
+    })
+
+    it("marks the output busy while a redraw is pending", async () => {
+        const user = userEvent.setup()
+        renderAt(`/${customLink}`)
+        await screen.findByText("Grammar has 6 possible branches")
+        const output = (await screen.findByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"})).parentElement!
+        await waitFor(() => expect(output).toHaveAttribute("aria-busy", "false"))
+
+        await user.type(screen.getByLabelText("Terminal 1 of rule C"), "z")
+
+        expect(output).toHaveAttribute("aria-busy", "true")
+        await waitFor(() => expect(output).toHaveAttribute("aria-busy", "false"))
+    })
+
+    it("New words changes the seed and the words", async () => {
+        const user = userEvent.setup()
+        renderAt("/")
+        await screen.findByText(/possible branches/)
+        const seed = screen.getByLabelText("Seed") as HTMLInputElement
+        const before = seed.value
+        const words = await outputWords()
+
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
+
+        await waitFor(() => expect(seed.value).not.toBe(before))
+        await waitFor(async () => expect(await outputWords()).not.toEqual(words))
     })
 })

@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import {randomSeed, seededRng} from "./seed.ts"
+import {randomSeed, seededRng, withSeed} from "./seed.ts"
 import {generate} from "./generate.ts"
 import {makeGrammar, makeRule} from "./test-helpers.ts"
 
@@ -28,5 +28,10 @@ describe("seededRng", () => {
 
     it("makes short readable random seeds", () => {
         expect(randomSeed()).toMatch(/^[a-z2-9]{6}$/)
+    })
+
+    it("withSeed fills in only an empty seed", () => {
+        expect(withSeed({seed: "abc"}).seed).toBe("abc")
+        expect(withSeed({seed: ""}).seed).toMatch(/^[a-z2-9]{6}$/)
     })
 })

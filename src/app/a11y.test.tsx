@@ -24,10 +24,10 @@ describe("accessibility (axe)", () => {
         await check(container)
     })
 
-    it("generator view after generating", async () => {
+    it("generator view after new words", async () => {
         const user = userEvent.setup()
         const {container} = await renderApp()
-        await user.click(screen.getByRole("button", {name: "Generate"}))
+        await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
         await check(container)
     })
 
