@@ -76,12 +76,12 @@ describe("Home", () => {
         renderAt("/")
         await screen.findByText(/possible branches/)
 
-        const before = screen.getAllByRole("button", {name: "Delete pattern"}).length
-        await user.click(screen.getAllByRole("button", {name: "Add pattern"})[0])
-        expect(screen.getAllByRole("button", {name: "Delete pattern"})).toHaveLength(before + 1)
+        const before = screen.getAllByRole("button", {name: /^Delete (pattern|terminal)/}).length
+        await user.click(screen.getAllByRole("button", {name: /^Add (pattern|terminal)/})[0])
+        expect(screen.getAllByRole("button", {name: /^Delete (pattern|terminal)/})).toHaveLength(before + 1)
 
-        await user.click(screen.getAllByRole("button", {name: "Delete pattern"})[0])
-        expect(screen.getAllByRole("button", {name: "Delete pattern"})).toHaveLength(before)
+        await user.click(screen.getAllByRole("button", {name: /^Delete (pattern|terminal)/})[0])
+        expect(screen.getAllByRole("button", {name: /^Delete (pattern|terminal)/})).toHaveLength(before)
     })
 
     it("gives a cloned rule its own ids", async () => {

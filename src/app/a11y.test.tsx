@@ -50,7 +50,7 @@ describe("accessibility (axe)", () => {
     it("generator view with a pattern error", async () => {
         const user = userEvent.setup()
         const {container} = await renderApp()
-        await user.click(screen.getAllByRole("button", {name: "Add pattern"})[0])
+        await user.click(screen.getAllByRole("button", {name: /^Add (pattern|terminal)/})[0])
         const empty = container.querySelectorAll("input[type=text]")
         await user.type(empty[empty.length - 1], "(((")
         await screen.findByText(/Invalid grammar/)

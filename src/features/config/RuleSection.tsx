@@ -1,6 +1,8 @@
 import {Dispatch, FormEvent, useState} from "react";
 import {Row} from "@/components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
+import {MoveButtons} from "@/components/MoveButtons.tsx";
+import {lowerFirst} from "@/components/text.ts";
 import AutowidthInput from "react-autowidth-input";
 import {Rule, RulePattern} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
@@ -21,11 +23,15 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
     return (
         <Row className="gap-4 flex-wrap">
             <SortableList items={rule.patterns} onMove={(from, to) => dispatch({type: "movePattern", ruleId, from, to})}
-                          direction="horizontal">
+                          direction="horizontal"
+                          describe={p => p.pattern ? `${rule.terminalOnly ? "terminal" : "pattern"} ${p.pattern}` : `empty ${rule.terminalOnly ? "terminal" : "pattern"}`}>
                 {rule.patterns.map((p, index) =>
                     <RulePatternItem key={p.id}
                                      label={`${rule.terminalOnly ? "Terminal" : "Pattern"} ${index + 1} of rule ${rule.name}`}
                                      pattern={p}
+                                     index={index}
+                                     total={rule.patterns.length}
+                                     onMove={to => dispatch({type: "movePattern", ruleId, from: index, to})}
                                      onChange={patch => dispatch({type: "editPattern", ruleId, id: p.id, patch})}
                                      terminalOnly={rule.terminalOnly}
                                      onDelete={() => dispatch({type: "removePattern", ruleId, id: p.id})}
@@ -35,7 +41,7 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
             </SortableList>
             <button onClick={() => dispatch({type: "addPattern", ruleId})}
                     className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded-sm p-1`}
-                    aria-label="Add pattern">
+                    aria-label={`Add ${rule.terminalOnly ? "terminal" : "pattern"} to rule ${rule.name}`}>
                 <PlusIcon className="size-6"/>
             </button>
         </Row>
@@ -46,6 +52,9 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
 type RulePatternProps = {
     // Accessible name that locates the item, e.g. "Pattern 2 of rule Vowel".
     label: string
+    index: number
+    total: number
+    onMove: (to: number) => void
     pattern: RulePattern
     onChange: (patch: Partial<RulePattern>) => void
     terminalOnly: boolean
@@ -62,6 +71,9 @@ function isNumber(value?: string | number): boolean {
 
 export const RulePatternItem = ({
                                     label,
+                                    index,
+                                    total,
+                                    onMove,
                                     pattern,
                                     onChange,
                                     terminalOnly,
@@ -102,9 +114,12 @@ export const RulePatternItem = ({
             {({handleProps}) => (
                 <Row className="rounded-sm overflow-clip w-min h-8 items-center">
                     <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...handleProps}
-                            aria-label="Drag pattern">
+                            aria-label={`Drag ${lowerFirst(label)}`}>
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
+                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove}
+                                 buttonClassName={`${terminalOnly ? "bg-primary/70" : "bg-secondary/70"} p-1 h-8 disabled:opacity-40`}
+                                 iconClassName="size-4"/>
                     <AutowidthInput value={pattern.pattern}
                                     aria-label={label}
                                     onChange={onGroupInput}
@@ -121,7 +136,7 @@ export const RulePatternItem = ({
                                         minWidth={10}/>
                     ) : null
                     }
-                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8" aria-label="Delete pattern">
+                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8" aria-label={`Delete ${lowerFirst(label)}`}>
                         <XIcon className="size-4"/></button>
                 </Row>
             )}

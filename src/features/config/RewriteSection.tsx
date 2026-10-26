@@ -1,6 +1,8 @@
 import {ChangeEvent, Dispatch} from "react";
 import {Row} from "@/components/Row.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
+import {MoveButtons} from "@/components/MoveButtons.tsx";
+import {lowerFirst} from "@/components/text.ts";
 import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
@@ -25,11 +27,15 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
             </Row>
             <Row className="gap-4 flex-wrap">
                 <SortableList items={rule.rewrites} onMove={(from, to) => dispatch({type: "moveRewrite", ruleId, from, to})}
-                              direction="horizontal">
+                              direction="horizontal"
+                              describe={r => `rewrite ${r.match || "empty"} to ${r.replace || "empty"}`}>
                     {rule.rewrites.map((r, index) =>
                         <RewritePatternItem key={r.id}
                                             label={`Rewrite ${index + 1} of rule ${rule.name}`}
                                             rewrite={r}
+                                            index={index}
+                                            total={rule.rewrites.length}
+                                            onMove={to => dispatch({type: "moveRewrite", ruleId, from: index, to})}
                                             onChange={patch => dispatch({type: "editRewrite", ruleId, id: r.id, patch})}
                                             onDelete={() => dispatch({type: "removeRewrite", ruleId, id: r.id})}
                                             enableSerif={enableSerif}/>
@@ -38,7 +44,7 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
 
                 <button onClick={() => dispatch({type: "addRewrite", ruleId})}
                         className={`bg-accent-warning  mr-4 rounded-sm p-1`}
-                        aria-label="Add rewrite pattern">
+                        aria-label={`Add rewrite to rule ${rule.name}`}>
                     <PlusIcon className="size-6"/>
                 </button>
             </Row>
@@ -49,6 +55,9 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
 
 type RewritePatternProps = {
     label: string
+    index: number
+    total: number
+    onMove: (to: number) => void
     rewrite: RewritePattern
     onChange: (patch: Partial<RewritePattern>) => void
     onDelete?: () => void
@@ -56,6 +65,9 @@ type RewritePatternProps = {
 }
 export const RewritePatternItem = ({
                                        label,
+                                       index,
+                                       total,
+                                       onMove,
                                        rewrite,
                                        onChange,
                                        onDelete,
@@ -75,9 +87,12 @@ export const RewritePatternItem = ({
         <SortableRow id={rewrite.id}>
             {({handleProps}) => (
                 <Row className="rounded-sm overflow-clip w-min h-8 items-center">
-                    <button className={`bg-accent-warning p-1 h-8`} {...handleProps} aria-label="Drag rewrite pattern">
+                    <button className={`bg-accent-warning p-1 h-8`} {...handleProps} aria-label={`Drag ${lowerFirst(label)}`}>
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
+                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove}
+                                 buttonClassName="bg-accent-warning/70 p-1 h-8 disabled:opacity-40"
+                                 iconClassName="size-4"/>
                     <AutowidthInput value={rewrite.match}
                                     aria-label={`${label}, match`}
                                     onChange={onMatchInput}
@@ -94,7 +109,7 @@ export const RewritePatternItem = ({
                                     type="text"
                                     minWidth={15}/>
                     <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
-                            aria-label="Delete rewrite pattern"><XIcon className="size-4"/></button>
+                            aria-label={`Delete ${lowerFirst(label)}`}><XIcon className="size-4"/></button>
                 </Row>
             )}
         </SortableRow>

@@ -48,9 +48,9 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
 
             <Row className="gap-3 items-center">
                 <label htmlFor="language">Language</label>
-                <div className="rounded-sm overflow-clip">
+                <div className="rounded-sm overflow-clip min-w-0">
                     <input id="language" value={config.language} onInput={onSetLanguage}
-                           className={`bg-surface text-left h-8 outline-0 pl-2 w-72`}/>
+                           className={`bg-surface text-left h-8 outline-0 pl-2 w-72 max-w-full`}/>
                 </div>
             </Row>
 
@@ -106,9 +106,13 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
                 <Col className="gap-4">
 
                     <SortableList items={config.rules} onMove={(from, to) => dispatch({type: "moveRule", from, to})}
-                                  direction="vertical">
-                        {config.rules.map(r =>
+                                  direction="vertical"
+                                  describe={r => `rule ${r.name || "unnamed"}`}>
+                        {config.rules.map((r, index) =>
                             <RuleInstance rule={r}
+                                          index={index}
+                                          total={config.rules.length}
+                                          onMove={to => dispatch({type: "moveRule", from: index, to})}
                                           dispatch={dispatch}
                                           enableWeights={config.enableWeights}
                                           enableSerif={config.enableSerif}

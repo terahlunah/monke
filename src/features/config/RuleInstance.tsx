@@ -5,6 +5,7 @@ import {Dispatch, FormEvent} from "react";
 import {Col} from "@/components/Col.tsx";
 import {ToggleLabel} from "@/components/ToggleLabel.tsx";
 import {SortableRow} from "@/components/SortableList.tsx";
+import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {RuleSection} from "./RuleSection.tsx";
@@ -13,6 +14,9 @@ import {ExclusionSection} from "./ExclusionSection.tsx";
 
 
 export type RuleInstanceProps = {
+    index: number
+    total: number
+    onMove: (to: number) => void
     rule: Rule
     dispatch: Dispatch<ConfigAction>
     enableWeights?: boolean
@@ -21,6 +25,9 @@ export type RuleInstanceProps = {
 
 export const RuleInstance = ({
                                  rule,
+                                 index,
+                                 total,
+                                 onMove,
                                  dispatch,
                                  enableWeights,
                                  enableSerif,
@@ -38,10 +45,15 @@ export const RuleInstance = ({
             <Col className="rounded-sm bg-surface px-2 pb-2 gap-2">
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
-                        <div className="pl-2 pr-3 touch-none" {...handleProps} aria-label="Reorder rule">
+                        <div className="pl-1 pr-1 md:pl-2 md:pr-3 touch-none" {...handleProps} aria-label={`Reorder rule ${rule.name}`}>
                             <EllipsisVerticalIcon className="size-5"/>
                         </div>
-                        <button onClick={() => dispatch({type: "toggleCollapse", ruleId})} className="border border-white/30 rounded-sm p-2 mr-2"
+                        <div className="flex flex-col mr-1 md:mr-2 rounded-sm overflow-clip border border-white/30">
+                            <MoveButtons label={`rule ${rule.name || index + 1}`} index={index} total={total} onMove={onMove}
+                                         buttonClassName="px-1 h-5 disabled:opacity-40"
+                                         iconClassName="size-4"/>
+                        </div>
+                        <button onClick={() => dispatch({type: "toggleCollapse", ruleId})} className="border border-white/30 rounded-sm p-2 mr-1 md:mr-2"
                                 aria-label={rule.collapsed ? "Expand Rule" : "Collapse rule"}>
                             {
                                 rule.collapsed ?
@@ -53,9 +65,9 @@ export const RuleInstance = ({
                                 aria-label="Duplicate rule">
                             <CopyIcon className="size-5"/>
                         </button>
-                        <div className="rounded-sm overflow-clip mx-4">
+                        <div className="rounded-sm overflow-clip mx-2 md:mx-4">
                             <AutowidthInput value={rule.name} onInput={onRuleNameInput} aria-label="Rule name"
-                                            className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
+                                            className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-3 md:px-4 text-lg`}/>
                         </div>
                         {
                             !rule.terminalOnly ?
