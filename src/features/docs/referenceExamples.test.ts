@@ -75,6 +75,13 @@ describe("reference grammars", () => {
         for (const w of words("final")) expect(w).toMatch(/^([ptksmnl][aeiou])+[ns]?$/)
     })
 
+    it("word edges never end in h or start with ŋ", () => {
+        const ws = words("edges")
+        for (const w of ws) expect(w).not.toMatch(/^ŋ|h$/)
+        expect(ws.some(w => w.includes("ŋ"))).toBe(true)
+        expect(ws.some(w => /[ptkmnŋ]$/.test(w))).toBe(true)
+    })
+
     it("avoiding repeated consonants rejects CVC with the same consonant", () => {
         for (const w of words("no-repeats")) expect(w).not.toMatch(/([ptkm])[aeiou]\1/)
     })

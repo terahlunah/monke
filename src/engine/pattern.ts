@@ -1,6 +1,7 @@
 import {
     Expr,
     makeAtom,
+    makeBoundary,
     makeMatch,
     makeRange,
     makeRef,
@@ -206,6 +207,9 @@ export class Parser {
             return this.parseGroup();
         } else if (char === "#") {
             return this.parseMatch();
+        } else if (char === "^" || char === "$") {
+            this.advancePosition();
+            return makeBoundary(char === "^" ? "start" : "end");
         } else if (this.isRefCharacter(char)) {
             return this.parseRef();
         } else {

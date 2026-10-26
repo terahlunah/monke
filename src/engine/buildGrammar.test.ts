@@ -99,6 +99,26 @@ describe("configToGrammar", () => {
         expect(() => configToGrammar(makeConfig("R", [makeRule("R", [pattern])]))).not.toThrow()
     })
 
+    it("rejects word boundaries in patterns and replacements, naming the rule", () => {
+        const message = /only allowed in rewrite matches and exclusions \(rule : 'R'\)/
+        expect(() => configToGrammar(makeConfig("R", [makeRule("R", ["^.'a'"])]))).toThrow(message)
+        expect(() => configToGrammar(makeConfig("R", [
+            makeRule("R", ["'a'"], {showRewrites: true, rewrites: [{id: "w", match: "'a'", replace: "'b'.$"}]}),
+        ]))).toThrow(message)
+    })
+
+    it("accepts word boundaries in rewrite matches and exclusions", () => {
+        expect(() => configToGrammar(makeConfig("R", [makeRule("R", ["'a'"], {
+            showRewrites: true, rewrites: [{id: "w", match: "^.'a'", replace: "'b'"}],
+            showExclusions: true, exclusions: [{id: "e", match: "'a'.$"}],
+        })]))).not.toThrow()
+    })
+
+    it("treats ^ and $ in terminal rules as plain text", () => {
+        const g = configToGrammar(makeConfig("T", [makeRule("T", ["^", "$"], {terminalOnly: true})]))!
+        expect(g.rules[0].expr).toEqual(choice([makeAtom("^"), makeAtom("$")]))
+    })
+
     it("rejects non-terminal rules without patterns, naming the rule", () => {
         expect(() => configToGrammar(makeConfig("Empty", [makeRule("Empty", [])]))).toThrow(/Empty/)
     })

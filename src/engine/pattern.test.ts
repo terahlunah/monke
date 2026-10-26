@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {Parser} from "./pattern.ts"
-import {makeAtom, makeChoice, makeMatch, makeRange, makeRef, makeSeq, makeWeighted, makeWeightedChoice} from "./grammar.ts"
+import {makeAtom, makeBoundary, makeChoice, makeMatch, makeRange, makeRef, makeSeq, makeWeighted, makeWeightedChoice} from "./grammar.ts"
 
 const parse = (src: string) => new Parser("R", src).parse()
 const choice = makeChoice
@@ -85,6 +85,10 @@ describe("pattern syntax", () => {
 
     it("parses back-references", () => {
         expect(parse("#0#.'x'.#12#")).toEqual(makeSeq([makeMatch(0), makeAtom("x"), makeMatch(12)]))
+    })
+
+    it("parses word boundaries", () => {
+        expect(parse("^.'a'.$")).toEqual(makeSeq([makeBoundary("start"), makeAtom("a"), makeBoundary("end")]))
     })
 
     it("parses empty input as the empty atom", () => {

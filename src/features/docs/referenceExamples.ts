@@ -104,6 +104,12 @@ export const rewriteDemos: RewriteDemo[] = [
         note: "P counts as one part, whatever it contains: #0# is x, #1# is ab, #2# is c.",
         rules: [{name: "P", items: ["'a'.'b'"]}],
     },
+    {rewrites: [["^.'ŋ'", "'n'"]], input: "ŋaŋa", output: "naŋa", note: "^ matches only at the start, so only the first ŋ changes."},
+    {rewrites: [["'h'.$", "''"]], input: "hah", output: "ha", note: "$ matches only at the end, so only the last h is dropped."},
+    {
+        rewrites: [["^.'ŋ'.V", "'n'.#2#"]], input: "ŋoŋa", output: "noŋa", rules: [V],
+        note: "A boundary is a part too, an empty one: ^ is #0#, ŋ is #1#, and the vowel is #2#.",
+    },
     {
         rewrites: [["'n'.'p'", "'m'.#1#"], ["'e'", "''"]], input: "anepa", output: "anpa",
         note: "Rewrite 2 brings n and p together after rewrite 1 has already run, so the np stays.",
@@ -127,6 +133,10 @@ export const exclusionDemos: ExclusionDemo[] = [
     {exclusion: "'ti'", input: "tapi", rejected: false},
     {exclusion: "V.V", input: "kaio", rejected: true, rules: [V]},
     {exclusion: "V.V", input: "kalo", rejected: false, rules: [V]},
+    {exclusion: "'h'.$", input: "bah", rejected: true},
+    {exclusion: "'h'.$", input: "bha", rejected: false},
+    {exclusion: "^.V", input: "aka", rejected: true, rules: [V]},
+    {exclusion: "^.V", input: "kaa", rejected: false, rules: [V]},
 ]
 
 export type Recipe = ReferenceExample & { summary: string }
@@ -162,6 +172,17 @@ export const recipes: Recipe[] = [
             {name: "Syllable", items: ["C.V"]},
             {name: "Final", items: ["C.V.(['n' / 's'])"]},
             {name: "Word", items: ["Syllable{:2}.Final"]},
+        ],
+    },
+    {
+        id: "edges",
+        title: "Word edges",
+        summary: "Words may end in a consonant, but never in h, and a word-initial ŋ becomes n. Both are on the start rule, so ^ and $ are the edges of the word.",
+        root: "Word",
+        rules: [
+            {name: "C", terminal: true, items: ["p", "t", "k", "h", "m", "n", "ŋ"]},
+            V,
+            {name: "Word", items: ["[C.V]{1:3}.(C)"], rewrites: [["^.'ŋ'", "'n'"]], exclusions: ["'h'.$"]},
         ],
     },
     {

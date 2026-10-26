@@ -21,6 +21,8 @@ const countCombinationsExpr = (g: Grammar, e: Expr): number => {
         }
         case "Match":
             throw new Error('Match syntax used outside replacement expression');
+        case "Boundary":
+            throw new Error('Word boundary used outside a rewrite match or exclusion');
         case "Seq":
             return e.items.reduce((acc, it) => acc * countCombinationsExpr(g, it), 1);
         case "Choice":

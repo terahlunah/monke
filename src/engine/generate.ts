@@ -60,8 +60,10 @@ const generateExpr = (g: Grammar, e: Expr, rng: Rng, matches?: string[]): string
 
             return generateExpr(g, choice, rng, matches)
         }
+        case "Boundary":
+            throw new Error("Word boundaries can only be matched, not generated");
         case "Quantifier": {
-            const n = Math.floor(rng() * (1 + e.max - e.min) + e.min)
+            const n =Math.floor(rng() * (1 + e.max - e.min) + e.min)
             let s = ""
             for (let i = 0; i < n; i++) {
                 s += generateExpr(g, e.expr, rng, matches)
@@ -114,7 +116,7 @@ const rewritePass = (g: Grammar, rule: Rule, gen: string, rng: Rng): string => {
         let i = 0
         while (i < result.length) {
             const s = result.slice(i);
-            const exprMatch = matchNonEmpty(g, match, s);
+            const exprMatch = matchNonEmpty(g, match, result, i);
             if (exprMatch === null) {
                 i++
                 continue

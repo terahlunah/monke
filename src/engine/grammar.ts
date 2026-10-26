@@ -20,6 +20,8 @@ export type Expr =
     | { tag: 'Seq', items: Expr[] }
     | { tag: 'Choice', items: WeightedExpr[] }
     | { tag: 'Quantifier', expr: Expr, min: number, max: number }
+    // Zero-width edge of the text being matched (a rule's output); only valid in rewrite matches and exclusions.
+    | { tag: 'Boundary', edge: 'start' | 'end' }
 
 export type WeightedExpr = {
     expr: Expr
@@ -31,7 +33,8 @@ export type WeightedExpr = {
 export const makeAtom = (value: string): Expr => ({tag: "Atom", value});
 export const makeRef = (rule: string): Expr => ({tag: "Ref", rule});
 export const makeMatch = (index: number): Expr => ({tag: "Match", index});
-export const makeSeq = (items: Expr[]): Expr => ({tag: "Seq", items});
+export const makeBoundary = (edge: 'start' | 'end'): Expr => ({tag: "Boundary", edge});
+export const makeSeq =(items: Expr[]): Expr => ({tag: "Seq", items});
 
 export const makeWeighted = (expr: Expr, weight: number | null): WeightedExpr => ({expr: expr, weight: weight ?? 1.0})
 export const makeChoice = (items: Expr[]): Expr => ({tag: "Choice", items: items.map(e => makeWeighted(e, null))});
@@ -60,6 +63,7 @@ const getExprEdges = (e: Expr): string[] => {
     switch (e.tag) {
         case "Atom":
         case "Match":
+        case "Boundary":
             return [];
         case "Ref":
             return [e.rule];
@@ -99,6 +103,21 @@ const maxMatchIndex = (e: Expr): number => {
             return maxMatchIndex(e.expr)
         default:
             return -1
+    }
+}
+
+export const containsBoundary = (e: Expr): boolean => {
+    switch (e.tag) {
+        case "Boundary":
+            return true
+        case "Seq":
+            return e.items.some(containsBoundary)
+        case "Choice":
+            return e.items.some(o => containsBoundary(o.expr))
+        case "Quantifier":
+            return containsBoundary(e.expr)
+        default:
+            return false
     }
 }
 

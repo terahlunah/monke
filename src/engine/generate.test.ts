@@ -186,6 +186,52 @@ describe("generate", () => {
         expect(generate(g)).toBe("aaaa")
     })
 
+    describe("word boundaries", () => {
+        const withRewrite = (pattern: string, match: string, replace: string) => makeGrammar("R", [makeRule("R", [pattern], {
+            showRewrites: true,
+            rewrites: [{id: "w", match, replace}],
+        }), makeRule("V", ["'a' / 'o'"])])
+
+        it("rewrites only at the start of the output", () => {
+            expect(generate(withRewrite("'ŋaŋa'", "^.'ŋ'", "'n'"))).toBe("naŋa")
+        })
+
+        it("rewrites only at the end of the output", () => {
+            expect(generate(withRewrite("'haha'", "'a'.$", "'e'"))).toBe("hahe")
+        })
+
+        it("counts a boundary as an empty back-reference part", () => {
+            expect(generate(withRewrite("'ŋoŋa'", "^.'ŋ'.V", "'n'.#2#.#0#"))).toBe("noŋa")
+        })
+
+        it("does not match a lone boundary, since it is empty", () => {
+            expect(generate(withRewrite("'ab'", "$", "'x'"))).toBe("ab")
+        })
+
+        const exclusionOn = (exclusion: string) => {
+            const g = makeGrammar("R", [makeRule("R", ["''"], {
+                showExclusions: true,
+                exclusions: [{id: "e", match: exclusion}],
+            })])
+            return (text: string) => matchesExclusion(g, g.ruleMap.get("R")!, text)
+        }
+
+        it("excludes only at the edges", () => {
+            const final = exclusionOn("'h'.$")
+            expect([final("bah"), final("bha"), final("h")]).toEqual([true, false, true])
+            const initial = exclusionOn("^.'h'")
+            expect([initial("hab"), initial("bha")]).toEqual([true, false])
+        })
+
+        it("refers to the edges of the rule's own output, not of the whole word", () => {
+            const g = makeGrammar("Word", [
+                makeRule("Word", ["Syl.Syl"]),
+                makeRule("Syl", ["'ka' / 'ha'"], {showExclusions: true, exclusions: [{id: "e", match: "^.'h'"}]}),
+            ])
+            expect(new Set(sample(g))).toEqual(new Set(["kaka"]))
+        })
+    })
+
     describe("repeated rewrites", () => {
         // Rewrite 2 creates an 'np' that rewrite 1 only sees on a later pass.
         const feeding = (repeatRewrites: boolean) => makeGrammar("R", [makeRule("R", ["'anepa'"], {

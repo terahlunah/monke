@@ -22,6 +22,7 @@ const sections = [
     {id: "reference-weights", title: "Weights"},
     {id: "reference-rewrites", title: "Rewrites"},
     {id: "reference-exclusions", title: "Exclusions"},
+    {id: "reference-boundaries", title: "Word boundaries"},
     {id: "reference-output", title: "Generating, sharing and undo"},
     {id: "reference-reordering", title: "Reordering and keyboard"},
     {id: "reference-recipes", title: "Recipes"},
@@ -147,6 +148,13 @@ export const Reference = () => {
                                                     className="text-primary-text underline">Rewrites</a>.</td>
                             <td className="py-2"><Code>#1#.#0#</Code></td>
                         </tr>
+                        <tr className="align-top">
+                            <th scope="row" className="py-2 pr-3 font-normal"><Code>^</Code> and <Code>$</Code></th>
+                            <td className="py-2 pr-3">Start and end of the rule's output. Only in rewrite matches and
+                                exclusions; see <a href="#reference-boundaries" onClick={e => jumpTo(e, "reference-boundaries")}
+                                                  className="text-primary-text underline">Word boundaries</a>.</td>
+                            <td className="py-2"><Code>{"'h'.$"}</Code></td>
+                        </tr>
                         </tbody>
                     </table>
 
@@ -260,8 +268,29 @@ export const Reference = () => {
                         ))}
                         </tbody>
                     </table>
-                    <p>To limit an exclusion to part of a word, put that part in its own rule and add the exclusion there.
-                        See the recipes below.</p>
+                    <p>To limit an exclusion to the start or end of a word, use <a href="#reference-boundaries"
+                        onClick={e => jumpTo(e, "reference-boundaries")} className="text-primary-text underline">word
+                        boundaries</a>. To limit it to another part of a word, put that part in its own rule and add the
+                        exclusion there. See the recipes below.</p>
+                </Section>
+
+                <Section id="reference-boundaries">
+                    <p>In a rewrite match or an exclusion, <Code>^</Code> matches the start and <Code>$</Code> the end.
+                        They match a position, not a letter, so <Code>{"'h'.$"}</Code> matches an h only when it is
+                        last.</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        <li>The start and end are those of the output being checked: the output of the rule the rewrite or
+                            exclusion belongs to. On the start rule, that is the whole word. On a <Code>Syllable</Code> rule,
+                            <Code>^</Code> is the start of each syllable.</li>
+                        <li>With several rewrites, the edges are those of the output as it is when that rewrite runs.</li>
+                        <li>A boundary counts as a part for back-references, an empty one: in <Code>{"^.'ŋ'.V"}</Code>,
+                            <Code>#0#</Code> is empty, <Code>#1#</Code> is ŋ and <Code>#2#</Code> is the vowel.</li>
+                        <li>A boundary alone matches nothing, since a match must contain at least one character.</li>
+                        <li>Boundaries can't be generated, so they are an error in a rule's patterns and in rewrite
+                            replacements. In terminal rules, <Code>^</Code> and <Code>$</Code> are plain text.</li>
+                    </ul>
+                    <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "edges")!}
+                                 summary={recipes.find(r => r.id === "edges")!.summary}/>
                 </Section>
 
                 <Section id="reference-output">
@@ -310,7 +339,7 @@ export const Reference = () => {
 
                 <Section id="reference-recipes">
                     <p>Each recipe is a complete grammar. <b>Try it</b> opens it in a new tab, so your current grammar is untouched.</p>
-                    {recipes.filter(r => r.id !== "weighted" && r.id !== "awkwords").map(r =>
+                    {recipes.filter(r => !["weighted", "awkwords", "edges"].includes(r.id)).map(r =>
                         <ExampleCard hrefs={hrefs} key={r.id} example={r} summary={r.summary}/>)}
                 </Section>
 
