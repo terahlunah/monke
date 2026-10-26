@@ -77,11 +77,11 @@ export const RuleInstance = ({
                                 <>
                                     <div className="w-0.5 h-8 bg-white/10"/>
                                     <Row className="gap-2 items-center">
-                                        <ToggleLabel label="Rw" accessibleName={`Rewrites (Rw) of rule ${rule.name}`} checked={rule.showRewrites}
+                                        <ToggleLabel label="Rw" accessibleName={`Rw, rewrites of rule ${rule.name}`} checked={rule.showRewrites}
                                                      onChange={show => dispatch({type: "setShowRewrites", ruleId, show})}
                                                      enabledColor="bg-accent-warning"
                                                      disabledColor="bg-accent-warning/20"/>
-                                        <ToggleLabel label="Ex" accessibleName={`Exclusions (Ex) of rule ${rule.name}`} checked={rule.showExclusions}
+                                        <ToggleLabel label="Ex" accessibleName={`Ex, exclusions of rule ${rule.name}`} checked={rule.showExclusions}
                                                      onChange={show => dispatch({type: "setShowExclusions", ruleId, show})}
                                                      enabledColor="bg-accent-caution"
                                                      disabledColor="bg-accent-caution/20"/>

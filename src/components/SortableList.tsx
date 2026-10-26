@@ -61,7 +61,8 @@ export const SortableList = <T extends { id: string }>({items, onMove, direction
 
     const announcements: Announcements = {
         onDragStart: ({active}) => `Picked up ${name(active.id)}, ${position(active.id)}.`,
-        onDragOver: ({active, over}) => over ? `${capitalize(name(active.id))} is over ${position(over.id)}.` : undefined,
+        // Skip the initial over-self event so it doesn't replace the pick-up announcement.
+        onDragOver: ({active, over}) => over && over.id !== active.id ? `${capitalize(name(active.id))} is over ${position(over.id)}.` : undefined,
         onDragEnd: ({active, over}) => over && over.id !== active.id ?
             `${capitalize(name(active.id))} moved to ${position(over.id)}.` :
             `${capitalize(name(active.id))} dropped, still at ${position(active.id)}.`,

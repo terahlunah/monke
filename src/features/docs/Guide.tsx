@@ -7,7 +7,8 @@ import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 export const Guide = () => {
 
     return (
-        <Col className="bg-background grow p-8 gap-2 md:overflow-auto md:no-scrollbar pb-64">
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard users must be able to scroll this region, and it has no focusable content of its own
+        <div tabIndex={0} className="flex flex-col bg-background grow p-8 gap-2 md:overflow-auto md:no-scrollbar pb-64">
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
                 <h2 className="font-bold text-xl">Grammar</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
@@ -267,7 +268,7 @@ export const Guide = () => {
             <Row className="gap-4">
                 <GuidePattern value="'a'" weight="0"/>
             </Row>
-        </Col>
+        </div>
     )
 }
 

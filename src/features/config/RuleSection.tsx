@@ -133,7 +133,7 @@ export const RulePatternItem = ({
                                     minWidth={15}/>
                     {enableWeight ? (
                         <AutowidthInput value={weightValue}
-                                        aria-label={`Weight of ${label.toLowerCase()}`}
+                                        aria-label={`Weight of ${lowerFirst(label)}`}
                                         onInput={onWeightInput}
                                         onBlur={onWeightBlur}
                                         className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}

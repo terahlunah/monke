@@ -200,7 +200,7 @@ describe("toggles", () => {
     it("exposes the rewrites toggle as a pressed button", async () => {
         const user = userEvent.setup()
         await renderApp()
-        const rw = screen.getByRole("button", {name: "Rewrites (Rw) of rule Syllable"})
+        const rw = screen.getByRole("button", {name: "Rw, rewrites of rule Syllable"})
         expect(rw).toHaveAttribute("aria-pressed", "false")
 
         await user.click(rw)
