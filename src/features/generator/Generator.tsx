@@ -1,15 +1,15 @@
-import {Col} from "../components/Col.tsx";
-import {SwitchLabel} from "../components/SwitchLabel.tsx";
-import {Row} from "../components/Row.tsx";
+import {Col} from "@/components/Col.tsx";
+import {SwitchLabel} from "@/components/SwitchLabel.tsx";
+import {Row} from "@/components/Row.tsx";
 import {ClipboardListIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
 import {ChangeEvent, Dispatch, FormEvent, useMemo, useRef, useState} from "react";
-import {generate} from "../engine/generate.ts";
-import {countCombinations, detectCycle} from "../engine/analysis.ts";
-import {Config} from "../engine/config.ts";
-import {ConfigAction} from "../engine/configReducer.ts";
+import {generate} from "@/engine/generate.ts";
+import {countCombinations, detectCycle} from "@/engine/analysis.ts";
+import {Config} from "@/engine/config.ts";
+import {ConfigAction} from "@/engine/configReducer.ts";
 import {toast} from "react-toastify";
-import {Grammar} from "../engine/grammar.ts";
-import {parseConfigFile} from "../engine/configfile.ts";
+import {Grammar} from "@/engine/grammar.ts";
+import {parseConfigFile} from "@/engine/configfile.ts";
 
 const MAX_WORD_COUNT = 10000
 

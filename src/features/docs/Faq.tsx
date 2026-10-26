@@ -1,5 +1,5 @@
-import {Col} from "../components/Col.tsx";
-import {GenericProps} from "../components/GenericProps.tsx";
+import {Col} from "@/components/Col.tsx";
+import {GenericProps} from "@/components/GenericProps.tsx";
 
 export const Faq = () => {
 

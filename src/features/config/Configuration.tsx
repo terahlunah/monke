@@ -1,9 +1,9 @@
-import {Col} from "../components/Col.tsx";
+import {Col} from "@/components/Col.tsx";
 import {RuleInstance} from "./RuleInstance.tsx";
-import {Row} from "../components/Row.tsx";
-import {SortableList} from "../components/SortableList.tsx";
-import {Config} from "../engine/config.ts";
-import {ConfigAction} from "../engine/configReducer.ts";
+import {Row} from "@/components/Row.tsx";
+import {SortableList} from "@/components/SortableList.tsx";
+import {Config} from "@/engine/config.ts";
+import {ConfigAction} from "@/engine/configReducer.ts";
 import {Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions} from "@headlessui/react";
 import {Dispatch, FormEvent} from "react";
 import {CheckIcon, ChevronsUpDownIcon} from "lucide-react";

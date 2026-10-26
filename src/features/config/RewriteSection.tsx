@@ -1,10 +1,10 @@
 import {ChangeEvent, Dispatch} from "react";
-import {Row} from "../components/Row.tsx";
+import {Row} from "@/components/Row.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
-import {RewritePattern, Rule} from "../engine/config.ts";
-import {ConfigAction} from "../engine/configReducer.ts";
-import {SortableList, SortableRow} from "../components/SortableList.tsx";
+import {RewritePattern, Rule} from "@/engine/config.ts";
+import {ConfigAction} from "@/engine/configReducer.ts";
+import {SortableList, SortableRow} from "@/components/SortableList.tsx";
 
 
 export type RewriteSectionProps = {

@@ -1,8 +1,8 @@
-import {Col} from "../components/Col.tsx";
+import {Col} from "@/components/Col.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
-import {Row} from "../components/Row.tsx";
+import {Row} from "@/components/Row.tsx";
 import AutowidthInput from "react-autowidth-input";
-import {SwitchLabel} from "../components/SwitchLabel.tsx";
+import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 
 export const Guide = () => {
 

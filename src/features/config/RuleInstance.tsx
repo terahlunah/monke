@@ -1,12 +1,12 @@
-import {Row} from "../components/Row.tsx";
+import {Row} from "@/components/Row.tsx";
 import {ChevronDownIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {Dispatch, FormEvent} from "react";
-import {Col} from "../components/Col.tsx";
-import {ToggleLabel} from "../components/ToggleLabel.tsx";
-import {SortableRow} from "../components/SortableList.tsx";
-import {Rule} from "../engine/config.ts";
-import {ConfigAction} from "../engine/configReducer.ts";
+import {Col} from "@/components/Col.tsx";
+import {ToggleLabel} from "@/components/ToggleLabel.tsx";
+import {SortableRow} from "@/components/SortableList.tsx";
+import {Rule} from "@/engine/config.ts";
+import {ConfigAction} from "@/engine/configReducer.ts";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";

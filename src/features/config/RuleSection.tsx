@@ -1,10 +1,10 @@
 import {Dispatch, FormEvent, useState} from "react";
-import {Row} from "../components/Row.tsx";
+import {Row} from "@/components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
-import {Rule, RulePattern} from "../engine/config.ts";
-import {ConfigAction} from "../engine/configReducer.ts";
-import {SortableList, SortableRow} from "../components/SortableList.tsx";
+import {Rule, RulePattern} from "@/engine/config.ts";
+import {ConfigAction} from "@/engine/configReducer.ts";
+import {SortableList, SortableRow} from "@/components/SortableList.tsx";
 
 
 export type RuleSectionProps = {
