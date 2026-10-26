@@ -23,6 +23,7 @@
     --color-primary: #1d7f7c;
     --color-primary-text: #7fd3cf;
     --color-primary-soft: #24333a;
+    --color-primary-hover: #186b69;
 
     /* One hue per kind of thing, never reused for another: terminals sky, patterns violet, rewrites amber,
        exclusions orchid, features lime, deletion red. */

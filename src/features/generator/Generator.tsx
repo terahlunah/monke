@@ -1,8 +1,8 @@
 
 import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 import {Row} from "@/components/Row.tsx";
-import {ClipboardListIcon, DicesIcon, DownloadIcon, LinkIcon, LoaderCircleIcon, UploadIcon} from "lucide-react";
-import {ChangeEvent, Dispatch, FormEvent, useEffect, useMemo, useRef, useState} from "react";
+import {ClipboardListIcon, DicesIcon, LoaderCircleIcon} from "lucide-react";
+import {Dispatch, FormEvent, useEffect, useMemo, useRef, useState} from "react";
 import {randomSeed} from "@/engine/seed.ts";
 import {drawAsync} from "./drawAsync.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
@@ -10,14 +10,11 @@ import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {toast} from "react-toastify";
 import {Grammar} from "@/engine/grammar.ts";
-import {parseConfigFile} from "@/engine/configfile.ts";
 import {setAlwaysShowReorder, useAlwaysShowReorder} from "@/components/reorderPref.ts";
 import {GRAMMAR_ERROR_ID} from "@/features/config/grammarError.ts";
-import {AwkwordsImport} from "./AwkwordsImport.tsx";
-import {AwkwordsImport as AwkwordsResult, AwkwordsWarning} from "@/engine/awkwords.ts";
+import {clampWordCount, GeneratorView} from "./useGeneratorView.ts";
 import {listAll} from "./listAll.ts";
 
-const MAX_WORD_COUNT = 10000
 // Above this many branches, listing would spend its whole work budget and still show only a sliver of the words.
 const LIST_ALL_MAX_BRANCHES = 1_000_000
 const LIST_ALL_HINT_ID = "list-all-hint"
@@ -42,26 +39,19 @@ const summarize = (words: string[], filterDuplicates: boolean): string => {
 }
 
 
-// Word counts are whole numbers in 1..MAX_WORD_COUNT; anything unparsable falls back to a small default.
-const clampWordCount = (value: string): number => {
-    const n = Math.trunc(Number(value))
-    if (value.trim() === "" || Number.isNaN(n)) return 10
-    return Math.min(Math.max(n, 1), MAX_WORD_COUNT)
-}
-
 type GeneratorProps = {
     config: Config
     grammar: Grammar | null
     error: string | null
     dispatch: Dispatch<ConfigAction>
+    view: GeneratorView
 }
 
-export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) => {
+export const Generator = ({config, grammar, error, dispatch, view}: GeneratorProps) => {
 
     const [generatedWords, setGeneratedWords] = useState<string[]>([])
-    const [wordCount, setWordCount] = useState("50")
-    const [outputList, setOutputList] = useState(false)
-    const [filterDuplicates, setFilterDuplicates] = useState(false)
+    const {wordCount, setWordCount, outputStyle, filterDuplicates, setFilterDuplicates, importNotes, setImportNotes} = view
+    const outputList = outputStyle === "list"
     // Redraw failures are shown but not put in an alert: they would interrupt on every keystroke.
     const [generationError, setGenerationError] = useState<{ message: string, live: boolean } | null>(null)
     // Announced politely after "New words" and "Generate all". The result is deliberately not read out: it can be thousands of words,
@@ -69,38 +59,7 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     const [announcement, setAnnouncement] = useState({text: "", run: 0})
 
 
-
-    // Kept until dismissed: a toast would vanish before a long list can be read.
-    const [importNotes, setImportNotes] = useState<AwkwordsWarning[]>([])
-
     const alwaysShowReorder = useAlwaysShowReorder()
-
-    const onAwkwordsImported = (result: AwkwordsResult) => {
-        dispatch({type: "load", config: result.config})
-        if (result.wordCount !== undefined) setWordCount(String(clampWordCount(String(result.wordCount))))
-        if (result.filterDuplicates !== undefined) setFilterDuplicates(result.filterDuplicates)
-        if (result.listOutput !== undefined) setOutputList(result.listOutput)
-        setImportNotes(result.warnings)
-        const n = result.warnings.length
-        const rules = `${result.config.rules.length} ${result.config.rules.length === 1 ? "rule" : "rules"}`
-        toast(n === 0 ? `Awkwords imported: ${rules}` : `Awkwords imported: ${rules}, ${n} ${n === 1 ? "note" : "notes"} to review`)
-    }
-
-    const fileInput = useRef<HTMLInputElement>(null)
-
-    const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0]
-        // Reset so picking the same file again still fires a change event.
-        e.target.value = ""
-        if (!file) return
-
-        try {
-            dispatch({type: "load", config: parseConfigFile(await file.text())})
-            toast("Config imported")
-        } catch (err) {
-            toast.error(err instanceof Error ? err.message : "Failed to import config")
-        }
-    }
 
     const filteredWords = useMemo(
         () => {
@@ -235,46 +194,19 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
         toast("Words copied to clipboard!")
     }
 
-    const onExport = async () => {
-        const data = JSON.stringify(config, null, 4)
-        const name = config.language.length != 0 ? config.language.replace(" ", "_") : "config"
-        const url = URL.createObjectURL(new Blob([data], {type: "text/plain;charset=utf-8"}))
-        const link = document.createElement("a")
-        link.href = url
-        link.download = `${name}.monke`
-        link.click()
-        // Revoking synchronously can cancel the download in some browsers.
-        setTimeout(() => URL.revokeObjectURL(url), 0)
-    }
-
-    const onImport = () => {
-        fileInput.current?.click()
-    }
-
-    const onCopyLink = async () => {
-        await navigator.clipboard.writeText(window.location.href)
-        toast("Link copied to clipboard!")
-    }
-
     return (
         <section id="generator" aria-labelledby="generator-heading" tabIndex={-1}
-                 className="flex flex-col grow bg-background md:w-1/2 p-6 gap-4 md:overflow-auto md:no-scrollbar md:border-l-8 border-l-surface outline-none">
+                 className="flex flex-col bg-surface p-4 md:p-6 gap-4 md:basis-0 md:grow md:overflow-auto md:no-scrollbar md:border-l border-line outline-none">
             <h2 id="generator-heading" className="sr-only">Generator</h2>
 
 
-            <SwitchLabel checked={config.enableWeights} onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
-                         label="Enable probability weights"
-                         enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
-            <SwitchLabel checked={config.repeatRewrites} onChange={enabled => dispatch({type: "setRepeatRewrites", enabled})}
-                         label="Repeat rewrites until nothing changes"
-                         enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
             <SwitchLabel checked={config.enableSerif} onChange={enabled => dispatch({type: "setEnableSerif", enabled})}
                          label="Enable serifs (For IPA characters readability)"
                          enabledColor="bg-primary" disabledColor="bg-primary/30"/>
             <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}
                          label="Filter Duplicates"
                          enabledColor="bg-accent-caution" disabledColor="bg-accent-caution/30"/>
-            <SwitchLabel checked={outputList} onChange={setOutputList}
+            <SwitchLabel checked={outputList} onChange={on => view.setOutputStyle(on ? "list" : "paragraph")}
                          label="Output as list"
                          enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
             <SwitchLabel checked={alwaysShowReorder} onChange={setAlwaysShowReorder}
@@ -282,30 +214,6 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                          enabledColor="bg-accent-danger" disabledColor="bg-accent-danger/30"/>
 
             <div className="border-t border-white/20"/>
-
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-                <button className="grow bg-secondary rounded-sm p-2" onClick={onCopyLink} aria-label="Share link">
-                    <Row className="items-center justify-center gap-2">
-                        <span>Share link</span>
-                        <LinkIcon className="size-5"/>
-                    </Row>
-                </button>
-                <button className="grow bg-secondary rounded-sm p-2" onClick={onExport} aria-label="Export config">
-                    <Row className="items-center justify-center gap-2">
-                        <span>Export Config</span>
-                        <UploadIcon className="size-5"/>
-                    </Row>
-                </button>
-                <button className="grow bg-secondary rounded-sm p-2" onClick={onImport} aria-label="Import config">
-                    <Row className="items-center justify-center gap-2">
-                        <span>Import Config</span>
-                        <DownloadIcon className="size-5"/>
-                    </Row>
-                </button>
-                <input ref={fileInput} type="file" accept=".monke" className="hidden" onChange={onFileSelected}
-                       aria-hidden="true" tabIndex={-1}/>
-                <AwkwordsImport onImported={onAwkwordsImported}/>
-            </div>
 
             {importNotes.length !== 0 ?
                 <section aria-labelledby="awkwords-notes-heading"

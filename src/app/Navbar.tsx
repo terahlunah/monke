@@ -1,4 +1,4 @@
-import {Fragment, useEffect, useId, useRef, useState} from "react";
+import {useEffect, useId, useRef, useState} from "react";
 import {MenuIcon} from "lucide-react";
 import {GithubIcon} from "@/components/GithubIcon.tsx";
 import {useMediaQuery} from "./useMediaQuery.ts";
@@ -19,39 +19,34 @@ export const Navbar = (props: NavbarProps) => {
 }
 
 const DesktopNavbar = ({tab, setTab}: NavbarProps) => {
-    const tabStyle = (t: Tab): string => t === tab ? "bg-primary/40 text-xl rounded-sm p-1 px-2" : "text-white text-xl p-1 px-2"
+    const tabStyle = (t: Tab): string =>
+        `rounded-md px-3 py-1.5 ${t === tab ? "bg-primary-soft text-primary-text font-semibold" : "text-on-surface hover:bg-white/5"}`
 
     return (
-        <header className="flex flex-row gap-4 items-center justify-between mx-2">
-            <div className="flex flex-row gap-4 p-2 items-center justify-start">
+        <header className="flex flex-row items-center gap-6 px-6 h-14 shrink-0 border-b border-line bg-surface">
+            <div className="flex flex-row items-baseline gap-3">
                 <h1 className="text-xl font-bold">Monke</h1>
-                <div className="border-l border-white/20 h-8"/>
-                <p className="text-lg text-on-surface/80">A grammar based word generator</p>
+                <p className="text-muted">Grammar-based word generator</p>
             </div>
-            <nav aria-label="Main" className="flex flex-row gap-4 p-2 items-center justify-center">
-                {tabs.map((t, i) => (
-                    <Fragment key={t.id}>
-                        {i > 0 ? <div className="border-l border-white/20 h-8" aria-hidden="true"/> : null}
-                        <button className={tabStyle(t.id)} aria-current={t.id === tab ? "page" : undefined}
-                                onClick={() => setTab(t.id)}>{t.label}</button>
-                    </Fragment>
+            <nav aria-label="Main" className="flex flex-row gap-1 ml-6">
+                {tabs.map(t => (
+                    <button key={t.id} className={tabStyle(t.id)} aria-current={t.id === tab ? "page" : undefined}
+                            onClick={() => setTab(t.id)}>{t.label}</button>
                 ))}
             </nav>
-            <div className="flex flex-row gap-4 p-2 items-center w-1/3 justify-end">
-                <p className="text-lg text-on-surface/80">Made by Terah</p>
-                <div className="border-l border-white/20 h-8"/>
-                <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener"
-                   aria-label="GitHub repository (opens in a new tab)">
-                    <GithubIcon className="size-8"/>
-                </a>
-            </div>
+            <div className="grow"/>
+            <p className="text-muted">Made by Terah</p>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" className="flex rounded-md hover:text-primary-text"
+               aria-label="GitHub repository (opens in a new tab)">
+                <GithubIcon className="size-6"/>
+            </a>
         </header>)
 }
 
 // A disclosure rather than an ARIA menu: these are page links, and role=menu makes screen readers switch to
 // application mode and expect arrow-key navigation. Plain buttons in a list are navigated with Tab like the rest of the page.
 const MobileNavbar = ({tab, setTab}: NavbarProps) => {
-    const tabStyle = (t: Tab): string => t === tab ? "text-primary-text text-left" : "text-white text-left"
+    const tabStyle = (t: Tab): string => t === tab ? "text-primary-text text-left" : "text-on-surface text-left"
     const [open, setOpen] = useState(false)
     const nav = useRef<HTMLElement>(null)
     const toggle = useRef<HTMLButtonElement>(null)
@@ -76,25 +71,21 @@ const MobileNavbar = ({tab, setTab}: NavbarProps) => {
     }, [open])
 
     return (
-        <header className="gap-4 p-2 items-center flex flex-row justify-between">
-            <div className="ml-2 flex flex-row gap-4 p-2 items-center justify-start">
-                <h1 className="text-xl font-bold">Monke</h1>
-                <div className="border-l border-white/20 h-8"/>
-                <p className="text-lg text-on-surface/80">Word generator</p>
-            </div>
+        <header className="flex flex-row items-center justify-between gap-3 px-4 h-[52px] shrink-0 border-b border-line bg-surface">
+            <h1 className="text-lg font-bold">Monke</h1>
 
-            <nav ref={nav} aria-label="Main" className="py-4 mr-2 relative"
+            <nav ref={nav} aria-label="Main" className="relative"
                  // Closes when focus leaves the menu, so a keyboard user tabbing past it doesn't leave it open.
                  onBlur={e => {
                      if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false)
                  }}>
-                <button ref={toggle} aria-label="Menu" aria-expanded={open} aria-controls={panelId}
+                <button ref={toggle} aria-label="Menu" aria-expanded={open} aria-controls={panelId} className="flex size-11 items-center justify-center rounded-md -mr-2.5 hover:bg-white/5"
                         onClick={() => setOpen(!open)}>
                     <MenuIcon className="size-6"/>
                 </button>
                 {open ? (
                     <ul id={panelId}
-                        className="z-20 absolute right-0 top-12 flex flex-col shadow-sm bg-background rounded-sm overflow-hidden divide-y divide-white/20">
+                        className="z-20 absolute right-0 top-12 flex flex-col shadow-lg border border-line-strong bg-surface rounded-lg overflow-hidden divide-y divide-line min-w-40">
                         <li className="flex flex-col">
                             <ul className="flex flex-col gap-4 p-4">
                                 {tabs.map(t => (

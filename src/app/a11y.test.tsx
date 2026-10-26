@@ -3,6 +3,7 @@ import {render, screen} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import axe from "axe-core"
 import {Home} from "./Home.tsx"
+import {openAwkwordsDialog} from "./test-helpers.ts"
 
 // jsdom has no layout or styles, so contrast can't be computed; it is checked in a real browser instead.
 const check = async (container: Element) => {
@@ -50,7 +51,7 @@ describe("accessibility (axe)", () => {
     it("Awkwords import dialog with an error", async () => {
         const user = userEvent.setup()
         await renderApp()
-        await user.click(screen.getByRole("button", {name: "Import Awkwords"}))
+        await openAwkwordsDialog(user)
         await user.type(await screen.findByLabelText("Awkwords pattern or file contents"), "a)")
         await user.click(screen.getByRole("button", {name: "Import"}))
         await screen.findByRole("alert")
@@ -60,7 +61,7 @@ describe("accessibility (axe)", () => {
     it("generator view with Awkwords import notes", async () => {
         const user = userEvent.setup()
         const {container} = await renderApp()
-        await user.click(screen.getByRole("button", {name: "Import Awkwords"}))
+        await openAwkwordsDialog(user)
         await user.type(await screen.findByLabelText("Awkwords pattern or file contents"), "CV^a/C")
         await user.click(screen.getByRole("button", {name: "Import"}))
         await screen.findByRole("region", {name: "Awkwords import notes"})

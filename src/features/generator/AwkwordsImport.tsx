@@ -1,23 +1,23 @@
 import {ChangeEvent, FormEvent, useId, useRef, useState} from "react"
 import {Description, Dialog, DialogPanel, DialogTitle} from "@headlessui/react"
-import {FileUpIcon} from "lucide-react"
 import {Row} from "@/components/Row.tsx"
 import {AwkwordsImport as ImportResult, importAwkwords} from "@/engine/awkwords.ts"
 
 type Props = {
+    open: boolean
+    onClose: () => void
     onImported: (result: ImportResult) => void
 }
 
-// Headless UI's Dialog traps focus, closes on Escape and returns focus to the trigger.
-export const AwkwordsImport = ({onImported}: Props) => {
-    const [open, setOpen] = useState(false)
+// Headless UI's Dialog traps focus and closes on Escape. The owner of `open` returns focus to its trigger.
+export const AwkwordsImport = ({open, onClose, onImported}: Props) => {
     const [text, setText] = useState("")
     const [error, setError] = useState<string | null>(null)
     const fileInput = useRef<HTMLInputElement>(null)
     const errorId = useId()
 
     const close = () => {
-        setOpen(false)
+        onClose()
         setError(null)
     }
 
@@ -47,18 +47,12 @@ export const AwkwordsImport = ({onImported}: Props) => {
     }
 
     return <>
-        <button className="grow bg-secondary rounded-sm p-2" onClick={() => setOpen(true)}>
-            <Row className="items-center justify-center gap-2">
-                <span>Import Awkwords</span>
-                <FileUpIcon className="size-5" aria-hidden="true"/>
-            </Row>
-        </button>
         <Dialog open={open} onClose={close} className="relative z-50">
             <div className="fixed inset-0 bg-black/60" aria-hidden="true"/>
             <div className="fixed inset-0 flex items-center justify-center p-4">
-                <DialogPanel className="flex flex-col gap-4 w-full max-w-xl max-h-full overflow-auto rounded-sm bg-surface border border-white/15 shadow-lg p-6">
+                <DialogPanel className="flex flex-col gap-4 w-full max-w-xl max-h-full overflow-auto rounded-sm bg-surface border border-line-strong shadow-lg p-6">
                     <DialogTitle className="font-bold text-xl">Import from Awkwords</DialogTitle>
-                    <Description className="text-gray-300">
+                    <Description className="text-muted">
                         Choose an .awkw file saved by Awkwords, or paste a pattern such as <code>[VV]t[VV]^aa^ii^uu</code>.
                         To paste subpatterns too, write one per line as in a saved file: <code>V:a/i/u</code> then <code>r:CV</code>.
                         This replaces the current grammar; Back undoes it.
@@ -80,10 +74,10 @@ export const AwkwordsImport = ({onImported}: Props) => {
                                   aria-invalid={error ? true : undefined}
                                   aria-describedby={error ? errorId : undefined}
                                   className="font-mono rounded-sm bg-background p-2 border border-white/20 focus-visible:outline-primary-text focus-visible:outline-2"/>
-                        {error ? <p id={errorId} role="alert" className="text-accent-danger-text">{error}</p> : null}
+                        {error ? <p id={errorId} role="alert" className="text-danger-text">{error}</p> : null}
                         <Row className="gap-4 justify-end mt-2">
                             <button type="button" className="rounded-sm p-2 px-4 border border-white/30 hover:bg-white/10" onClick={close}>Cancel</button>
-                            <button type="submit" className="rounded-sm p-2 px-4 bg-primary">Import</button>
+                            <button type="submit" className="rounded-sm p-2 px-4 bg-primary text-white">Import</button>
                         </Row>
                     </form>
                 </DialogPanel>
