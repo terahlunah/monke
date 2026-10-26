@@ -1,5 +1,5 @@
 import {Config, Rule as ConfigRule, RulePattern} from "./config.ts";
-import {containsBoundary, Expr, findInvalidMatchIndex, getRuleEdges, Grammar, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule} from "./grammar.ts";
+import {containsBoundary, Expr, findInvalidBackReference, findInvalidMatchIndex, getRuleEdges, Grammar, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule} from "./grammar.ts";
 import {parsePattern} from "./pattern.ts";
 
 // Locates a grammar problem in the config so the UI can flag the offending input: the pattern/rewrite/exclusion
@@ -62,9 +62,9 @@ const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
     const ruleExpr = rulePatternsToExpr(rule, rule.patterns)
 
     // Hidden sections are kept in the config but must not affect generation.
-    const exclusions = rule.showExclusions ? rule.exclusions.map(p => locate(rule.id, p.id, () => parsePattern(rule.name, p.match))) : []
+    const exclusions = rule.showExclusions ? rule.exclusions.map(p => locate(rule.id, p.id, () => parseMatchPattern(rule.name, p.match))) : []
     const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => {
-        const match = locate(rule.id, p.id, () => parsePattern(rule.name, p.match))
+        const match = locate(rule.id, p.id, () => parseMatchPattern(rule.name, p.match))
         const replace = locate(rule.id, p.id, () => noBoundary(rule.name, parsePattern(rule.name, p.replace)))
         const invalid = findInvalidMatchIndex(match, replace)
         if (invalid !== null) {
@@ -80,6 +80,15 @@ const terminalPatternsToExpr = (patterns: RulePattern[]): Expr =>
 
 const rulePatternsToExpr = (rule: ConfigRule, patterns: RulePattern[]): Expr =>
     makeWeightedChoice(patterns.map(p => makeWeighted(locate(rule.id, p.id, () => noBoundary(rule.name, parsePattern(rule.name, p.pattern))), p.weight)))
+
+const parseMatchPattern = (ruleName: string, src: string): Expr => {
+    const e = parsePattern(ruleName, src)
+    const invalid = findInvalidBackReference(e)
+    if (invalid !== null) {
+        throw new Error(`Match #${invalid}# must refer to an earlier part of the pattern (rule : '${ruleName}')`)
+    }
+    return e
+}
 
 // Boundaries only make sense when matching existing text, not when producing it.
 const noBoundary = (ruleName: string, e: Expr): Expr => {

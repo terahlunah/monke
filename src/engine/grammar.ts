@@ -106,7 +106,21 @@ const maxMatchIndex = (e: Expr): number => {
     }
 }
 
-export const containsBoundary = (e: Expr): boolean => {
+// In a match pattern, `#n#` repeats the text of part n of the top-level sequence, so it must sit in a later part.
+// Returns the first index that breaks this, or null.
+export const findInvalidBackReference = (pattern: Expr): number | null => {
+    if (pattern.tag !== "Seq") {
+        const max = maxMatchIndex(pattern)
+        return max >= 0 ? max : null
+    }
+    for (const [i, item] of pattern.items.entries()) {
+        const max = maxMatchIndex(item)
+        if (max >= i) return max
+    }
+    return null
+}
+
+export const containsBoundary =(e: Expr): boolean => {
     switch (e.tag) {
         case "Boundary":
             return true

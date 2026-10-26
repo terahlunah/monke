@@ -186,6 +186,39 @@ describe("generate", () => {
         expect(generate(g)).toBe("aaaa")
     })
 
+    describe("back-references in matches", () => {
+        const exclusionOn = (exclusion: string) => {
+            const g = makeGrammar("R", [makeRule("R", ["''"], {
+                showExclusions: true,
+                exclusions: [{id: "e", match: exclusion}],
+            }), makeRule("C", ["p", "t", "pt"], {terminalOnly: true}), makeRule("V", ["a", "i"], {terminalOnly: true})])
+            return (text: string) => matchesExclusion(g, g.ruleMap.get("R")!, text)
+        }
+
+        it("excludes a doubled consonant but not two different ones", () => {
+            const doubled = exclusionOn("C.#0#")
+            expect([doubled("appa"), doubled("atta"), doubled("apta"), doubled("ap")]).toEqual([true, true, false, false])
+        })
+
+        it("backtracks into the referenced part to find a repeat", () => {
+            // C first tries 'p', which is not repeated; only 'pt' followed by 'pt' matches.
+            expect(exclusionOn("C.#0#")("aptpt")).toBe(true)
+        })
+
+        it("refers to top-level parts from inside a group", () => {
+            const repeat = exclusionOn("C.V.[#0# / 'h']")
+            expect([repeat("papa"), repeat("pah"), repeat("pata")]).toEqual([true, true, false])
+        })
+
+        it("matches back-references in rewrite matches", () => {
+            const g = makeGrammar("R", [makeRule("R", ["'appatta'"], {
+                showRewrites: true,
+                rewrites: [{id: "w", match: "C.#0#", replace: "#0#"}],
+            }), makeRule("C", ["p", "t"], {terminalOnly: true})])
+            expect(generate(g)).toBe("apata")
+        })
+    })
+
     describe("word boundaries", () => {
         const withRewrite = (pattern: string, match: string, replace: string) => makeGrammar("R", [makeRule("R", [pattern], {
             showRewrites: true,

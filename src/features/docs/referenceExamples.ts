@@ -104,6 +104,10 @@ export const rewriteDemos: RewriteDemo[] = [
         note: "P counts as one part, whatever it contains: #0# is x, #1# is ab, #2# is c.",
         rules: [{name: "P", items: ["'a'.'b'"]}],
     },
+    {
+        rewrites: [["C.#0#", "#0#"]], input: "appatta", output: "apata", rules: [C],
+        note: "Degemination: in a match, #0# stands for the same text part 0 matched, so this finds doubled consonants.",
+    },
     {rewrites: [["^.'ŋ'", "'n'"]], input: "ŋaŋa", output: "naŋa", note: "^ matches only at the start, so only the first ŋ changes."},
     {rewrites: [["'h'.$", "''"]], input: "hah", output: "ha", note: "$ matches only at the end, so only the last h is dropped."},
     {
@@ -133,6 +137,8 @@ export const exclusionDemos: ExclusionDemo[] = [
     {exclusion: "'ti'", input: "tapi", rejected: false},
     {exclusion: "V.V", input: "kaio", rejected: true, rules: [V]},
     {exclusion: "V.V", input: "kalo", rejected: false, rules: [V]},
+    {exclusion: "C.#0#", input: "appa", rejected: true, rules: [C]},
+    {exclusion: "C.#0#", input: "apta", rejected: false, rules: [C]},
     {exclusion: "'h'.$", input: "bah", rejected: true},
     {exclusion: "'h'.$", input: "bha", rejected: false},
     {exclusion: "^.V", input: "aka", rejected: true, rules: [V]},
@@ -188,12 +194,12 @@ export const recipes: Recipe[] = [
     {
         id: "no-repeats",
         title: "Avoiding repeated consonants",
-        summary: "One exclusion with a choice rejects words like papa or tito.",
+        summary: "The exclusion C.V.#0# rejects words like papa or tito: #0# must be the same consonant C matched.",
         root: "Word",
         rules: [
             {name: "C", terminal: true, items: ["p", "t", "k", "m"]},
             V,
-            {name: "Word", items: ["[C.V]{2:3}"], exclusions: ["'p'.V.'p' / 't'.V.'t' / 'k'.V.'k' / 'm'.V.'m'"]},
+            {name: "Word", items: ["[C.V]{2:3}"], exclusions: ["C.V.#0#"]},
         ],
     },
     {

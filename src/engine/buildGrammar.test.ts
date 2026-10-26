@@ -99,6 +99,25 @@ describe("configToGrammar", () => {
         expect(() => configToGrammar(makeConfig("R", [makeRule("R", [pattern])]))).not.toThrow()
     })
 
+    it.each(["#0#.'a'", "'a'.#1#", "'a'.['b'.#1#]", "#0#", "'a' / #0#"])(
+        "rejects back-reference %s in an exclusion that does not refer to an earlier part", (match) => {
+            expect(() => configToGrammar(makeConfig("R", [
+                makeRule("R", ["'a'"], {showExclusions: true, exclusions: [{id: "e", match}]}),
+            ]))).toThrow(/Match #\d+# must refer to an earlier part of the pattern \(rule : 'R'\)/)
+        })
+
+    it("rejects a back-reference to a later part in a rewrite match", () => {
+        expect(() => configToGrammar(makeConfig("R", [
+            makeRule("R", ["'a'"], {showRewrites: true, rewrites: [{id: "w", match: "#1#.'a'", replace: "'b'"}]}),
+        ]))).toThrow(/must refer to an earlier part/)
+    })
+
+    it("accepts back-references to earlier parts in exclusions", () => {
+        expect(() => configToGrammar(makeConfig("R", [
+            makeRule("R", ["'a'"], {showExclusions: true, exclusions: [{id: "e", match: "'a'.'b'.[#0# / #1#]"}]}),
+        ]))).not.toThrow()
+    })
+
     it("rejects word boundaries in patterns and replacements, naming the rule", () => {
         const message = /only allowed in rewrite matches and exclusions \(rule : 'R'\)/
         expect(() => configToGrammar(makeConfig("R", [makeRule("R", ["^.'a'"])]))).toThrow(message)

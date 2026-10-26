@@ -143,8 +143,8 @@ export const Reference = () => {
                         ))}
                         <tr className="align-top">
                             <th scope="row" className="py-2 pr-3 font-normal"><Code>#n#</Code></th>
-                            <td className="py-2 pr-3">Back-reference to part n of a rewrite's match. Only in rewrite
-                                replacements; see <a href="#reference-rewrites" onClick={e => jumpTo(e, "reference-rewrites")}
+                            <td className="py-2 pr-3">Back-reference to part n of a match. In rewrite replacements it inserts
+                                that part; in rewrite matches and exclusions it matches the same text again. See <a href="#reference-rewrites" onClick={e => jumpTo(e, "reference-rewrites")}
                                                     className="text-primary-text underline">Rewrites</a>.</td>
                             <td className="py-2"><Code>#1#.#0#</Code></td>
                         </tr>
@@ -219,6 +219,11 @@ export const Reference = () => {
                         letters. A match that is a single quoted text is part <Code>#0#</Code>.</p>
                     <p>A reference to a part the match can't have, such as <Code>#2#</Code> for <Code>{"'a'.'b'"}</Code>, is an
                         error. When the number of parts depends on what matched, a missing part inserts nothing.</p>
+                    <p>In a match, and in an exclusion, <Code>#n#</Code> matches exactly the text that part n matched, so
+                        <Code>C.#0#</Code> finds pp or tt but not pt. Parts are counted the same way, and a back-reference
+                        must come after the part it refers to: <Code>#0#.C</Code> is an error. The parts it can refer to
+                        are those of the outer sequence, even from inside a group: in <Code>{"C.V.[#0# / 'h']"}</Code>,
+                        the last part is the first consonant again or an h.</p>
 
                     <Sub>Examples</Sub>
                     <ul className="flex flex-col gap-3">
@@ -245,6 +250,10 @@ export const Reference = () => {
                             output matches.</li>
                         <li>All alternatives of a choice and all outputs of a referenced rule are checked, so
                             <Code>V.V</Code> rejects any two vowels in a row.</li>
+                        <li><Code>#n#</Code> matches the same text as part n of the exclusion, so <Code>C.#0#</Code>
+                            rejects any doubled consonant. Parts are counted as in <a href="#reference-rewrites"
+                            onClick={e => jumpTo(e, "reference-rewrites")} className="text-primary-text underline">rewrite
+                            back-references</a>.</li>
                         <li>Exclusions check the output after the rule's rewrites.</li>
                         <li>A rejected output is generated again, only for that rule. After 100 rejections in a row,
                             generation stops with <b>Exclusion rules are too restrictive</b>.</li>
