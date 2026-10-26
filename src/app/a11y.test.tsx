@@ -6,8 +6,9 @@ import {Home} from "./Home.tsx"
 import {openAwkwordsDialog} from "./test-helpers.ts"
 
 // jsdom has no layout or styles, so contrast can't be computed; it is checked in a real browser instead.
-const check = async (container: Element) => {
-    const {violations} = await axe.run(container, {rules: {"color-contrast": {enabled: false}}})
+// An open menu is portaled to the end of the body, outside every landmark by design, so `landmarks: false` skips that one rule.
+const check = async (container: Element, {landmarks = true} = {}) => {
+    const {violations} = await axe.run(container, {rules: {"color-contrast": {enabled: false}, region: {enabled: landmarks}}})
     const summary = violations.map(v => `${v.id}: ${v.help}\n` + v.nodes.map(n => `  ${n.target.join(" ")}`).join("\n"))
     expect(summary, summary.join("\n")).toEqual([])
 }
@@ -76,5 +77,29 @@ describe("accessibility (axe)", () => {
         await user.type(empty[empty.length - 1], "(((")
         await screen.findByText(/Invalid grammar/)
         await check(container)
+    })
+
+    it("generator view with weights on and a terminal rule collapsed", async () => {
+        const user = userEvent.setup()
+        const {container} = await renderApp()
+        await user.click(screen.getByRole("button", {name: "Weights"}))
+        await user.click(screen.getByRole("button", {name: "Details of rule Vowel"}))
+        await check(container)
+    })
+
+    it("view settings menu open", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await user.click(screen.getByRole("button", {name: "View settings"}))
+        await screen.findByRole("menuitemcheckbox", {name: "Serif font"})
+        await check(document.body, {landmarks: false})
+    })
+
+    it("examples menu open", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await user.click(screen.getByRole("button", {name: "Examples"}))
+        await screen.findByRole("menuitem", {name: "toki pona example"})
+        await check(document.body, {landmarks: false})
     })
 })

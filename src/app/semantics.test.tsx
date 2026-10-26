@@ -2,6 +2,7 @@ import {afterEach, describe, expect, it} from "vitest"
 import {render, screen, waitFor, within} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {Home} from "./Home.tsx"
+import {toggleViewSetting} from "./test-helpers.ts"
 
 // dnd-kit renders its own live region, so look inside the generator section for ours.
 const generatorStatus = () => within(screen.getByRole("region", {name: "Generator"})).getByRole("status")
@@ -192,7 +193,7 @@ describe("generator output", () => {
     it("includes the unique count when duplicates are filtered", async () => {
         const user = userEvent.setup()
         await renderApp()
-        await user.click(screen.getByRole("switch", {name: "Filter Duplicates"}))
+        await toggleViewSetting(user, "Filter duplicates")
 
         await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
@@ -202,7 +203,7 @@ describe("generator output", () => {
     it("renders a list when output as list is on", async () => {
         const user = userEvent.setup()
         await renderApp()
-        await user.click(screen.getByRole("switch", {name: "Output as list"}))
+        await user.click(screen.getByRole("radio", {name: "List"}))
 
         await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
@@ -212,15 +213,41 @@ describe("generator output", () => {
 })
 
 describe("toggles", () => {
-    it("exposes switch state without changing the name", async () => {
+    it("exposes a view setting's state without changing its name", async () => {
         const user = userEvent.setup()
         await renderApp()
-        const toggle = screen.getByRole("switch", {name: "Filter Duplicates"})
-        expect(toggle).not.toBeChecked()
+        await user.click(screen.getByRole("button", {name: "View settings"}))
+        const item = await screen.findByRole("menuitemcheckbox", {name: "Filter duplicates"})
+        expect(item).toHaveAttribute("aria-checked", "false")
 
-        await user.click(toggle)
+        await user.click(item)
 
-        expect(screen.getByRole("switch", {name: "Filter Duplicates"})).toBeChecked()
+        // The menu stays open, so the same item reports its new state.
+        expect(screen.getByRole("menuitemcheckbox", {name: "Filter duplicates"})).toHaveAttribute("aria-checked", "true")
+    })
+
+    it("exposes the output style as a radio group", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const group = screen.getByRole("radiogroup", {name: "Output style"})
+        expect(within(group).getByRole("radio", {name: "Paragraph"})).toBeChecked()
+
+        await user.click(within(group).getByRole("radio", {name: "List"}))
+
+        expect(within(group).getByRole("radio", {name: "List"})).toBeChecked()
+        expect(within(group).getByRole("radio", {name: "Paragraph"})).not.toBeChecked()
+    })
+
+    it("switches the serif font from the view settings", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const rule = () => screen.getByLabelText("Terminal 1 of rule Vowel")
+        expect(rule()).toHaveClass("font-mono")
+
+        await toggleViewSetting(user, "Serif font")
+
+        expect(rule()).toHaveClass("font-serif")
+        expect(rule()).not.toHaveClass("font-mono")
     })
 
     it("exposes the rewrites toggle as a pressed button", async () => {

@@ -3,6 +3,7 @@ import {render, screen} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {Home} from "./Home.tsx"
 import {resyncAlwaysShowReorder} from "@/components/reorderPref.ts"
+import {toggleViewSetting} from "./test-helpers.ts"
 
 const renderApp = async () => {
     window.history.replaceState(null, "", "/")
@@ -112,17 +113,20 @@ describe("reorder button visibility", () => {
         const user = userEvent.setup()
         await renderApp()
 
-        await user.click(screen.getByRole("switch", {name: "Always show reorder buttons"}))
+        await toggleViewSetting(user, "Always show reorder buttons")
 
-        expect(screen.getByRole("switch", {name: "Always show reorder buttons"})).toBeChecked()
+        await user.click(screen.getByRole("button", {name: "View settings"}))
+        expect(await screen.findByRole("menuitemcheckbox", {name: "Always show reorder buttons"})).toBeChecked()
         expect(group("Move terminal 1 of rule Vowel down").className).not.toContain("max-w-0")
         expect(window.localStorage.getItem("monke.alwaysShowReorderButtons")).toBe("true")
     })
 
     it("restores the stored setting", async () => {
+        const user = userEvent.setup()
         window.localStorage.setItem("monke.alwaysShowReorderButtons", "true")
         resyncAlwaysShowReorder()
         await renderApp()
-        expect(screen.getByRole("switch", {name: "Always show reorder buttons"})).toBeChecked()
+        await user.click(screen.getByRole("button", {name: "View settings"}))
+        expect(await screen.findByRole("menuitemcheckbox", {name: "Always show reorder buttons"})).toBeChecked()
     })
 })

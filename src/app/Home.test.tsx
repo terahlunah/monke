@@ -108,7 +108,7 @@ describe("Home", () => {
     it("restores a config from the URL path", async () => {
         renderAt(`/${customLink}`)
         await waitFor(() => expect(document.title).toBe("Monke - frozen"))
-        expect(await screen.findByText("Grammar has 6 possible branches")).toBeInTheDocument()
+        expect(await screen.findByText("6 possible branches")).toBeInTheDocument()
         expect(screen.queryByDisplayValue("Consonant")).not.toBeInTheDocument()
 
         const output = await screen.findByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"})
@@ -118,7 +118,7 @@ describe("Home", () => {
     it("lists every word with Generate all and announces the count", async () => {
         const user = userEvent.setup()
         renderAt(`/${customLink}`)
-        expect(await screen.findByText("Grammar has 6 possible branches")).toBeInTheDocument()
+        expect(await screen.findByText("6 possible branches")).toBeInTheDocument()
 
         await user.click(screen.getByRole("button", {name: "Generate all"}))
 
@@ -133,7 +133,7 @@ describe("Home", () => {
     it("updates the output live after an edit", async () => {
         const user = userEvent.setup()
         renderAt(`/${customLink}`)
-        await screen.findByText("Grammar has 6 possible branches")
+        await screen.findByText("6 possible branches")
         expect(await outputWords()).toHaveLength(50)
 
         const terminal = screen.getByLabelText("Terminal 1 of rule C")
@@ -146,7 +146,7 @@ describe("Home", () => {
     it("draws the same words from the same seed after reopening the link", async () => {
         const user = userEvent.setup()
         const view = renderAt(`/${customLink}`)
-        await screen.findByText("Grammar has 6 possible branches")
+        await screen.findByText("6 possible branches")
         await user.clear(screen.getByLabelText("Seed"))
         await user.type(screen.getByLabelText("Seed"), "monke")
         await waitFor(() => expect(window.location.pathname).not.toBe(`/${customLink}`))
@@ -161,14 +161,14 @@ describe("Home", () => {
 
     it("gives a link saved without a seed a random one", async () => {
         renderAt(`/${customLink}`)
-        await screen.findByText("Grammar has 6 possible branches")
+        await screen.findByText("6 possible branches")
         await waitFor(() => expect((screen.getByLabelText("Seed") as HTMLInputElement).value).toMatch(/^[a-z2-9]{6}$/))
     })
 
     it("marks the output busy while a redraw is pending", async () => {
         const user = userEvent.setup()
         renderAt(`/${customLink}`)
-        await screen.findByText("Grammar has 6 possible branches")
+        await screen.findByText("6 possible branches")
         const output = (await screen.findByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"})).parentElement!
         await waitFor(() => expect(output).toHaveAttribute("aria-busy", "false"))
 

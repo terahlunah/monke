@@ -1,8 +1,8 @@
-
-import {SwitchLabel} from "@/components/SwitchLabel.tsx";
-import {Row} from "@/components/Row.tsx";
-import {ClipboardListIcon, DicesIcon, LoaderCircleIcon} from "lucide-react";
-import {Dispatch, FormEvent, useEffect, useMemo, useRef, useState} from "react";
+import {Menu, MenuButton, Radio, RadioGroup} from "@headlessui/react";
+import {CheckIcon, DicesIcon, LoaderCircleIcon, SettingsIcon} from "lucide-react";
+import {MenuItem, MenuPanel, menuItemClass} from "@/components/menu.tsx";
+import {buttonOutline, buttonPrimary, textInput} from "@/components/styles.ts";
+import {Dispatch, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState} from "react";
 import {randomSeed} from "@/engine/seed.ts";
 import {drawAsync} from "./drawAsync.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
@@ -194,106 +194,109 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
         toast("Words copied to clipboard!")
     }
 
+    const branchSummary = error || !grammar || cycle ? null : `${formatCount(combinations)} possible ${combinations === 1 ? "branch" : "branches"}`
+
     return (
-        <section id="generator" aria-labelledby="generator-heading" tabIndex={-1}
-                 className="flex flex-col bg-surface p-4 md:p-6 gap-4 md:basis-[400px] md:grow md:min-w-0 md:overflow-auto md:no-scrollbar md:border-l border-line outline-none">
-            <h2 id="generator-heading" className="sr-only">Generator</h2>
-
-
-            <SwitchLabel checked={config.enableSerif} onChange={enabled => dispatch({type: "setEnableSerif", enabled})}
-                         label="Enable serifs (For IPA characters readability)"
-                         enabledColor="bg-primary" disabledColor="bg-primary/30"/>
-            <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}
-                         label="Filter Duplicates"
-                         enabledColor="bg-accent-caution" disabledColor="bg-accent-caution/30"/>
-            <SwitchLabel checked={outputList} onChange={on => view.setOutputStyle(on ? "list" : "paragraph")}
-                         label="Output as list"
-                         enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
-            <SwitchLabel checked={alwaysShowReorder} onChange={setAlwaysShowReorder}
-                         label="Always show reorder buttons"
-                         enabledColor="bg-accent-danger" disabledColor="bg-accent-danger/30"/>
-
-            <div className="border-t border-white/20"/>
-
-            {importNotes.length !== 0 ?
-                <section aria-labelledby="awkwords-notes-heading"
-                         className="flex flex-col gap-2 rounded-sm bg-surface p-4 border-l-4 border-accent-warning">
-                    <h3 id="awkwords-notes-heading" className="font-bold">Awkwords import notes</h3>
-                    <ul className="list-disc pl-6 flex flex-col gap-1">
-                        {importNotes.map((w, i) => <li key={i}>{w.message}</li>)}
-                    </ul>
-                    <button className="self-end rounded-sm p-2 px-4 bg-white/10" onClick={() => setImportNotes([])}>
-                        Dismiss import notes
-                    </button>
-                </section> :
-                null
-            }
-
-            <div className="border-t border-white/20"/>
+        <section id="generator" aria-label="Generator" tabIndex={-1}
+                 className="flex flex-col bg-surface px-4 py-3.5 md:p-6 gap-3 md:gap-3.5 border-b border-line md:border-b-0 md:border-l md:basis-[400px] md:grow md:min-w-0 md:overflow-auto md:no-scrollbar outline-none">
+            <div className="flex items-center gap-2 md:gap-2.5">
+                <h2 className="text-[15px] font-semibold">Words</h2>
+                {branchSummary ? <p className="text-xs md:text-[13px] text-muted">{branchSummary}</p> : null}
+                <div className="grow"/>
+                <Menu>
+                    <MenuButton aria-label="View settings"
+                                className="flex h-10 w-11 md:h-[34px] md:w-[34px] items-center justify-center rounded-md border border-line-strong hover:bg-white/5">
+                        <SettingsIcon className="size-4" aria-hidden="true"/>
+                    </MenuButton>
+                    <MenuPanel anchor="bottom end">
+                        <CheckItem checked={config.enableSerif} label="Serif font"
+                                   onToggle={() => dispatch({type: "setEnableSerif", enabled: !config.enableSerif})}/>
+                        <CheckItem checked={filterDuplicates} label="Filter duplicates"
+                                   onToggle={() => setFilterDuplicates(!filterDuplicates)}/>
+                        <CheckItem checked={alwaysShowReorder} label="Always show reorder buttons"
+                                   onToggle={() => setAlwaysShowReorder(!alwaysShowReorder)}/>
+                    </MenuPanel>
+                </Menu>
+            </div>
 
             {error ?
                 // Inserted on error so assistive tech announces it; inputs at fault reference it via aria-describedby.
-                <p id={GRAMMAR_ERROR_ID} role="alert" className="text-gray-300">Invalid grammar: {error}</p> :
-                <p className="text-gray-300">
-                    {grammar ?
-                        (cycle ?
-                            `Grammar has at least one cycle: ${cycle.join(" > ")}` :
-                            `Grammar has ${combinations} possible branches`) :
-                        "No grammar: choose a start rule"
-                    }
-                </p>
+                <p id={GRAMMAR_ERROR_ID} role="alert" className="text-sm text-muted">Invalid grammar: {error}</p> :
+                !grammar ?
+                    <p className="text-sm text-muted">No grammar: choose a start rule</p> :
+                    cycle ? <p className="text-sm text-muted">Grammar has at least one cycle: {cycle.join(" > ")}</p> : null
             }
 
-            <div className="border-t border-white/20"/>
-
             {/* Everything that decides the drawn words sits on one row: how many, which seed, and a new seed. */}
-            <Row className="gap-2 items-center flex-wrap">
-                <label htmlFor="word-count" className="shrink-0">Count</label>
-                <input id="word-count" aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
+            <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
+                <label htmlFor="word-count" className="text-muted max-md:sr-only">Count</label>
+                <input id="word-count" aria-label="Word count" value={wordCount} onChange={onWordCountInput} onBlur={onWordCountBlur}
                        inputMode="numeric"
-                       className="bg-primary/40 rounded-sm text-center h-10 outline-0 w-16 shrink-0 mr-2"/>
-                <label htmlFor="seed" className="shrink-0">Seed</label>
+                       className={`${textInput} h-10 md:h-9 w-[52px] md:w-14 px-1 text-center`}/>
+                <label htmlFor="seed" className="text-muted max-md:sr-only">Seed</label>
                 <input id="seed" value={config.seed}
                        onChange={e => dispatch({type: "setSeed", seed: e.target.value})}
                        // The output is driven by the seed, so it is never left empty.
                        onBlur={() => {
                            if (config.seed === "") dispatch({type: "setSeed", seed: randomSeed()})
                        }}
-                       className="bg-primary/40 rounded-sm h-10 px-2 outline-0 w-28 shrink-0"/>
-                <button onClick={onNewWords} className="grow bg-primary rounded-sm p-2"
-                        aria-label="New words (new seed)">
-                    <Row className="items-center justify-center gap-2">
-                        <span>New words</span>
-                        {slow ?
-                            <LoaderCircleIcon className="size-5 animate-spin motion-reduce:animate-pulse"/> :
-                            <DicesIcon className="size-5"/>}
-                    </Row>
+                       spellCheck={false}
+                       className={`${textInput} h-10 md:h-9 w-[84px] md:w-[92px] px-2 md:px-2.5 font-mono`}/>
+                <button onClick={onNewWords} aria-label="New words (new seed)"
+                        className={`${buttonPrimary} md:h-9 min-w-[7.5rem] grow`}>
+                    New words
+                    {slow ?
+                        <LoaderCircleIcon className="size-4 animate-spin motion-reduce:animate-pulse" aria-hidden="true"/> :
+                        <DicesIcon className="size-4" aria-hidden="true"/>}
                 </button>
-            </Row>
+            </div>
 
-            <Row className="gap-4 flex-wrap">
+            <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
+                <RadioGroup value={outputStyle} onChange={view.setOutputStyle} aria-label="Output style"
+                            className="flex overflow-hidden rounded-md border border-line-strong">
+                    {(["paragraph", "list"] as const).map(style => (
+                        <Radio key={style} value={style}
+                               className="h-9 md:h-8 px-2.5 md:px-3 flex items-center cursor-pointer hover:bg-white/5 data-checked:bg-primary-soft data-checked:text-primary-text data-checked:font-semibold">
+                            {style === "paragraph" ? "Paragraph" : "List"}
+                        </Radio>
+                    ))}
+                </RadioGroup>
+                <div className="grow"/>
                 {/* aria-disabled rather than disabled keeps it focusable, so keyboard and screen reader users can reach the reason. */}
-                <button onClick={onListAll} className="grow bg-primary rounded-sm p-2 aria-disabled:opacity-50"
+                <button onClick={onListAll} className={`${buttonOutline} md:h-8 px-2.5 md:px-3 aria-disabled:opacity-50`}
+                        aria-label="Generate all"
                         aria-disabled={listAllBlocker !== null || listing}
                         aria-describedby={listAllBlocker ? LIST_ALL_HINT_ID : undefined}>
-                    Generate all
+                    <span className="md:hidden" aria-hidden="true">All</span>
+                    <span className="max-md:hidden" aria-hidden="true">Generate all</span>
                 </button>
-                <button className="grow bg-primary rounded-sm p-2" onClick={onCopy} aria-label="Copy words">
-                    <Row className="items-center justify-center gap-2">
-                        <span>Copy</span>
-                        <ClipboardListIcon className="size-5"/>
-                    </Row>
+                <button className={`${buttonOutline} md:h-8 px-2.5 md:px-3`} onClick={onCopy} aria-label="Copy words">
+                    Copy
                 </button>
-            </Row>
+            </div>
 
             {listAllBlocker ?
-                <p id={LIST_ALL_HINT_ID} className="text-center italic text-gray-300">{listAllBlocker}</p> :
+                <p id={LIST_ALL_HINT_ID} className="text-xs text-muted">{listAllBlocker}</p> :
+                null
+            }
+
+            {importNotes.length !== 0 ?
+                <section aria-labelledby="awkwords-notes-heading"
+                         className="flex flex-col gap-2 rounded-lg border border-rewrite-line bg-background p-3.5">
+                    <h3 id="awkwords-notes-heading" className="font-semibold text-rewrite">Awkwords import notes</h3>
+                    <ul className="list-disc pl-5 flex flex-col gap-1">
+                        {importNotes.map((w, i) => <li key={i}>{w.message}</li>)}
+                    </ul>
+                    <button className={`${buttonOutline} self-end`} onClick={() => setImportNotes([])}>
+                        Dismiss import notes
+                    </button>
+                </section> :
                 null
             }
 
             {
                 filterDuplicates && generatedWords.length != 0 ?
-                    <p className="text-center italic text-gray-300">
+                    <p className="text-xs text-muted">
                         Showing {filteredWords.length} unique words out of {generatedWords.length} generated
                     </p> :
                     null
@@ -301,7 +304,7 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
 
             {
                 generationError ?
-                    <p role={generationError.live ? undefined : "alert"} className="text-center italic text-accent-danger-text">
+                    <p role={generationError.live ? undefined : "alert"} className="text-sm text-danger-text">
                         {generationError.message}
                     </p> :
                     null
@@ -316,17 +319,37 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
 
             {generatedWords.length !== 0 ? <h3 className="sr-only">Generated words</h3> : null}
             {/* Dimmed rather than hidden while stale, so the layout does not jump. */}
-            <div aria-busy={busy} className={slow ? "opacity-60" : ""}>
-            {outputList ?
-                <ul className={config.enableSerif ? "font-serif" : ""}>
-                    {filteredWords.map((word, i) => <li key={i}>{word}</li>)}
-                </ul> :
-                <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
-                    {text}
-                </p>
-            }
+            <div aria-busy={busy}
+                 className={`rounded-lg border border-line bg-background p-3 md:p-3.5 text-[15px] leading-[1.7] md:leading-[1.8] ${slow ? "opacity-60" : ""}`}>
+                {outputList ?
+                    <ul className={config.enableSerif ? "font-serif" : ""}>
+                        {filteredWords.map((word, i) => <li key={i}>{word}</li>)}
+                    </ul> :
+                    <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
+                        {text}
+                    </p>
+                }
             </div>
 
         </section>
     )
 }
+
+// Headless UI has no checkbox menu item and always renders role="menuitem", ahead of any role passed in. React leaves an
+// attribute alone while its prop is unchanged, so setting the role once from a ref sticks.
+const asCheckbox = (el: HTMLElement | null) => el?.setAttribute("role", "menuitemcheckbox")
+
+// A checkbox item of the view settings menu. It stays open after toggling (preventDefault skips Headless UI's close),
+// so the new state is read out on the item and several settings can be changed in one visit.
+const CheckItem = ({checked, label, onToggle}: { checked: boolean, label: string, onToggle: () => void }) => (
+    <MenuItem as="button" type="button" ref={asCheckbox} aria-checked={checked} className={menuItemClass}
+              onClick={(e: MouseEvent) => {
+                  e.preventDefault()
+                  onToggle()
+              }}>
+        <span className="flex size-4 items-center justify-center rounded-sm border border-current" aria-hidden="true">
+            {checked ? <CheckIcon className="size-3.5"/> : null}
+        </span>
+        {label}
+    </MenuItem>
+)
