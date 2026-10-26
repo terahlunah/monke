@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {decodeConfig, encodeConfig} from "./sharing.ts"
-import {Config} from "../pages/Home.tsx"
+import {Config} from "../models/config.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
 import {makeConfig, makeRule} from "../test-helpers.ts"
 

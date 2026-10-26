@@ -1,4 +1,4 @@
-import {Config} from "./pages/Home.tsx"
+import {Config} from "./models/config.ts"
 import {Rule} from "./models/ui.ts"
 import {configToGrammar} from "./logic/parser.ts"
 

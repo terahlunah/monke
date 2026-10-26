@@ -1,4 +1,4 @@
-import {Config} from '../pages/Home.tsx'
+import {Config} from '../models/config.ts'
 import {ExclusionPattern, RewritePattern, Rule, RulePattern} from "../models/ui.ts";
 
 import {ByteBuffer} from "./bytebuffer.ts"

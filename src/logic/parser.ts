@@ -1,4 +1,4 @@
-import {Config} from "../pages/Home.tsx";
+import {Config} from "../models/config.ts";
 import {Rule as ConfigRule} from "../models/ui.ts";
 import {
     Expr, findInvalidMatchIndex, getRuleEdges, Grammar,

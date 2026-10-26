@@ -6,16 +6,12 @@ export class ByteBuffer {
     private view: DataView;
     private wpos: number = 0;
     private rpos: number = 0;
-    private endian: boolean; // true for LittleEndian, false for BigEndian
+    // Share links are little-endian; changing this would break existing ones.
+    private readonly endian = true;
 
     constructor(data?: ArrayBuffer) {
         this.buffer = data || new ArrayBuffer(0);
         this.view = new DataView(this.buffer);
-        this.endian = true; // Default to LittleEndian
-    }
-
-    public setEndian(littleEndian: boolean) {
-        this.endian = littleEndian;
     }
 
     public writeBytes(bytes: Uint8Array) {
@@ -52,28 +48,10 @@ export class ByteBuffer {
         this.wpos += 1;
     }
 
-    public writeInt16(value: number) {
-        this.ensureCapacity(this.wpos + 2);
-        this.view.setInt16(this.wpos, value, this.endian);
-        this.wpos += 2;
-    }
-
-    public writeInt32(value: number) {
-        this.ensureCapacity(this.wpos + 4);
-        this.view.setInt32(this.wpos, value, this.endian);
-        this.wpos += 4;
-    }
-
     public writeFloat32(value: number) {
         this.ensureCapacity(this.wpos + 4);
         this.view.setFloat32(this.wpos, value, this.endian);
         this.wpos += 4;
-    }
-
-    public writeFloat64(value: number) {
-        this.ensureCapacity(this.wpos + 8);
-        this.view.setFloat64(this.wpos, value, this.endian);
-        this.wpos += 8;
     }
 
     public writeString(value: string) {
@@ -114,27 +92,9 @@ export class ByteBuffer {
         return value;
     }
 
-    public readInt16(): number {
-        const value = this.view.getInt16(this.rpos, this.endian);
-        this.rpos += 2;
-        return value;
-    }
-
-    public readInt32(): number {
-        const value = this.view.getInt32(this.rpos, this.endian);
-        this.rpos += 4;
-        return value;
-    }
-
     public readFloat32(): number {
         const value = this.view.getFloat32(this.rpos, this.endian);
         this.rpos += 4;
-        return value;
-    }
-
-    public readFloat64(): number {
-        const value = this.view.getFloat64(this.rpos, this.endian);
-        this.rpos += 8;
         return value;
     }
 

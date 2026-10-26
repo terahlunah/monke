@@ -3,10 +3,10 @@ import {RuleInstance} from "./RuleInstance.tsx";
 import {Row} from "../components/Row.tsx";
 import {SortableList} from "../components/SortableList.tsx";
 import {removeAt, updateAt} from "../logic/list.ts";
-import {Config} from "../pages/Home.tsx";
+import {Config} from "../models/config.ts";
 import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
-import {Listbox, Transition} from "@headlessui/react";
-import {FormEvent, Fragment} from "react";
+import {Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions} from "@headlessui/react";
+import {FormEvent} from "react";
 import {CheckIcon, ChevronsUpDownIcon} from "lucide-react";
 import {Rule} from "../models/ui.ts";
 
@@ -126,19 +126,19 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
             <div className="border-t border-white/20 my-2"/>
 
             <Row className="gap-3 items-center">
-                <h1>Language</h1>
+                <label htmlFor="language">Language</label>
                 <div className="rounded-sm overflow-clip">
-                    <input value={config.language} onInput={onSetLanguage}
+                    <input id="language" value={config.language} onInput={onSetLanguage}
                            className={`bg-surface text-left h-8 outline-0 pl-2 w-72`}/>
                 </div>
             </Row>
 
-            <Row className="gap-4 items-center">
-                <h1>Start rule</h1>
-                <div className="w-72 z-10">
-                    <Listbox value={config.root} onChange={onSelectRoot}>
+            <Listbox value={config.root} onChange={onSelectRoot}>
+                <Row className="gap-4 items-center">
+                    <ListboxLabel>Start rule</ListboxLabel>
+                    <div className="w-72 z-10">
                         <div className="relative">
-                            <Listbox.Button
+                            <ListboxButton
                                 className="min-h-8 relative w-full cursor-default rounded-sm bg-surface py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
                                 <span className="block truncate">{config.root}</span>
                                 <span
@@ -148,45 +148,36 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
                                               aria-hidden="true"
                                           />
                                         </span>
-                            </Listbox.Button>
-                            <Transition
-                                as={Fragment}
-                                leave="transition ease-in duration-100"
-                                leaveFrom="opacity-100"
-                                leaveTo="opacity-0">
-                                <Listbox.Options
-                                    className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-surface py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                                    {config.rules.map((rule) => (
-                                        <Listbox.Option
-                                            key={rule.id}
-                                            className={({active}) =>
-                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                                    active ? 'bg-primary text-on-surface' : 'text-on-surface'
-                                                }`
-                                            }
-                                            value={rule.name}>
-                                            {({selected}) => (
-                                                <>
-                                                          <span
-                                                              className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
-                                                            {rule.name}
-                                                          </span>
-                                                    {selected ? (
-                                                        <span
-                                                            className="absolute inset-y-0 left-0 flex items-center pl-3 text-on-surface">
-                                                              <CheckIcon className="h-5 w-5" aria-hidden="true"/>
-                                                            </span>
-                                                    ) : null}
-                                                </>
-                                            )}
-                                        </Listbox.Option>
-                                    ))}
-                                </Listbox.Options>
-                            </Transition>
+                            </ListboxButton>
+                            <ListboxOptions
+                                transition
+                                className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-surface py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm transition ease-in duration-100 data-closed:opacity-0">
+                                {config.rules.map((rule) => (
+                                    <ListboxOption
+                                        key={rule.id}
+                                        className="relative cursor-default select-none py-2 pl-10 pr-4 text-on-surface data-focus:bg-primary"
+                                        value={rule.name}>
+                                        {({selected}) => (
+                                            <>
+                                                <span
+                                                    className={`block truncate ${selected ? 'font-medium' : 'font-normal'}`}>
+                                                    {rule.name}
+                                                </span>
+                                                {selected ? (
+                                                    <span
+                                                        className="absolute inset-y-0 left-0 flex items-center pl-3 text-on-surface">
+                                                        <CheckIcon className="h-5 w-5" aria-hidden="true"/>
+                                                    </span>
+                                                ) : null}
+                                            </>
+                                        )}
+                                    </ListboxOption>
+                                ))}
+                            </ListboxOptions>
                         </div>
-                    </Listbox>
-                </div>
-            </Row>
+                    </div>
+                </Row>
+            </Listbox>
 
             <div className="border-t border-white/20 my-2"/>
 

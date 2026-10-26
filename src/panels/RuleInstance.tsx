@@ -1,4 +1,3 @@
-import {GenericProps} from "../components/GenericProps.tsx";
 import {Row} from "../components/Row.tsx";
 import {ChevronDownIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
@@ -22,14 +21,13 @@ export type RuleInstanceProps = {
 }
 
 export const RuleInstance = ({
-                                 className,
                                  rule,
                                  onRuleChange,
                                  onDelete,
                                  enableWeights,
                                  enableSerif,
                                  onClone,
-                             }: GenericProps<RuleInstanceProps>) => {
+                             }: RuleInstanceProps) => {
 
 
     const onRuleNameInput = (e: FormEvent<HTMLInputElement>) => {
@@ -51,7 +49,7 @@ export const RuleInstance = ({
     return (
         <SortableRow id={rule.id} draggingClassName="z-30 shadow-sm border-white/20 border">
             {({handleProps}) => (
-            <Col className={`${className} rounded-sm bg-surface px-2 pb-2 gap-2`}>
+            <Col className="rounded-sm bg-surface px-2 pb-2 gap-2">
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
                         <div className="pl-2 pr-3 touch-none" {...handleProps} aria-label="Reorder rule">
@@ -69,8 +67,8 @@ export const RuleInstance = ({
                                 aria-label="Duplicate rule">
                             <CopyIcon className="size-5"/>
                         </button>
-                        <div className="rounded-sm overflow-clip mx-4" aria-label="Edit rule name">
-                            <AutowidthInput value={rule.name} onInput={onRuleNameInput}
+                        <div className="rounded-sm overflow-clip mx-4">
+                            <AutowidthInput value={rule.name} onInput={onRuleNameInput} aria-label="Rule name"
                                             className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-4 text-lg`}/>
                         </div>
                         {

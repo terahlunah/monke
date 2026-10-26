@@ -83,16 +83,16 @@ export const RewritePatternItem = ({
                                     className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"
                                     minWidth={15}/>
-                    <button className="bg-accent-warning p-1 h-8" aria-disabled={true} disabled={true} aria-label="">
+                    <span className="bg-accent-warning p-1 h-8 flex items-center" aria-hidden="true">
                         <ChevronsRightIcon className="size-4"/>
-                    </button>
+                    </span>
                     <AutowidthInput value={rewrite.replace}
                                     onChange={onReplaceInput}
                                     className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"
                                     minWidth={15}/>
-                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
-                    </button>
+                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
+                            aria-label="Delete rewrite pattern"><XIcon className="size-4"/></button>
                 </Row>
             )}
         </SortableRow>

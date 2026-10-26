@@ -27,6 +27,16 @@ describe("Home", () => {
         expect(window.history.length).toBe(entries)
     })
 
+    it("labels its main inputs", async () => {
+        renderAt("/")
+        await screen.findByText(/possible branches/)
+
+        expect(screen.getByLabelText("Language")).toHaveValue("toki pona")
+        expect(screen.getByLabelText("Word count")).toHaveValue("50")
+        expect(screen.getAllByLabelText("Rule name")[0]).toBeInTheDocument()
+        expect(screen.getByRole("button", {name: /Start rule/})).toBeInTheDocument()
+    })
+
     it("adds and removes patterns in a rule", async () => {
         const user = userEvent.setup()
         renderAt("/")

@@ -10,19 +10,12 @@ import {tokiPonaRoot, tokiPonaRules} from "../logic/defaults.ts";
 import {GithubIcon} from "../components/GithubIcon.tsx";
 import {configToGrammar} from "../logic/parser.ts";
 import {Rule} from "../models/ui.ts";
+import {Config} from "../models/config.ts";
 import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
 import {Faq} from "../panels/Faq.tsx";
 import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
 import {MenuIcon} from "lucide-react";
 import {GenericProps} from "../components/GenericProps.tsx";
-
-export type Config = {
-    language: string,
-    rules: Rule[],
-    root: string | null
-    enableWeights: boolean,
-    enableSerif: boolean,
-}
 
 const emptyConfig: Config = {
     language: "",

@@ -33,7 +33,7 @@ export const SwitchLabel = ({
                             <span
                                 className={`${checked ? 'translate-x-4' : 'translate-x-1'} inline-block h-3 w-3 transform rounded-full bg-white transition`}/>
             </Switch>
-            <h1 className={`${labelClass}`}>{label}</h1>
+            <span className={labelClass}>{label}</span>
         </Row>
     )
 }

@@ -4,7 +4,7 @@ import {Row} from "../components/Row.tsx";
 import {ClipboardListIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
 import {ChangeEvent, FormEvent, useMemo, useRef, useState} from "react";
 import {countCombinations, detectCycle, generate} from "../logic/wordgen.ts";
-import {Config} from "../pages/Home.tsx";
+import {Config} from "../models/config.ts";
 import {toast} from "react-toastify";
 import {Grammar} from "../models/grammar.ts";
 import {parseConfigFile} from "../logic/configfile.ts";
@@ -160,19 +160,19 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
             <Row className="gap-4">
                 <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onCopyLink} aria-label="Share link">
                     <Row className="items-center justify-center gap-2">
-                        <h1>Share link</h1>
+                        <span>Share link</span>
                         <LinkIcon className="size-5"/>
                     </Row>
                 </button>
                 <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onExport} aria-label="Export config">
                     <Row className="items-center justify-center gap-2">
-                        <h1>Export Config</h1>
+                        <span>Export Config</span>
                         <UploadIcon className="size-5"/>
                     </Row>
                 </button>
                 <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onImport} aria-label="Import config">
                     <Row className="items-center justify-center gap-2">
-                        <h1>Import Config</h1>
+                        <span>Import Config</span>
                         <DownloadIcon className="size-5"/>
                     </Row>
                 </button>
@@ -198,12 +198,12 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
                     <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3"
                             aria-label="Generate">Generate
                     </button>
-                    <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
+                    <input aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
                            className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
                 </Row>
                 <button className="grow bg-primary rounded-sm p-2" onClick={onCopy} aria-label="Copy words">
                     <Row className="items-center justify-center gap-2">
-                        <h1>Copy</h1>
+                        <span>Copy</span>
                         <ClipboardListIcon className="size-5"/>
                     </Row>
                 </button>
