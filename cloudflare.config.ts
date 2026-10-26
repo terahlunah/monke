@@ -6,6 +6,7 @@ export default defineConfig({
     worker: {
         name: "monke",
         compatibilityDate: "2026-10-19",
+        domains: ["monke.lunah.dev"],
         assets: {
             notFoundHandling: "single-page-application",
         },
