@@ -117,12 +117,12 @@ export const RulePatternItem = ({
     return (
         <SortableRow id={pattern.id}>
             {({handleProps}) => (
-                <Row className="rounded-sm overflow-clip w-min h-8 items-center">
+                <Row className="group/chip rounded-sm overflow-clip w-min h-8 items-center">
                     <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...handleProps}
                             aria-label={`Drag ${lowerFirst(label)}`}>
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
-                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove}
+                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove} orientation="horizontal" scope="chip"
                                  buttonClassName={`${terminalOnly ? "bg-primary/70" : "bg-secondary/70"} p-1 h-8 disabled:opacity-40`}
                                  iconClassName="size-4"/>
                     <AutowidthInput value={pattern.pattern}

@@ -10,6 +10,7 @@ import {ConfigAction} from "@/engine/configReducer.ts";
 import {toast} from "react-toastify";
 import {Grammar} from "@/engine/grammar.ts";
 import {parseConfigFile} from "@/engine/configfile.ts";
+import {setAlwaysShowReorder, useAlwaysShowReorder} from "@/components/reorderPref.ts";
 import {GRAMMAR_ERROR_ID} from "@/features/config/grammarError.ts";
 
 const MAX_WORD_COUNT = 10000
@@ -48,6 +49,8 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     const [announcement, setAnnouncement] = useState({text: "", run: 0})
 
 
+
+    const alwaysShowReorder = useAlwaysShowReorder()
 
     const fileInput = useRef<HTMLInputElement>(null)
 
@@ -176,6 +179,9 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             <SwitchLabel checked={outputList} onChange={setOutputList}
                          label="Output as list"
                          enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
+            <SwitchLabel checked={alwaysShowReorder} onChange={setAlwaysShowReorder}
+                         label="Always show reorder buttons"
+                         enabledColor="bg-accent-danger" disabledColor="bg-accent-danger/30"/>
 
             <div className="border-t border-white/20"/>
 

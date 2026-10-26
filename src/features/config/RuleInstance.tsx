@@ -44,18 +44,17 @@ export const RuleInstance = ({
     return (
         <SortableRow id={rule.id} draggingClassName="z-30 shadow-sm border-white/20 border">
             {({handleProps}) => (
-            <Col className="rounded-sm bg-surface px-2 pb-2 gap-2">
+            <Col className="group/rule rounded-sm bg-surface px-2 pb-2 gap-2">
                 <h3 className="sr-only">Rule {rule.name}</h3>
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
                         <div className="pl-1 pr-1 md:pl-2 md:pr-3 touch-none" {...handleProps} aria-label={`Reorder rule ${rule.name}`}>
                             <EllipsisVerticalIcon className="size-5"/>
                         </div>
-                        <div className="flex flex-col mr-1 md:mr-2 rounded-sm overflow-clip border border-white/30">
-                            <MoveButtons label={`rule ${rule.name || index + 1}`} index={index} total={total} onMove={onMove}
-                                         buttonClassName="px-1 h-5 disabled:opacity-40"
-                                         iconClassName="size-4"/>
-                        </div>
+                        <MoveButtons label={`rule ${rule.name || index + 1}`} index={index} total={total} onMove={onMove}
+                                     orientation="vertical" scope="rule"
+                                     buttonClassName="border border-white/30 rounded-sm p-2 mr-1 md:mr-2 disabled:opacity-40"
+                                     iconClassName="size-5"/>
                         <button onClick={() => dispatch({type: "toggleCollapse", ruleId})} className="border border-white/30 rounded-sm p-2 mr-1 md:mr-2"
                                 aria-expanded={!rule.collapsed} aria-label={`Details of rule ${rule.name}`}>
                             {

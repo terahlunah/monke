@@ -23,7 +23,7 @@ import {CSS} from "@dnd-kit/utilities";
 import {capitalize} from "./text.ts";
 
 const screenReaderInstructions: ScreenReaderInstructions = {
-    draggable: "To pick up this item, press space or enter. Use the arrow keys to move it, space or enter to drop it, and escape to cancel. The move up and move down buttons reorder without dragging.",
+    draggable: "To pick up this item, press space or enter. Use the arrow keys to move it, space or enter to drop it, and escape to cancel. The move buttons reorder without dragging.",
 }
 
 type SortableListProps<T extends { id: string }> = {

@@ -91,11 +91,11 @@ export const RewritePatternItem = ({
     return (
         <SortableRow id={rewrite.id}>
             {({handleProps}) => (
-                <Row className="rounded-sm overflow-clip w-min h-8 items-center">
+                <Row className="group/chip rounded-sm overflow-clip w-min h-8 items-center">
                     <button className={`bg-accent-warning p-1 h-8`} {...handleProps} aria-label={`Drag ${lowerFirst(label)}`}>
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
-                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove}
+                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove} orientation="horizontal" scope="chip"
                                  buttonClassName="bg-accent-warning/70 p-1 h-8 disabled:opacity-40"
                                  iconClassName="size-4"/>
                     <AutowidthInput value={rewrite.match}

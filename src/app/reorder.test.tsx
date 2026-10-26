@@ -1,7 +1,8 @@
-import {describe, expect, it} from "vitest"
+import {beforeEach, describe, expect, it} from "vitest"
 import {render, screen} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {Home} from "./Home.tsx"
+import {resyncAlwaysShowReorder} from "@/components/reorderPref.ts"
 
 const renderApp = async () => {
     window.history.replaceState(null, "", "/")
@@ -44,10 +45,10 @@ describe("reordering without dragging", () => {
         const values = () => screen.getAllByLabelText(/^Terminal \d+ of rule Vowel$/).map(i => (i as HTMLInputElement).value)
         const before = values()
 
-        await user.click(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel down"}))
+        await user.click(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"}))
 
         expect(values().slice(0, 2)).toEqual([before[1], before[0]])
-        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel down"})).toHaveFocus()
+        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel right"})).toHaveFocus()
     })
 
     // With two rewrites the moved item ends last, so focus lands on its up button.
@@ -57,10 +58,10 @@ describe("reordering without dragging", () => {
         const matches = () => screen.getAllByLabelText(/^Rewrite \d+ of rule Word, match$/).map(i => (i as HTMLInputElement).value)
         const before = matches()
 
-        await user.click(screen.getByRole("button", {name: "Move rewrite 1 of rule Word down"}))
+        await user.click(screen.getByRole("button", {name: "Move rewrite 1 of rule Word right"}))
 
         expect(matches()).toEqual([before[1], before[0]])
-        expect(screen.getByRole("button", {name: "Move rewrite 2 of rule Word up"})).toHaveFocus()
+        expect(screen.getByRole("button", {name: "Move rewrite 2 of rule Word left"})).toHaveFocus()
     })
 
     it("moves exclusions", async () => {
@@ -69,8 +70,56 @@ describe("reordering without dragging", () => {
         const values = () => screen.getAllByLabelText(/^Exclusion \d+ of rule Word$/).map(i => (i as HTMLInputElement).value)
         const before = values()
 
-        await user.click(screen.getByRole("button", {name: "Move exclusion 2 of rule Word up"}))
+        await user.click(screen.getByRole("button", {name: "Move exclusion 2 of rule Word left"}))
 
         expect(values()).toEqual([before[1], before[0], ...before.slice(2)])
+    })
+})
+
+describe("reorder button visibility", () => {
+    beforeEach(() => {
+        window.localStorage.clear()
+        resyncAlwaysShowReorder()
+    })
+
+    const group = (name: string) => screen.getByRole("button", {name}).parentElement!
+
+    it("keeps collapsed buttons focusable and in the accessibility tree", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const button = screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"})
+
+        expect(group("Move terminal 1 of rule Vowel right").className).toContain("max-w-0")
+        expect(group("Move terminal 1 of rule Vowel right").className).toContain("group-focus-within/chip:max-w-24")
+        button.focus()
+        expect(button).toHaveFocus()
+        await user.tab()
+        expect(button).not.toHaveFocus()
+    })
+
+    it("labels chips left and right and rules up and down", async () => {
+        await renderApp()
+        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel left"})).toBeInTheDocument()
+        expect(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"})).toBeInTheDocument()
+        expect(screen.queryByRole("button", {name: /Move terminal \d of rule Vowel (up|down)/})).toBeNull()
+        expect(screen.getByRole("button", {name: `Move rule ${ruleNames()[1]} up`})).toBeInTheDocument()
+    })
+
+    it("always shows the buttons and persists the setting when switched on", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+
+        await user.click(screen.getByRole("switch", {name: "Always show reorder buttons"}))
+
+        expect(screen.getByRole("switch", {name: "Always show reorder buttons"})).toBeChecked()
+        expect(group("Move terminal 1 of rule Vowel right").className).not.toContain("max-w-0")
+        expect(window.localStorage.getItem("monke.alwaysShowReorderButtons")).toBe("true")
+    })
+
+    it("restores the stored setting", async () => {
+        window.localStorage.setItem("monke.alwaysShowReorderButtons", "true")
+        resyncAlwaysShowReorder()
+        await renderApp()
+        expect(screen.getByRole("switch", {name: "Always show reorder buttons"})).toBeChecked()
     })
 })

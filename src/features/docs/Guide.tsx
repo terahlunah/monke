@@ -234,6 +234,17 @@ export const Guide = () => {
             <p>Any expression can be used in the "match".</p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
+                <h2 className="font-bold text-xl">Reordering</h2>
+                <div className="h-0.5 bg-white/10 grow"/>
+            </Row>
+            <p>Rules, patterns, terminals, rewrites and exclusions can be reordered. Drag them by their grip handle
+                (on touch screens, press and hold first). With a keyboard, focus the handle, press space or enter to pick
+                the item up, use the arrow keys to move it, then space or enter to drop it, or escape to cancel.</p>
+            <p>Each item also has move buttons (up and down for rules, left and right for chips). They appear when you
+                hover over or focus inside an item. Turn on "Always show reorder buttons" in the generator panel to keep
+                them visible. This setting is stored in your browser only and is not part of share links.</p>
+
+            <Row className="items-baseline justify-between gap-4 mt-4 grow">
                 <h2 className="font-bold text-xl">Weight Probabilities</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
