@@ -62,7 +62,7 @@ describe("landmarks and navigation", () => {
     it("never skips a heading level", async () => {
         const user = userEvent.setup()
         await renderApp()
-        for (const view of ["Generator", "Guide", "FAQ"]) {
+        for (const view of ["Generator", "Reference", "FAQ"]) {
             await user.click(screen.getByRole("button", {name: view}))
             let previous = 0
             for (const h of screen.getAllByRole("heading")) {
@@ -78,11 +78,11 @@ describe("landmarks and navigation", () => {
         await renderApp()
         expect(screen.getByRole("button", {name: "Generator"})).toHaveAttribute("aria-current", "page")
 
-        await user.click(screen.getByRole("button", {name: "Guide"}))
+        await user.click(screen.getByRole("button", {name: "Reference"}))
 
-        expect(screen.getByRole("button", {name: "Guide"})).toHaveAttribute("aria-current", "page")
+        expect(screen.getByRole("button", {name: "Reference"})).toHaveAttribute("aria-current", "page")
         expect(screen.getByRole("button", {name: "Generator"})).not.toHaveAttribute("aria-current")
-        expect(screen.getByRole("main", {name: "Guide"})).toHaveFocus()
+        expect(screen.getByRole("main", {name: "Reference"})).toHaveFocus()
     })
 
     it("offers a skip link to the generator", async () => {

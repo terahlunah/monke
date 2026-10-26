@@ -1,32 +1,29 @@
 import {MouseEvent, ReactNode} from "react";
+import {ExampleCard} from "./ExampleCard.tsx";
+import {useExampleHrefs} from "./useExampleHrefs.ts";
 import {
-    ExampleRule,
     exclusionDemos,
     firstGrammar,
-    GuideExample,
     itemText,
-    itemWeight,
     recipes,
     rewriteDemos,
     syntaxRows
-} from "./guideExamples.ts";
+} from "./referenceExamples.ts";
 
-type GuideProps = {
-    // Absent when the guide is rendered without an editor to load examples into.
-    onTryExample?: (example: GuideExample) => void
-}
+// Every example offering a Try it link, so their share URLs are encoded together once.
+const allExamples = [firstGrammar, ...recipes]
 
 const sections = [
-    {id: "guide-quick-start", title: "Quick start"},
-    {id: "guide-concepts", title: "Concepts"},
-    {id: "guide-syntax", title: "Pattern syntax"},
-    {id: "guide-weights", title: "Weights"},
-    {id: "guide-rewrites", title: "Rewrites"},
-    {id: "guide-exclusions", title: "Exclusions"},
-    {id: "guide-output", title: "Generating, sharing and undo"},
-    {id: "guide-reordering", title: "Reordering and keyboard"},
-    {id: "guide-recipes", title: "Recipes"},
-    {id: "guide-awkwords", title: "Coming from Awkwords"},
+    {id: "reference-quick-start", title: "Quick start"},
+    {id: "reference-concepts", title: "Concepts"},
+    {id: "reference-syntax", title: "Pattern syntax"},
+    {id: "reference-weights", title: "Weights"},
+    {id: "reference-rewrites", title: "Rewrites"},
+    {id: "reference-exclusions", title: "Exclusions"},
+    {id: "reference-output", title: "Generating, sharing and undo"},
+    {id: "reference-reordering", title: "Reordering and keyboard"},
+    {id: "reference-recipes", title: "Recipes"},
+    {id: "reference-awkwords", title: "Coming from Awkwords"},
 ] as const
 
 type SectionId = typeof sections[number]["id"]
@@ -40,17 +37,18 @@ const jumpTo = (e: MouseEvent<HTMLAnchorElement>, id: string) => {
     target.focus({preventScroll: true})
 }
 
-export const Guide = ({onTryExample}: GuideProps) => {
+export const Reference = () => {
+    const hrefs = useExampleHrefs(allExamples)
     return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard users must be able to scroll this region
         <div tabIndex={0} className="flex flex-col bg-background grow p-4 md:p-8 gap-3 md:overflow-auto md:no-scrollbar pb-64 leading-relaxed">
             <div className="flex flex-col gap-3 max-w-3xl w-full mx-auto">
                 <p className="text-lg">
-                    Monke builds words from rules you write. This guide starts with a five-minute tour and ends with a
+                    Monke builds words from rules you write. This reference starts with a five-minute tour and ends with a
                     reference you can come back to.
                 </p>
 
-                <nav aria-label="Guide contents" className="rounded-sm bg-surface p-4">
+                <nav aria-label="Reference contents" className="rounded-sm bg-surface p-4">
                     <h2 className="font-bold mb-2">Contents</h2>
                     <ol className="list-decimal list-inside grid sm:grid-cols-2 gap-x-6 gap-y-1">
                         {sections.map(s => (
@@ -62,7 +60,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                     </ol>
                 </nav>
 
-                <Section id="guide-quick-start">
+                <Section id="reference-quick-start">
                     <ol className="list-decimal pl-6 flex flex-col gap-2">
                         <li>On the Generator page, press <b>toki pona example</b> to load a small working grammar.</li>
                         <li>Press <b>Generate</b>. You get 50 words; change the number next to the button for more or fewer.</li>
@@ -70,10 +68,10 @@ export const Guide = ({onTryExample}: GuideProps) => {
                             The new vowel shows up in the words.</li>
                         <li>Made a mistake? Use your browser's <b>Back</b> button to undo the last edit.</li>
                     </ol>
-                    <p>Or start from the small grammar in the next section with its <b>Try it</b> button.</p>
+                    <p>Or open the small grammar in the next section with its <b>Try it</b> link.</p>
                 </Section>
 
-                <Section id="guide-concepts">
+                <Section id="reference-concepts">
                     <Sub>Rules</Sub>
                     <p>A grammar is a list of named rules. A name starts with a letter or <Code>_</Code> and continues with
                         letters, digits or <Code>_</Code>, so <Code>V</Code>, <Code>Syllable</Code> and <Code>coda_2</Code> all
@@ -97,7 +95,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                     <CodeBlock>{"C.V.('n')"}</CodeBlock>
                     <p>Here is a complete grammar using it. It makes words such as <Code>ka</Code>, <Code>sonmi</Code> and
                         <Code>tulipen</Code>.</p>
-                    <ExampleCard onTry={onTryExample} example={firstGrammar}/>
+                    <ExampleCard hrefs={hrefs} example={firstGrammar}/>
 
                     <Sub>Status line and errors</Sub>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
@@ -115,7 +113,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                     </ul>
                 </Section>
 
-                <Section id="guide-syntax">
+                <Section id="reference-syntax">
                     <p>Patterns, rewrites and exclusions share one syntax. Examples use the rules <Code>C</Code> and
                         <Code>V</Code> from the grammar above.</p>
                     <table className="w-full text-left border-collapse">
@@ -141,7 +139,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                         <tr className="align-top">
                             <th scope="row" className="py-2 pr-3 font-normal"><Code>#n#</Code></th>
                             <td className="py-2 pr-3">Back-reference to part n of a rewrite's match. Only in rewrite
-                                replacements; see <a href="#guide-rewrites" onClick={e => jumpTo(e, "guide-rewrites")}
+                                replacements; see <a href="#reference-rewrites" onClick={e => jumpTo(e, "reference-rewrites")}
                                                     className="text-primary-text underline">Rewrites</a>.</td>
                             <td className="py-2"><Code>#1#.#0#</Code></td>
                         </tr>
@@ -160,7 +158,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                     </ul>
                 </Section>
 
-                <Section id="guide-weights">
+                <Section id="reference-weights">
                     <p>Weights are ignored until you turn on <b>Enable probability weights</b> in the generator panel. Until
                         then every alternative is equally likely and every optional is present half of the time.</p>
                     <p>Once enabled, each terminal and pattern gets a weight field next to it. Weights are relative: a weight of
@@ -173,10 +171,10 @@ export const Guide = ({onTryExample}: GuideProps) => {
                         the time; keep this probability between 0 and 1.</p>
                     <p>Quantifiers like <Code>{"{1:3}"}</Code> always pick each count with the same probability. To favour some
                         lengths, use weighted alternatives instead, such as <Code>{"Syllable*3 / Syllable.Syllable"}</Code>.</p>
-                    <ExampleCard onTry={onTryExample} example={recipes.find(r => r.id === "weighted")!}/>
+                    <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "weighted")!}/>
                 </Section>
 
-                <Section id="guide-rewrites">
+                <Section id="reference-rewrites">
                     <p>Rewrites change a rule's output after it is generated, like sound changes. Turn on <b>Rw</b> in a rule's
                         header to show and enable its rewrites; turned off, they are kept but ignored.</p>
                     <p>A rewrite has a match and a replacement, both written in pattern syntax.</p>
@@ -220,7 +218,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                     </ul>
                 </Section>
 
-                <Section id="guide-exclusions">
+                <Section id="reference-exclusions">
                     <p>Exclusions reject outputs you don't want. Turn on <b>Ex</b> in a rule's header to show and enable them;
                         turned off, they are kept but ignored.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
@@ -255,7 +253,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                         See the recipes below.</p>
                 </Section>
 
-                <Section id="guide-output">
+                <Section id="reference-output">
                     <Sub>Generator options</Sub>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>The number next to <b>Generate</b> sets how many words to make, from 1 to 10000.</li>
@@ -280,7 +278,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                         typing counts as one step. Loading an example, importing a file and clearing are steps too.</p>
                 </Section>
 
-                <Section id="guide-reordering">
+                <Section id="reference-reordering">
                     <p>Rules, terminals, patterns, rewrites and exclusions can be reordered. Order matters for rewrites; for
                         the rest it only changes how things look.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
@@ -296,14 +294,13 @@ export const Guide = ({onTryExample}: GuideProps) => {
                         page, a <b>Skip to generator</b> link at the start jumps past the rules.</p>
                 </Section>
 
-                <Section id="guide-recipes">
-                    <p>Each recipe is a complete grammar. <b>Try it</b> replaces your current grammar with it; press Back to
-                        get yours back.</p>
+                <Section id="reference-recipes">
+                    <p>Each recipe is a complete grammar. <b>Try it</b> opens it in a new tab, so your current grammar is untouched.</p>
                     {recipes.filter(r => r.id !== "weighted" && r.id !== "awkwords").map(r =>
-                        <ExampleCard onTry={onTryExample} key={r.id} example={r} summary={r.summary}/>)}
+                        <ExampleCard hrefs={hrefs} key={r.id} example={r} summary={r.summary}/>)}
                 </Section>
 
-                <Section id="guide-awkwords">
+                <Section id="reference-awkwords">
                     <p>If you know Awkwords, most ideas carry over. The main differences: Monke has no single-letter limit
                         on names, needs dots between parts, and requires quotes around all literal text.</p>
                     <table className="w-full text-left border-collapse">
@@ -331,7 +328,7 @@ export const Guide = ({onTryExample}: GuideProps) => {
                         <Code>Syllable</Code> rule that always makes two letters, with the exclusion <Code>{"'ti'"}</Code>,
                         rejects exactly the syllable ti. Unlike an exclusion on the whole word, it doesn't reject a ti formed
                         across two syllables.</p>
-                    <ExampleCard onTry={onTryExample} example={recipes.find(r => r.id === "awkwords")!} summary={recipes.find(r => r.id === "awkwords")!.summary}/>
+                    <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "awkwords")!} summary={recipes.find(r => r.id === "awkwords")!.summary}/>
 
                     <Sub>Only in Monke</Sub>
                     <p>Repetition with <Code>{"{min:max}"}</Code>, rewrites with back-references, per-rule exclusions,
@@ -363,57 +360,6 @@ const CodeBlock = ({children}: { children: string }) => (
 )
 
 const Arrow = () => <><span aria-hidden="true">→</span><span className="sr-only">becomes</span></>
-
-const RuleView = ({rule}: { rule: ExampleRule }) => (
-    <li className="flex flex-col gap-1">
-        <p>
-            <span className={`${rule.terminal ? "bg-primary/40" : "bg-secondary/40"} rounded-sm px-2 py-0.5 font-bold`}>{rule.name}</span>
-            {" "}<span className="text-sm text-on-surface/80">{rule.terminal ? "terminal rule" : "rule"}</span>
-        </p>
-        <ul aria-label={`${rule.terminal ? "Terminals" : "Patterns"} of ${rule.name}`} className="flex flex-row flex-wrap gap-2 pl-2">
-            {rule.items.map((item, i) => {
-                const weight = itemWeight(item)
-                return (
-                    <li key={i}>
-                        <Code>{itemText(item)}</Code>
-                        {weight !== null ? <span className="text-sm text-on-surface/80"> weight {weight}</span> : null}
-                    </li>
-                )
-            })}
-        </ul>
-        {rule.rewrites?.length ? (
-            <ul className="pl-2">
-                {rule.rewrites.map(([m, r], i) => <li key={i}>Rewrite <Code>{m}</Code> <Arrow/> <Code>{r}</Code></li>)}
-            </ul>
-        ) : null}
-        {rule.exclusions?.length ? (
-            <p className="pl-2">Exclusions: {rule.exclusions.map((e, i) => <span key={i}>{i > 0 ? ", " : null}<Code>{e}</Code></span>)}</p>
-        ) : null}
-    </li>
-)
-
-const ExampleCard = ({example, summary, onTry}: {
-    example: GuideExample,
-    summary?: string,
-    onTry?: (example: GuideExample) => void
-}) => (
-    <div className="rounded-sm bg-surface p-4 flex flex-col gap-3">
-        <div className="flex flex-row flex-wrap items-center justify-between gap-2">
-            <h3 className="font-bold text-lg">{example.title}</h3>
-            {onTry ?
-                <button onClick={() => onTry(example)} className="bg-primary rounded-sm px-3 py-1">
-                    Try it<span className="sr-only">: {example.title}</span>
-                </button> : null}
-        </div>
-        {summary ? <p>{summary}</p> : null}
-        <p className="text-sm text-on-surface/80">
-            Start rule <Code>{example.root}</Code>{example.weights ? ", weights enabled" : null}
-        </p>
-        <ul aria-label={`Rules of ${example.title}`} className="flex flex-col gap-3">
-            {example.rules.map(r => <RuleView key={r.name} rule={r}/>)}
-        </ul>
-    </div>
-)
 
 const awkwordsRows: [ReactNode, ReactNode][] = [
     [<>Category <Code>V</Code> with <Code>a/i/u</Code></>, <>Terminal rule <Code>V</Code> with terminals <Code>a</Code>, <Code>i</Code>, <Code>u</Code>. Any name works, not only capital letters.</>],

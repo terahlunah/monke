@@ -1,6 +1,6 @@
 import {Config, Rule} from "@/engine/config.ts";
 
-// Guide examples live here as data so the guide renders them and guideExamples.test.ts checks them against the engine.
+// Reference examples live here as data so the reference renders them and referenceExamples.test.ts checks them against the engine.
 
 // A terminal or pattern, optionally with a weight (used only when weights are enabled).
 export type ExampleItem = string | [text: string, weight: number]
@@ -13,7 +13,7 @@ export type ExampleRule = {
     exclusions?: string[]
 }
 
-export type GuideExample = {
+export type ReferenceExample = {
     id: string
     title: string
     root: string
@@ -24,7 +24,7 @@ export type GuideExample = {
 export const itemText = (item: ExampleItem): string => typeof item === "string" ? item : item[0]
 export const itemWeight = (item: ExampleItem): number | null => typeof item === "string" ? null : item[1]
 
-export const exampleToConfig = (example: GuideExample, enableSerif = false): Config => ({
+export const exampleToConfig = (example: ReferenceExample, enableSerif = false): Config => ({
     language: example.title,
     root: example.root,
     enableWeights: example.weights ?? false,
@@ -45,7 +45,7 @@ export const exampleToConfig = (example: GuideExample, enableSerif = false): Con
 const C: ExampleRule = {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "n", "l"]}
 const V: ExampleRule = {name: "V", terminal: true, items: ["a", "e", "i", "o", "u"]}
 
-export const firstGrammar: GuideExample = {
+export const firstGrammar: ReferenceExample = {
     id: "first-grammar",
     title: "First grammar",
     root: "Word",
@@ -80,7 +80,7 @@ export const syntaxRows: SyntaxRow[] = [
     {syntax: "x{:max}", meaning: "Same as {0:max}.", example: "'h'{:1}.V", output: "a, ha, …"},
 ]
 
-// Each demo applies its rewrites, in order, to `input`; the guideExamples test checks the result is `output`.
+// Each demo applies its rewrites, in order, to `input`; the referenceExamples test checks the result is `output`.
 export type RewriteDemo = {
     rewrites: [match: string, replace: string][]
     input: string
@@ -117,7 +117,7 @@ export const exclusionDemos: ExclusionDemo[] = [
     {exclusion: "V.V", input: "kalo", rejected: false, rules: [V]},
 ]
 
-export type Recipe = GuideExample & { summary: string }
+export type Recipe = ReferenceExample & { summary: string }
 
 const CJ: ExampleRule = {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "n", "l", "j", "w"]}
 

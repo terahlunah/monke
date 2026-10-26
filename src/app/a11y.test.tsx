@@ -31,10 +31,10 @@ describe("accessibility (axe)", () => {
         await check(container)
     })
 
-    it("guide", async () => {
+    it("reference", async () => {
         const user = userEvent.setup()
         const {container} = await renderApp()
-        await user.click(screen.getAllByRole("button", {name: "Guide"})[0])
+        await user.click(screen.getAllByRole("button", {name: "Reference"})[0])
         await screen.findByText(/builds words from rules you write/)
         await check(container)
     })

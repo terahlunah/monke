@@ -1,7 +1,7 @@
-export type Tab = "generator" | "guide" | "faq"
+export type Tab = "generator" | "reference" | "faq"
 
 export const tabs: { id: Tab, label: string }[] = [
     {id: "generator", label: "Generator"},
-    {id: "guide", label: "Guide"},
+    {id: "reference", label: "Reference"},
     {id: "faq", label: "FAQ"},
 ]

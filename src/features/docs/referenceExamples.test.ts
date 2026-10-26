@@ -4,23 +4,23 @@ import {generate} from "@/engine/generate.ts"
 import {matchesExclusion} from "@/engine/match.ts"
 import {parsePattern} from "@/engine/pattern.ts"
 import {mulberry32} from "@/engine/test-helpers.ts"
-import {exampleToConfig, ExampleRule, exclusionDemos, firstGrammar, GuideExample, recipes, rewriteDemos, syntaxRows} from "./guideExamples.ts"
+import {exampleToConfig, ExampleRule, exclusionDemos, firstGrammar, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
-const grammarOf = (example: GuideExample) => {
+const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
     if (!grammar) throw new Error("no grammar")
     return grammar
 }
 
-const sample = (example: GuideExample, n = 300) => {
+const sample = (example: ReferenceExample, n = 300) => {
     const grammar = grammarOf(example)
     const rng = mulberry32(1)
     return Array.from({length: n}, () => generate(grammar, rng))
 }
 
-const demo = (rules: ExampleRule[]): GuideExample => ({id: "demo", title: "demo", root: "Demo", rules})
+const demo = (rules: ExampleRule[]): ReferenceExample => ({id: "demo", title: "demo", root: "Demo", rules})
 
-describe("guide syntax table", () => {
+describe("reference syntax table", () => {
     it.each(syntaxRows)("$syntax: $example parses and generates", ({example}) => {
         expect(() => parsePattern("Demo", example)).not.toThrow()
         const words = sample(demo([...firstGrammar.rules, {name: "Demo", items: [example]}]), 20)
@@ -38,21 +38,21 @@ describe("guide syntax table", () => {
     })
 })
 
-describe("guide rewrite demos", () => {
+describe("reference rewrite demos", () => {
     it.each(rewriteDemos)("$input becomes $output", ({rewrites, input, output, rules = []}) => {
         const words = sample(demo([...rules, {name: "Demo", items: [`'${input}'`], rewrites}]), 5)
         expect(new Set(words)).toEqual(new Set([output]))
     })
 })
 
-describe("guide exclusion demos", () => {
+describe("reference exclusion demos", () => {
     it.each(exclusionDemos)("$exclusion on $input: rejected=$rejected", ({exclusion, input, rejected, rules = []}) => {
         const grammar = grammarOf(demo([...rules, {name: "Demo", items: ["''"], exclusions: [exclusion]}]))
         expect(matchesExclusion(grammar, grammar.ruleMap.get("Demo")!, input)).toBe(rejected)
     })
 })
 
-describe("guide grammars", () => {
+describe("reference grammars", () => {
     it.each([firstGrammar, ...recipes])("$title generates without error", example => {
         const words = sample(example)
         expect(words.every(w => w.length > 0)).toBe(true)

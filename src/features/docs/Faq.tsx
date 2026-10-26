@@ -9,7 +9,7 @@ export const Faq = () => {
         <Col className="bg-background grow p-4 md:p-8 gap-10 md:overflow-auto md:no-scrollbar justify-start">
             <FaqItem title="What is this tool?">
                 <b className="text-primary-text">Monke</b> is a word generator for conlang creators. You describe the
-                sound patterns of your language with rules, and it generates as many words as you need. The Guide explains
+                sound patterns of your language with rules, and it generates as many words as you need. The Reference explains
                 how to write the rules.
             </FaqItem>
             <FaqItem title="Why the name Monke?">
@@ -35,7 +35,7 @@ export const Faq = () => {
                          rel="noreferrer noopener">GitHub page<span className="sr-only"> (opens in a new tab)</span></a>.
             </FaqItem>
             <FaqItem title="This is a bit complex. Are there alternatives?">
-                Start with the Guide's quick start and recipes; most grammars only need a few rules. If it's still not for
+                Start with the Reference's quick start and recipes; most grammars only need a few rules. If it's still not for
                 you, try <a className={linkClass} href="https://wrdz-7570a.web.app/" target="_blank"
                             rel="noreferrer noopener">Wrdz<span className="sr-only"> (opens in a new tab)</span></a> by
                 Collin Brennan, a word generator with a simpler interface and one of Monke's inspirations.
