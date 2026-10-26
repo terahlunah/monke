@@ -10,7 +10,6 @@ import {tokiPonaRoot, tokiPonaRules} from "../logic/defaults.ts";
 import {FaGithub} from "react-icons/fa";
 import {configToGrammar} from "../logic/parser.ts";
 import {Rule} from "../models/ui.ts";
-import {useParams} from "react-router";
 import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
 import {Faq} from "../panels/Faq.tsx";
 import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
@@ -25,67 +24,74 @@ export type Config = {
     enableSerif: boolean,
 }
 
+const emptyConfig: Config = {
+    language: "",
+    rules: [],
+    root: null,
+    enableWeights: false,
+    enableSerif: false,
+}
+
+const defaultConfig: Config = {
+    language: "toki pona",
+    rules: tokiPonaRules,
+    root: tokiPonaRoot,
+    enableWeights: false,
+    enableSerif: false,
+}
+
 export const Home = () => {
 
-    const {urlConfig} = useParams();
+    // The URL path is only read once at startup; afterwards it just mirrors the config.
+    const [urlConfig] = useState(() => window.location.pathname.slice(1))
 
     const [tab, setTab] = useState<"generator" | "guide" | "faq">("generator")
 
-    const [config, setConfig] = useState<Config>({
-        language: "",
-        rules: [],
-        root: null,
-        enableWeights: false,
-        enableSerif: false,
-    })
+    const [config, setConfig] = useState<Config>(urlConfig ? emptyConfig : defaultConfig)
+    // Holds back URL writes until a link in the path has been decoded, so it isn't overwritten by the empty config.
+    const [synced, setSynced] = useState(!urlConfig)
+
+    useEffect(() => {
+        if (!urlConfig) return
+
+        decodeConfig(urlConfig)
+            .then(setConfig)
+            .catch(e => {
+                console.error(e)
+                setConfig(defaultConfig)
+            })
+            .finally(() => setSynced(true))
+    }, [urlConfig])
 
     useEffect(() => {
         document.title = `Monke - ${config.language}`;
     }, [config]);
 
     useEffect(() => {
-        const updateUrl = async () => {
-            const data = await encodeConfig(config)
-            window.history.pushState("", "", `/${data}`);
-        }
+        if (!synced) return
 
-        updateUrl().catch(console.error);
-    }, [config])
-
-
-    useEffect(() => {
-        const updateConfigFromUrl = async () => {
-            console.log(urlConfig)
-
-            if (urlConfig) {
-                const config = await decodeConfig(urlConfig)
-                console.log(config)
-                setConfig(config)
-            } else {
-                setConfig({
-                    language: "toki pona",
-                    rules: tokiPonaRules,
-                    root: tokiPonaRoot,
-                    enableWeights: false,
-                    enableSerif: false,
+        let cancelled = false
+        // Encoding is async and the config changes on every keystroke: debounce and drop stale results.
+        const timer = setTimeout(() => {
+            encodeConfig(config)
+                .then(data => {
+                    if (!cancelled) window.history.replaceState(null, "", `/${data}`)
                 })
-            }
+                .catch(console.error)
+        }, 300)
+
+        return () => {
+            cancelled = true
+            clearTimeout(timer)
         }
+    }, [config, synced])
 
-        updateConfigFromUrl().catch(console.error);
-    }, [urlConfig])
-
-
-    const setEnableWeights = (value: boolean) => {
-        setConfig({...config, enableWeights: value})
-    }
-
-    const setEnableSerif = (value: boolean) => {
-        setConfig({...config, enableSerif: value})
+    const updateConfig = (patch: Partial<Config>) => {
+        setConfig(c => ({...c, ...patch}))
     }
 
     const setRules = (root: string | null, rules: Rule[]) => {
-        setConfig({...config, root: root, rules: rules})
+        updateConfig({root, rules})
     }
 
     const [grammar, error] = useMemo(() => {
@@ -94,7 +100,6 @@ export const Home = () => {
             try {
                 grammar = configToGrammar(config)
             } catch (e) {
-                console.log(e)
                 error = (e as Error).message
             }
             return [grammar, error]
@@ -125,13 +130,11 @@ export const Home = () => {
                         <Linear className="md:overflow-auto grow">
                             <Configuration config={config}
                                            setRules={setRules}
-                                           setConfig={setConfig}/>
+                                           updateConfig={updateConfig}/>
                             <Generator config={config}
                                        grammar={grammar}
                                        error={error}
-                                       setEnableWeights={setEnableWeights}
-                                       setEnableSerif={setEnableSerif}
-                                       setConfig={setConfig}/>
+                                       updateConfig={updateConfig}/>
                         </Linear> : null
                 }
                 {tab === "guide" ? <Guide/> : null}

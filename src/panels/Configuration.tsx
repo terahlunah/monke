@@ -16,10 +16,10 @@ import {Rule} from "../models/ui.ts";
 type ConfigurationProps = {
     config: Config
     setRules: (root: string | null, rules: Rule[]) => void
-    setConfig: (config: Config) => void
+    updateConfig: (patch: Partial<Config>) => void
 }
 
-export const Configuration = ({config, setRules, setConfig}: ConfigurationProps) => {
+export const Configuration = ({config, setRules, updateConfig}: ConfigurationProps) => {
 
     const onRuleChangeIndex = (index: number) => {
         return (group: Rule) => {
@@ -116,7 +116,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
 
     const onSetLanguage = (e: FormEvent<HTMLInputElement>) => {
         const lang = e.currentTarget.value;
-        setConfig({...config, language: lang})
+        updateConfig({language: lang})
     }
 
     return (
@@ -125,14 +125,13 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
 
             <Row className="gap-4">
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
-                        onClick={() => setConfig({...config, language: "", root: null, rules: []})}>
+                        onClick={() => updateConfig({language: "", root: null, rules: []})}>
                     <Row className="items-center justify-center gap-2">
                         <span>Clear</span>
                     </Row>
                 </button>
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
-                        onClick={() => setConfig({
-                            ...config,
+                        onClick={() => updateConfig({
                             language: "toki pona",
                             root: tokiPonaRoot,
                             rules: tokiPonaRules,
@@ -143,8 +142,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                     </Row>
                 </button>
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
-                        onClick={() => setConfig({
-                            ...config,
+                        onClick={() => updateConfig({
                             language: "toki pona",
                             root: tokiPonaRoot,
                             rules: tokiPonaWeightedRules,

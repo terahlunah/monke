@@ -1,17 +1,12 @@
 import {describe, expect, it} from "vitest"
 import {render, screen, waitFor} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import {MemoryRouter, Route, Routes} from "react-router"
 import {Home} from "./Home.tsx"
 
-const renderAt = (path: string) => render(
-    <MemoryRouter initialEntries={[path]}>
-        <Routes>
-            <Route path="/" element={<Home/>}/>
-            <Route path="/:urlConfig" element={<Home/>}/>
-        </Routes>
-    </MemoryRouter>
-)
+const renderAt = (path: string) => {
+    window.history.replaceState(null, "", path)
+    return render(<Home/>)
+}
 
 // Frozen link (see sharing.test.ts): root Word = C.V / V, rewrite k+vowel -> vowel.
 // Reachable words are therefore limited to a, i, ta, ti.
@@ -23,6 +18,13 @@ describe("Home", () => {
         await waitFor(() => expect(document.title).toBe("Monke - toki pona"))
         expect(await screen.findByText(/possible branches/)).toBeInTheDocument()
         expect(screen.getByDisplayValue("Consonant")).toBeInTheDocument()
+    })
+
+    it("mirrors the config into the URL without adding history entries", async () => {
+        const entries = window.history.length
+        renderAt("/")
+        await waitFor(() => expect(window.location.pathname).not.toBe("/"))
+        expect(window.history.length).toBe(entries)
     })
 
     it("generates words when clicking Generate", async () => {

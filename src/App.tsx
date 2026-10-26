@@ -1,17 +1,3 @@
-import {BrowserRouter as Router, Route, Routes} from 'react-router'
 import {Home} from "./pages/Home.tsx";
 
-export const App = () => {
-    return (
-        <>
-            <Router basename={import.meta.env.BASE_URL}>
-                <Routes>
-                    <Route path="/" element={<Home/>}/>
-                    <Route path="/:urlConfig" element={<Home/>}/>
-                </Routes>
-            </Router>
-        </>
-    )
-}
-
-
+export const App = () => <Home/>

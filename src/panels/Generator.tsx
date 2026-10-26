@@ -14,12 +14,10 @@ type GeneratorProps = {
     config: Config
     grammar: Grammar | null
     error: string | null
-    setEnableWeights: (enable: boolean) => void
-    setEnableSerif: (enable: boolean) => void
-    setConfig: (config: Config) => void
+    updateConfig: (patch: Partial<Config>) => void
 }
 
-export const Generator = ({config, grammar, error, setEnableWeights, setEnableSerif, setConfig}: GeneratorProps) => {
+export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps) => {
 
     const [generatedWords, setGeneratedWords] = useState<string[]>([])
     const [wordCount, setWordCount] = useState("50")
@@ -37,7 +35,7 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
         onFilesSuccessfullySelected: ({filesContent}: { filesContent: { content: string }[] }) => {
             const data: string = filesContent[0].content
             const newConfig = JSON.parse(data)
-            setConfig({...config, ...newConfig})
+            updateConfig(newConfig)
             toast("Config imported")
         },
     });
@@ -147,10 +145,10 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
         <Col
             className="grow bg-background md:w-1/2 p-6 gap-4 md:overflow-auto md:no-scrollbar md:border-l-8 border-l-surface">
 
-            <SwitchLabel checked={config.enableWeights} onChange={setEnableWeights}
+            <SwitchLabel checked={config.enableWeights} onChange={enableWeights => updateConfig({enableWeights})}
                          label="Enable probability weights"
                          enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
-            <SwitchLabel checked={config.enableSerif} onChange={setEnableSerif}
+            <SwitchLabel checked={config.enableSerif} onChange={enableSerif => updateConfig({enableSerif})}
                          label="Enable serifs (For IPA characters readability)"
                          enabledColor="bg-primary" disabledColor="bg-primary/30"/>
             <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}
