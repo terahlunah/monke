@@ -14,6 +14,14 @@ import {GRAMMAR_ERROR_ID} from "@/features/config/grammarError.ts";
 
 const MAX_WORD_COUNT = 10000
 
+const summarize = (words: string[], filterDuplicates: boolean): string => {
+    const noun = words.length === 1 ? "word" : "words"
+    return filterDuplicates ?
+        `Generated ${words.length} ${noun}, ${new Set(words).size} unique` :
+        `Generated ${words.length} ${noun}`
+}
+
+
 // Word counts are whole numbers in 1..MAX_WORD_COUNT; anything unparsable falls back to a small default.
 const clampWordCount = (value: string): number => {
     const n = Math.trunc(Number(value))
@@ -35,6 +43,10 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     const [outputList, setOutputList] = useState(false)
     const [filterDuplicates, setFilterDuplicates] = useState(false)
     const [generationError, setGenerationError] = useState<string | null>(null)
+    // Announced politely after each run. The result is deliberately not read out: it can be thousands of words,
+    // and screen reader users browse it as text or a list instead.
+    const [announcement, setAnnouncement] = useState({text: "", run: 0})
+
 
 
     const fileInput = useRef<HTMLInputElement>(null)
@@ -104,15 +116,19 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             const count = clampWordCount(wordCount)
             setWordCount(String(count))
 
+            let failed = false
             try {
                 for (let i = 0; i < count; i++) {
                     words.push(generate(grammar))
                 }
             } catch (e) {
+                failed = true
                 setGenerationError((e as Error).message)
             }
 
             setGeneratedWords(words)
+            // A failed run is announced by its error alert instead.
+            setAnnouncement(({run}) => ({text: failed ? "" : summarize(words, filterDuplicates), run: run + 1}))
         }
     }
 
@@ -221,24 +237,36 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             {
                 filterDuplicates && generatedWords.length != 0 ?
-                    <h3 className="text-center italic text-gray-300">
+                    <p className="text-center italic text-gray-300">
                         Showing {filteredWords.length} unique words out of {generatedWords.length} generated
-                    </h3> :
+                    </p> :
                     null
             }
 
             {
                 generationError ?
-                    <h3 className="text-center italic text-accent-danger">
+                    <p role="alert" className="text-center italic text-accent-danger">
                         {generationError}
-                    </h3> :
+                    </p> :
                     null
             }
 
 
-            <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
-                {text}
-            </p>
+            {/* A persistent live region: announcements are only reliable from a region that exists before its text changes.
+                The keyed child makes a repeated, identical summary announce again. */}
+            <div role="status" className="sr-only">
+                <p key={announcement.run}>{announcement.text}</p>
+            </div>
+
+            {generatedWords.length !== 0 ? <h3 className="sr-only">Generated words</h3> : null}
+            {outputList ?
+                <ul className={config.enableSerif ? "font-serif" : ""}>
+                    {filteredWords.map((word, i) => <li key={i}>{word}</li>)}
+                </ul> :
+                <p className={`whitespace-pre-line ${config.enableSerif ? "font-serif" : ""}`}>
+                    {text}
+                </p>
+            }
 
         </section>
     )

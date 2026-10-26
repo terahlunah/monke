@@ -1,5 +1,4 @@
-import {Fragment} from "react";
-import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
+import {Fragment, useEffect, useId, useRef, useState} from "react";
 import {MenuIcon} from "lucide-react";
 import {GithubIcon} from "@/components/GithubIcon.tsx";
 import {useMediaQuery} from "./useMediaQuery.ts";
@@ -49,8 +48,32 @@ const DesktopNavbar = ({tab, setTab}: NavbarProps) => {
         </header>)
 }
 
+// A disclosure rather than an ARIA menu: these are page links, and role=menu makes screen readers switch to
+// application mode and expect arrow-key navigation. Plain buttons in a list are navigated with Tab like the rest of the page.
 const MobileNavbar = ({tab, setTab}: NavbarProps) => {
-    const tabStyle = (t: Tab): string => t === tab ? "text-primary text-left data-focus:underline" : "text-white text-left data-focus:underline"
+    const tabStyle = (t: Tab): string => t === tab ? "text-primary text-left" : "text-white text-left"
+    const [open, setOpen] = useState(false)
+    const nav = useRef<HTMLElement>(null)
+    const toggle = useRef<HTMLButtonElement>(null)
+    const panelId = useId()
+
+    useEffect(() => {
+        if (!open) return
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== "Escape") return
+            setOpen(false)
+            toggle.current?.focus()
+        }
+        const onPointerDown = (e: PointerEvent) => {
+            if (!nav.current?.contains(e.target as Node)) setOpen(false)
+        }
+        document.addEventListener("keydown", onKeyDown)
+        document.addEventListener("pointerdown", onPointerDown)
+        return () => {
+            document.removeEventListener("keydown", onKeyDown)
+            document.removeEventListener("pointerdown", onPointerDown)
+        }
+    }, [open])
 
     return (
         <header className="gap-4 p-2 items-center flex flex-row justify-between">
@@ -60,30 +83,38 @@ const MobileNavbar = ({tab, setTab}: NavbarProps) => {
                 <p className="text-lg text-on-surface/80">Word generator</p>
             </div>
 
-            <nav aria-label="Main" className="py-4 mr-2 relative">
-                <Menu>
-                    <MenuButton aria-label="Menu">
-                        <MenuIcon className="size-6"/>
-                    </MenuButton>
-                    <MenuItems
+            <nav ref={nav} aria-label="Main" className="py-4 mr-2 relative"
+                 // Closes when focus leaves the menu, so a keyboard user tabbing past it doesn't leave it open.
+                 onBlur={e => {
+                     if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false)
+                 }}>
+                <button ref={toggle} aria-label="Menu" aria-expanded={open} aria-controls={panelId}
+                        onClick={() => setOpen(!open)}>
+                    <MenuIcon className="size-6"/>
+                </button>
+                {open ? (
+                    <ul id={panelId}
                         className="z-20 absolute right-0 top-12 flex flex-col shadow-sm bg-background rounded-sm overflow-hidden divide-y divide-white/20">
-                        <div className="flex flex-col gap-4 p-4">
-                            {tabs.map(t => (
-                                <MenuItem key={t.id}>
-                                    <button className={tabStyle(t.id)} aria-current={t.id === tab ? "page" : undefined}
-                                            onClick={() => setTab(t.id)}>{t.label}</button>
-                                </MenuItem>
-                            ))}
-                        </div>
-                        <div className="flex flex-col gap-4 p-4">
-                            <MenuItem>
-                                <a className="text-left data-focus:underline" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
-                                    GitHub<span className="sr-only"> (opens in a new tab)</span>
-                                </a>
-                            </MenuItem>
-                        </div>
-                    </MenuItems>
-                </Menu>
+                        <li className="flex flex-col">
+                            <ul className="flex flex-col gap-4 p-4">
+                                {tabs.map(t => (
+                                    <li key={t.id} className="flex flex-col">
+                                        <button className={tabStyle(t.id)} aria-current={t.id === tab ? "page" : undefined}
+                                                onClick={() => {
+                                                    setOpen(false)
+                                                    setTab(t.id)
+                                                }}>{t.label}</button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </li>
+                        <li className="flex flex-col p-4">
+                            <a className="text-left" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
+                                GitHub<span className="sr-only"> (opens in a new tab)</span>
+                            </a>
+                        </li>
+                    </ul>
+                ) : null}
             </nav>
         </header>
     )

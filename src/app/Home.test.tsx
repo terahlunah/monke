@@ -89,7 +89,7 @@ describe("Home", () => {
         renderAt("/")
         await screen.findByText(/possible branches/)
 
-        await user.click(screen.getAllByRole("button", {name: "Duplicate rule"})[0])
+        await user.click(screen.getAllByRole("button", {name: /^Duplicate rule/})[0])
 
         const ids = [...document.querySelectorAll("[id]")].map(e => e.id)
         expect(new Set(ids).size).toBe(ids.length)

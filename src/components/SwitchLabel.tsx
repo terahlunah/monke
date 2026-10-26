@@ -1,6 +1,5 @@
 import {GenericProps} from "./GenericProps.tsx";
-import {Switch} from "@headlessui/react";
-import {Row} from "./Row.tsx";
+import {Field, Label, Switch} from "@headlessui/react";
 
 
 type SwitchLabelProps = {
@@ -12,6 +11,8 @@ type SwitchLabelProps = {
     disabledColor: string
 }
 
+// The visible label names the switch and the switch role reports on/off, so the name stays constant
+// (a name like "Disable X" would contradict the announced state).
 export const SwitchLabel = ({
                                 className,
                                 label,
@@ -22,9 +23,8 @@ export const SwitchLabel = ({
                                 disabledColor
                             }: GenericProps<SwitchLabelProps>) => {
     return (
-        <Row className={`${className} items-center gap-2`}>
+        <Field className={`flex flex-row ${className ?? ""} items-center gap-2`}>
             <Switch
-                aria-label={`${checked ? "Disable" : "Enable"} '${label}'`}
                 checked={checked}
                 onChange={onChange}
                 className={`${
@@ -33,7 +33,7 @@ export const SwitchLabel = ({
                             <span
                                 className={`${checked ? 'translate-x-4' : 'translate-x-1'} inline-block h-3 w-3 transform rounded-full bg-white transition`}/>
             </Switch>
-            <span className={labelClass}>{label}</span>
-        </Row>
+            <Label className={labelClass}>{label}</Label>
+        </Field>
     )
 }

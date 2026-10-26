@@ -57,7 +57,7 @@ export const RuleInstance = ({
                                          iconClassName="size-4"/>
                         </div>
                         <button onClick={() => dispatch({type: "toggleCollapse", ruleId})} className="border border-white/30 rounded-sm p-2 mr-1 md:mr-2"
-                                aria-label={rule.collapsed ? "Expand Rule" : "Collapse rule"}>
+                                aria-expanded={!rule.collapsed} aria-label={`Details of rule ${rule.name}`}>
                             {
                                 rule.collapsed ?
                                     <ChevronDownIcon className="size-5 stroke-[2.5]"/> :
@@ -65,7 +65,7 @@ export const RuleInstance = ({
                             }
                         </button>
                         <button onClick={() => dispatch({type: "duplicateRule", ruleId})} className="border border-white/30 rounded-sm p-2"
-                                aria-label="Duplicate rule">
+                                aria-label={`Duplicate rule ${rule.name}`}>
                             <CopyIcon className="size-5"/>
                         </button>
                         <div className="rounded-sm overflow-clip mx-2 md:mx-4">
@@ -77,11 +77,11 @@ export const RuleInstance = ({
                                 <>
                                     <div className="w-0.5 h-8 bg-white/10"/>
                                     <Row className="gap-2 items-center">
-                                        <ToggleLabel label="Rw" checked={rule.showRewrites}
+                                        <ToggleLabel label="Rw" accessibleName={`Rewrites (Rw) of rule ${rule.name}`} checked={rule.showRewrites}
                                                      onChange={show => dispatch({type: "setShowRewrites", ruleId, show})}
                                                      enabledColor="bg-accent-warning"
                                                      disabledColor="bg-accent-warning/20"/>
-                                        <ToggleLabel label="Ex" checked={rule.showExclusions}
+                                        <ToggleLabel label="Ex" accessibleName={`Exclusions (Ex) of rule ${rule.name}`} checked={rule.showExclusions}
                                                      onChange={show => dispatch({type: "setShowExclusions", ruleId, show})}
                                                      enabledColor="bg-accent-caution"
                                                      disabledColor="bg-accent-caution/20"/>
@@ -90,7 +90,7 @@ export const RuleInstance = ({
                                 : null
                         }
                     </Row>
-                    <button onClick={() => dispatch({type: "removeRule", ruleId})} className="bg-accent-danger/50 rounded-sm p-1" aria-label="Delete rule">
+                    <button onClick={() => dispatch({type: "removeRule", ruleId})} className="bg-accent-danger/50 rounded-sm p-1" aria-label={`Delete rule ${rule.name}`}>
                         <XIcon className="size-5"/>
                     </button>
                 </Row>

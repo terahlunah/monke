@@ -1,7 +1,10 @@
 import {afterEach, describe, expect, it} from "vitest"
-import {render, screen} from "@testing-library/react"
+import {render, screen, within} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {Home} from "./Home.tsx"
+
+// dnd-kit renders its own live region, so look inside the generator section for ours.
+const generatorStatus = () => within(screen.getByRole("region", {name: "Generator"})).getByRole("status")
 
 const renderApp = async () => {
     window.history.replaceState(null, "", "/")
@@ -97,9 +100,123 @@ describe("landmarks and navigation", () => {
         await renderApp()
 
         await user.click(screen.getByRole("button", {name: "Menu"}))
-        await user.click(await screen.findByRole("menuitem", {name: "FAQ"}))
+        await user.click(await screen.findByRole("button", {name: "FAQ"}))
 
         await screen.findByText(/What is this tool/)
         expect(screen.getByRole("main", {name: "FAQ"})).toHaveFocus()
+    })
+
+    it("closes the mobile menu with Escape and returns focus to its button", async () => {
+        window.matchMedia = (query: string) => ({...originalMatchMedia(query), matches: false})
+        const user = userEvent.setup()
+        await renderApp()
+        const menu = screen.getByRole("button", {name: "Menu"})
+        expect(menu).toHaveAttribute("aria-expanded", "false")
+
+        await user.click(menu)
+        expect(menu).toHaveAttribute("aria-expanded", "true")
+        await user.keyboard("{Escape}")
+
+        expect(menu).toHaveAttribute("aria-expanded", "false")
+        expect(menu).toHaveFocus()
+    })
+
+    it("closes the mobile menu when focus moves out of it", async () => {
+        window.matchMedia = (query: string) => ({...originalMatchMedia(query), matches: false})
+        const user = userEvent.setup()
+        await renderApp()
+        const menu = screen.getByRole("button", {name: "Menu"})
+
+        await user.click(menu)
+        await user.tab()
+        await user.tab()
+        await user.tab()
+        await user.tab()
+        await user.tab()
+
+        expect(menu).toHaveAttribute("aria-expanded", "false")
+    })
+})
+
+describe("generator output", () => {
+    it("announces a summary instead of the words", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const status = generatorStatus()
+        expect(status).toHaveTextContent("")
+
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+
+        expect(status).toHaveTextContent("Generated 50 words")
+    })
+
+    it("keeps announcing when the same summary repeats", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const status = generatorStatus()
+
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+        const first = status.firstElementChild
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+
+        expect(status).toHaveTextContent("Generated 50 words")
+        expect(status.firstElementChild).not.toBe(first)
+    })
+
+    it("includes the unique count when duplicates are filtered", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await user.click(screen.getByRole("switch", {name: "Filter Duplicates"}))
+
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+
+        expect(generatorStatus()).toHaveTextContent(/^Generated 50 words, \d+ unique$/)
+    })
+
+    it("renders a list when output as list is on", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await user.click(screen.getByRole("switch", {name: "Output as list"}))
+
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+
+        const list = screen.getByRole("list")
+        expect(within(list).getAllByRole("listitem")).toHaveLength(50)
+    })
+})
+
+describe("toggles", () => {
+    it("exposes switch state without changing the name", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const toggle = screen.getByRole("switch", {name: "Filter Duplicates"})
+        expect(toggle).not.toBeChecked()
+
+        await user.click(toggle)
+
+        expect(screen.getByRole("switch", {name: "Filter Duplicates"})).toBeChecked()
+    })
+
+    it("exposes the rewrites toggle as a pressed button", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const rw = screen.getByRole("button", {name: "Rewrites (Rw) of rule Syllable"})
+        expect(rw).toHaveAttribute("aria-pressed", "false")
+
+        await user.click(rw)
+
+        expect(rw).toHaveAttribute("aria-pressed", "true")
+    })
+
+    it("exposes a rule's collapsed state", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const details = screen.getByRole("button", {name: "Details of rule Vowel"})
+        expect(details).toHaveAttribute("aria-expanded", "true")
+
+        await user.click(details)
+
+        expect(details).toHaveAttribute("aria-expanded", "false")
+        expect(screen.queryByLabelText("Terminal 1 of rule Vowel")).not.toBeInTheDocument()
     })
 })
