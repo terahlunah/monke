@@ -1,6 +1,6 @@
 import {GenericProps} from "../components/GenericProps.tsx";
 import {Row} from "../components/Row.tsx";
-import {DocumentDuplicateIcon, EllipsisVerticalIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {ChevronDownIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {FormEvent} from "react";
 import {Col} from "../components/Col.tsx";
@@ -11,7 +11,6 @@ import {Rule} from "../models/ui.ts";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";
-import {ChevronDownIcon, ChevronUpIcon} from "@heroicons/react/24/solid";
 
 
 export type RuleInstanceProps = {
@@ -71,18 +70,19 @@ export const RuleInstance = ({
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
                         <div className="pl-2 pr-3 touch-none" {...listeners} {...attributes} aria-label="Reorder rule">
-                            <EllipsisVerticalIcon className="h-5"/>
+                            <EllipsisVerticalIcon className="size-5"/>
                         </div>
                         <button onClick={onRuleToggleCollapse} className="border border-white/30 rounded-sm p-2 mr-2"
                                 aria-label={rule.collapsed ? "Expand Rule" : "Collapse rule"}>
                             {
                                 rule.collapsed ?
-                                    <ChevronDownIcon className="h-5"/> : <ChevronUpIcon className="h-5"/>
+                                    <ChevronDownIcon className="size-5 stroke-[2.5]"/> :
+                                    <ChevronUpIcon className="size-5 stroke-[2.5]"/>
                             }
                         </button>
                         <button onClick={onClone} className="border border-white/30 rounded-sm p-2"
                                 aria-label="Duplicate rule">
-                            <DocumentDuplicateIcon className="h-5"/>
+                            <CopyIcon className="size-5"/>
                         </button>
                         <div className="rounded-sm overflow-clip mx-4" aria-label="Edit rule name">
                             <AutowidthInput value={rule.name} onInput={onRuleNameInput}
@@ -107,7 +107,7 @@ export const RuleInstance = ({
                         }
                     </Row>
                     <button onClick={onDelete} className="bg-accent-danger/50 rounded-sm p-1" aria-label="Delete rule">
-                        <XMarkIcon className="h-5"/>
+                        <XIcon className="size-5"/>
                     </button>
                 </Row>
                 {

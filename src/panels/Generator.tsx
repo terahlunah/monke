@@ -1,14 +1,12 @@
 import {Col} from "../components/Col.tsx";
 import {SwitchLabel} from "../components/SwitchLabel.tsx";
 import {Row} from "../components/Row.tsx";
-import {ArrowDownTrayIcon, ArrowUpTrayIcon, ClipboardDocumentListIcon, LinkIcon} from "@heroicons/react/24/outline";
-import {FormEvent, useMemo, useState} from "react";
+import {ClipboardListIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
+import {ChangeEvent, FormEvent, useMemo, useRef, useState} from "react";
 import {countCombinations, detectCycle, generate} from "../logic/wordgen.ts";
 import {Config} from "../pages/Home.tsx";
 import {toast} from "react-toastify";
 import {Grammar} from "../models/grammar.ts";
-import {saveAs} from 'file-saver';
-import {useFilePicker} from "use-file-picker";
 
 type GeneratorProps = {
     config: Config
@@ -26,19 +24,18 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
     const [generationError, setGenerationError] = useState<string | null>(null)
 
 
-    const {openFilePicker} = useFilePicker({
-        accept: '.monke',
-        onFilesRejected: ({errors}) => {
-            console.log('Failed to import config', errors);
-            toast("Failed to import config")
-        },
-        onFilesSuccessfullySelected: ({filesContent}: { filesContent: { content: string }[] }) => {
-            const data: string = filesContent[0].content
-            const newConfig = JSON.parse(data)
-            updateConfig(newConfig)
-            toast("Config imported")
-        },
-    });
+    const fileInput = useRef<HTMLInputElement>(null)
+
+    const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        // Reset so picking the same file again still fires a change event.
+        e.target.value = ""
+        if (!file) return
+
+        const newConfig = JSON.parse(await file.text())
+        updateConfig(newConfig)
+        toast("Config imported")
+    }
 
     const filteredWords = useMemo(
         () => {
@@ -128,12 +125,16 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
     const onExport = async () => {
         const data = JSON.stringify(config, null, 4)
         const name = config.language.length != 0 ? config.language.replace(" ", "_") : "config"
-        const file = new File([data], `${name}.monke`, {type: "text/plain;charset=utf-8"});
-        saveAs(file);
+        const url = URL.createObjectURL(new Blob([data], {type: "text/plain;charset=utf-8"}))
+        const link = document.createElement("a")
+        link.href = url
+        link.download = `${name}.monke`
+        link.click()
+        URL.revokeObjectURL(url)
     }
 
     const onImport = () => {
-        openFilePicker()
+        fileInput.current?.click()
     }
 
     const onCopyLink = async () => {
@@ -164,21 +165,23 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
                 <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onCopyLink} aria-label="Share link">
                     <Row className="items-center justify-center gap-2">
                         <h1>Share link</h1>
-                        <LinkIcon className="h-5"/>
+                        <LinkIcon className="size-5"/>
                     </Row>
                 </button>
                 <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onExport} aria-label="Export config">
                     <Row className="items-center justify-center gap-2">
                         <h1>Export Config</h1>
-                        <ArrowUpTrayIcon className="h-5"/>
+                        <UploadIcon className="size-5"/>
                     </Row>
                 </button>
                 <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onImport} aria-label="Import config">
                     <Row className="items-center justify-center gap-2">
                         <h1>Import Config</h1>
-                        <ArrowDownTrayIcon className="h-5"/>
+                        <DownloadIcon className="size-5"/>
                     </Row>
                 </button>
+                <input ref={fileInput} type="file" accept=".monke" className="hidden" onChange={onFileSelected}
+                       aria-hidden="true" tabIndex={-1}/>
             </Row>
 
             <div className="border-t border-white/20"/>
@@ -205,7 +208,7 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
                 <button className="grow bg-primary rounded-sm p-2" onClick={onCopy} aria-label="Copy words">
                     <Row className="items-center justify-center gap-2">
                         <h1>Copy</h1>
-                        <ClipboardDocumentListIcon className="h-5"/>
+                        <ClipboardListIcon className="size-5"/>
                     </Row>
                 </button>
             </Row>

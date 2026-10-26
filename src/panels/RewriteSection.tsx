@@ -3,12 +3,11 @@ import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} 
 import {CSS} from "@dnd-kit/utilities";
 import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
-import {ChevronDoubleRightIcon, EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "../models/ui.ts";
 import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
-import {uid} from "uid";
 
 
 export type RewriteSectionProps = {
@@ -46,7 +45,7 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
 
     const onRewritePatternAdd = () => {
         const newRule = cloneDeep(rule)
-        newRule.rewrites.push({id: uid(), match: "", replace: ""})
+        newRule.rewrites.push({id: crypto.randomUUID(), match: "", replace: ""})
         onRuleChange(newRule)
     }
 
@@ -86,7 +85,7 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
                 <button onClick={onRewritePatternAdd}
                         className={`bg-accent-warning  mr-4 rounded-sm p-1`}
                         aria-label="Add rewrite pattern">
-                    <PlusIcon className="h-6"/>
+                    <PlusIcon className="size-6"/>
                 </button>
             </Row>
         </>
@@ -134,7 +133,7 @@ export const RewritePatternItem = ({
         <div ref={setNodeRef} style={style} id={rewrite.id}>
             <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`bg-accent-warning p-1 h-8`} {...listeners} aria-label="Drag rewrite pattern">
-                    <EllipsisVerticalIcon className="h-4"/>
+                    <EllipsisVerticalIcon className="size-4"/>
                 </button>
                 <AutowidthInput value={rewrite.match}
                                 onChange={onMatchInput}
@@ -142,14 +141,14 @@ export const RewritePatternItem = ({
                                 type="text"
                                 minWidth={15}/>
                 <button className="bg-accent-warning p-1 h-8" aria-disabled={true} disabled={true} aria-label="">
-                    <ChevronDoubleRightIcon className="h-4"/>
+                    <ChevronsRightIcon className="size-4"/>
                 </button>
                 <AutowidthInput value={rewrite.replace}
                                 onChange={onReplaceInput}
                                 className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                 type="text"
                                 minWidth={15}/>
-                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/></button>
+                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/></button>
             </Row>
         </div>
     );

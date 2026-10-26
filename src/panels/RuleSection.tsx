@@ -3,11 +3,10 @@ import {FormEvent, useState} from "react";
 import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
 import {Row} from "../components/Row.tsx";
-import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
-import {uid} from "uid";
 import {Rule, RulePattern} from "../models/ui.ts";
 
 
@@ -47,7 +46,7 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ge
 
     const onRuleAdd = () => {
         const newRule = cloneDeep(rule)
-        newRule.patterns.push({id: uid(), pattern: "", weight: 1.0})
+        newRule.patterns.push({id: crypto.randomUUID(), pattern: "", weight: 1.0})
         onRuleChange(newRule)
     }
 
@@ -82,7 +81,7 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ge
             <button onClick={onRuleAdd}
                     className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded-sm p-1`}
                     aria-label="Add pattern">
-                <PlusIcon className="h-6"/>
+                <PlusIcon className="size-6"/>
             </button>
         </Row>
     );
@@ -158,7 +157,7 @@ export const RulePatternItem = ({
             <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...listeners}
                         aria-label="Drag pattern">
-                    <EllipsisVerticalIcon className="h-4"/>
+                    <EllipsisVerticalIcon className="size-4"/>
                 </button>
                 <AutowidthInput value={pattern.pattern}
                                 onChange={onGroupInput}
@@ -177,7 +176,7 @@ export const RulePatternItem = ({
                 ) : null
                 }
                 <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8" aria-label="Delete pattern">
-                    <XMarkIcon className="h-4"/></button>
+                    <XIcon className="size-4"/></button>
             </Row>
         </div>
     );

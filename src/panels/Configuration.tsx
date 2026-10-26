@@ -1,6 +1,5 @@
 import {Col} from "../components/Col.tsx";
 import {RuleInstance} from "./RuleInstance.tsx";
-import {uid} from "uid";
 import cloneDeep from "lodash.clonedeep";
 import {Row} from "../components/Row.tsx";
 import {closestCenter, DndContext, DragEndEvent, useSensor, useSensors} from "@dnd-kit/core";
@@ -10,7 +9,7 @@ import {Config} from "../pages/Home.tsx";
 import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
 import {Listbox, Transition} from "@headlessui/react";
 import {FormEvent, Fragment} from "react";
-import {CheckIcon, ChevronUpDownIcon} from "@heroicons/react/24/outline";
+import {CheckIcon, ChevronsUpDownIcon} from "lucide-react";
 import {Rule} from "../models/ui.ts";
 
 type ConfigurationProps = {
@@ -34,11 +33,11 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
             const source = config.rules[index]
             const rule: Rule = {
                 ...source,
-                id: uid(),
+                id: crypto.randomUUID(),
                 name: `${source.name} clone`,
-                patterns: source.patterns.map(p => ({...p, id: uid()})),
-                rewrites: source.rewrites.map(p => ({...p, id: uid()})),
-                exclusions: source.exclusions.map(p => ({...p, id: uid()})),
+                patterns: source.patterns.map(p => ({...p, id: crypto.randomUUID()})),
+                rewrites: source.rewrites.map(p => ({...p, id: crypto.randomUUID()})),
+                exclusions: source.exclusions.map(p => ({...p, id: crypto.randomUUID()})),
             }
 
             const newRules = cloneDeep(config.rules)
@@ -62,7 +61,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
 
     const onRuleAdd = () => {
         setRules(config.root, [...config.rules, {
-            id: uid(),
+            id: crypto.randomUUID(),
             name: "",
             patterns: [],
             rewrites: [],
@@ -76,7 +75,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
 
     const onGroupAdd = () => {
         setRules(config.root, [...config.rules, {
-            id: uid(),
+            id: crypto.randomUUID(),
             name: "",
             patterns: [],
             rewrites: [],
@@ -174,7 +173,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
                                 <span className="block truncate">{config.root}</span>
                                 <span
                                     className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                                          <ChevronUpDownIcon
+                                          <ChevronsUpDownIcon
                                               className="h-5 w-5 text-gray-400"
                                               aria-hidden="true"
                                           />

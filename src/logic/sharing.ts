@@ -1,6 +1,5 @@
 import {Config} from '../pages/Home.tsx'
 import {ExclusionPattern, RewritePattern, Rule, RulePattern} from "../models/ui.ts";
-import {uid} from "uid";
 
 import {ByteBuffer} from "./bytebuffer.ts"
 
@@ -78,7 +77,7 @@ export const decodeConfig = async (data: string): Promise<Config> => {
         const patternCount = readCount()
         const patterns: RulePattern[] = []
         for (let n = 0; n < patternCount; n++) {
-            patterns.push({id: uid(), pattern: readString(), weight: buf.readFloat32()})
+            patterns.push({id: crypto.randomUUID(), pattern: readString(), weight: buf.readFloat32()})
         }
 
         const rewrites: RewritePattern[] = []
@@ -87,17 +86,17 @@ export const decodeConfig = async (data: string): Promise<Config> => {
         if (!terminalOnly) {
             const rewriteCount = readCount()
             for (let n = 0; n < rewriteCount; n++) {
-                rewrites.push({id: uid(), match: readString(), replace: readString()})
+                rewrites.push({id: crypto.randomUUID(), match: readString(), replace: readString()})
             }
 
             const exclusionCount = readCount()
             for (let n = 0; n < exclusionCount; n++) {
-                exclusions.push({id: uid(), match: readString()})
+                exclusions.push({id: crypto.randomUUID(), match: readString()})
             }
         }
 
         rules.push({
-            id: uid(),
+            id: crypto.randomUUID(),
             name: name,
             terminalOnly: terminalOnly,
             showRewrites: showRewrites,

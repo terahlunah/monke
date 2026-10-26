@@ -7,13 +7,13 @@ import {Bounce, ToastContainer} from "react-toastify";
 import {Col} from "../components/Col.tsx";
 import {Row} from "../components/Row.tsx";
 import {tokiPonaRoot, tokiPonaRules} from "../logic/defaults.ts";
-import {FaGithub} from "react-icons/fa";
+import {GithubIcon} from "../components/GithubIcon.tsx";
 import {configToGrammar} from "../logic/parser.ts";
 import {Rule} from "../models/ui.ts";
 import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
 import {Faq} from "../panels/Faq.tsx";
 import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
-import {Bars3Icon} from "@heroicons/react/24/outline";
+import {MenuIcon} from "lucide-react";
 import {GenericProps} from "../components/GenericProps.tsx";
 
 export type Config = {
@@ -173,7 +173,7 @@ const DesktopNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
                 <h2 className="text-lg text-on-surface/80">Made by Terah</h2>
                 <div className="border-l border-white/20 h-8"/>
                 <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
-                    <FaGithub className="size-8"/>
+                    <GithubIcon className="size-8"/>
                 </a>
             </Row>
         </Row>)
@@ -193,7 +193,7 @@ const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
 
             <div className="py-4 mr-2 relative">
                 <MenuButton className="">
-                    <Bars3Icon className="h-6"/>
+                    <MenuIcon className="size-6"/>
                 </MenuButton>
                 <MenuItems
                     className="z-20 absolute right-0 top-12 flex flex-col shadow-sm bg-background rounded-sm overflow-hidden divide-y divide-white/20">

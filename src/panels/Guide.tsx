@@ -1,5 +1,5 @@
 import {Col} from "../components/Col.tsx";
-import {ChevronDoubleRightIcon, EllipsisVerticalIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {ChevronsRightIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
 import {Row} from "../components/Row.tsx";
 import AutowidthInput from "react-autowidth-input";
 import {SwitchLabel} from "../components/SwitchLabel.tsx";
@@ -274,7 +274,7 @@ const GuideTerminal = ({value, weight}: { value: string, weight?: string }) => {
     return (
         <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-primary p-1 h-8`}>
-                <EllipsisVerticalIcon className="h-4"/>
+                <EllipsisVerticalIcon className="size-4"/>
             </button>
             <AutowidthInput value={value}
                             className={`bg-primary/40 px-1 outline-0 text-center h-8`}
@@ -286,7 +286,7 @@ const GuideTerminal = ({value, weight}: { value: string, weight?: string }) => {
                                 type="text"
                                 minWidth={10}/> : null
             }
-            <button className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/>
+            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
             </button>
         </Row>
     )
@@ -296,7 +296,7 @@ const GuidePattern = ({value, weight}: { value: string, weight?: string }) => {
     return (
         <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-secondary p-1 h-8`}>
-                <EllipsisVerticalIcon className="h-4"/>
+                <EllipsisVerticalIcon className="size-4"/>
             </button>
             <AutowidthInput value={value}
                             className={`bg-secondary/40 px-1 outline-0 text-center h-8`}
@@ -308,7 +308,7 @@ const GuidePattern = ({value, weight}: { value: string, weight?: string }) => {
                                 type="text"
                                 minWidth={10}/> : null
             }
-            <button className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/></button>
+            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/></button>
         </Row>
     )
 }
@@ -317,18 +317,18 @@ const GuideRewrite = ({match, replace}: { match: string, replace: string }) => {
     return (
         <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-accent-warning p-1 h-8`}>
-                <EllipsisVerticalIcon className="h-4"/>
+                <EllipsisVerticalIcon className="size-4"/>
             </button>
             <AutowidthInput value={match}
                             className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}
                             type="text"
                             minWidth={15}/>
-            <button className="bg-accent-warning p-1 h-8"><ChevronDoubleRightIcon className="h-4"/></button>
+            <button className="bg-accent-warning p-1 h-8"><ChevronsRightIcon className="size-4"/></button>
             <AutowidthInput value={replace}
                             className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}
                             type="text"
                             minWidth={15}/>
-            <button className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/>
+            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
             </button>
         </Row>
     )
@@ -338,13 +338,13 @@ const GuideExclusion = ({match}: { match: string }) => {
     return (
         <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-accent-caution p-1 h-8`}>
-                <EllipsisVerticalIcon className="h-4"/>
+                <EllipsisVerticalIcon className="size-4"/>
             </button>
             <AutowidthInput value={match}
                             className={`bg-accent-caution/40 px-1 outline-0 text-center h-8`}
                             type="text"
                             minWidth={15}/>
-            <button className="bg-accent-danger/60 p-1 h-8"><XMarkIcon className="h-4"/>
+            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
             </button>
         </Row>
     )

@@ -3,11 +3,10 @@ import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} 
 import {CSS} from "@dnd-kit/utilities";
 import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
-import {EllipsisVerticalIcon, PlusIcon, XMarkIcon} from "@heroicons/react/24/outline";
+import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import cloneDeep from "lodash.clonedeep";
-import {uid} from "uid";
 import {ExclusionPattern, Rule} from "../models/ui.ts";
 
 
@@ -46,7 +45,7 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
 
     const onExclusionPatternAdd = () => {
         const newRule = cloneDeep(rule)
-        newRule.exclusions.push({id: uid(), match: ""})
+        newRule.exclusions.push({id: crypto.randomUUID(), match: ""})
         onRuleChange(newRule)
     }
 
@@ -86,7 +85,7 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
                 <button onClick={onExclusionPatternAdd}
                         className={`bg-accent-caution  mr-4 rounded-sm p-1`}
                         aria-label="Add exclusion pattern">
-                    <PlusIcon className="h-6"/>
+                    <PlusIcon className="size-6"/>
                 </button>
             </Row>
         </>
@@ -130,7 +129,7 @@ export const ExclusionPatternItem = ({
         <div ref={setNodeRef} style={style} id={exclusion.id}>
             <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`bg-accent-caution p-1 h-8`} {...listeners} aria-label="Drag exclusion pattern">
-                    <EllipsisVerticalIcon className="h-4"/>
+                    <EllipsisVerticalIcon className="size-4"/>
                 </button>
                 <AutowidthInput value={exclusion.match}
                                 onChange={onGroupInput}
@@ -138,7 +137,7 @@ export const ExclusionPatternItem = ({
                                 type="text"
                                 minWidth={15}/>
                 <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
-                        aria-label="Delete exclusion pattern"><XMarkIcon className="h-4"/></button>
+                        aria-label="Delete exclusion pattern"><XIcon className="size-4"/></button>
             </Row>
         </div>
     );

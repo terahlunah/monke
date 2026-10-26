@@ -17,6 +17,11 @@
 }
 
 @layer base {
+    /* Lucide defaults to a 2px stroke; the lighter 1.5px matches the weight the UI was designed with. */
+    .lucide {
+        stroke-width: 1.5;
+    }
+
     /* Tailwind 3 defaults, which the layout was designed against: v4 uses currentColor for borders and a default cursor on buttons. */
     *,
     ::after,
