@@ -19,6 +19,12 @@
 }
 
 @layer base {
+    /* Matches the app shell so no unstyled white can show if the document is ever scrolled or overscrolled. */
+    html,
+    body {
+        background-color: var(--color-surface);
+    }
+
     /* Lucide defaults to a 2px stroke; the lighter 1.5px matches the weight the UI was designed with. */
     .lucide {
         stroke-width: 1.5;

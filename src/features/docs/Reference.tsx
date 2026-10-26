@@ -1,4 +1,6 @@
 import {MouseEvent, ReactNode} from "react";
+import {ScrollRegion} from "@/components/ScrollRegion.tsx";
+import {scrollRegionTo} from "@/components/scroll.ts";
 import {ExampleCard} from "./ExampleCard.tsx";
 import {useExampleHrefs} from "./useExampleHrefs.ts";
 import {
@@ -33,15 +35,14 @@ const jumpTo = (e: MouseEvent<HTMLAnchorElement>, id: string) => {
     const target = document.getElementById(id)
     if (!target) return
     e.preventDefault()
-    target.scrollIntoView({block: "start"})
+    scrollRegionTo(target.closest<HTMLElement>("[data-scroll-region]")!, target)
     target.focus({preventScroll: true})
 }
 
 export const Reference = () => {
     const hrefs = useExampleHrefs(allExamples)
     return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard users must be able to scroll this region
-        <div tabIndex={0} className="flex flex-col bg-background grow p-4 md:p-8 gap-3 md:overflow-auto md:no-scrollbar pb-64 leading-relaxed">
+        <ScrollRegion label="reference" className="flex flex-col bg-background grow p-4 md:p-8 gap-3 md:no-scrollbar pb-64 leading-relaxed">
             <div className="flex flex-col gap-3 max-w-3xl w-full mx-auto">
                 <p className="text-lg">
                     Monke builds words from rules you write. This reference starts with a five-minute tour and ends with a
@@ -335,7 +336,7 @@ export const Reference = () => {
                         optional probabilities and weighted rule patterns.</p>
                 </Section>
             </div>
-        </div>
+        </ScrollRegion>
     )
 }
 

@@ -1,3 +1,4 @@
+import {ScrollRegion} from "@/components/ScrollRegion.tsx";
 import {Col} from "@/components/Col.tsx";
 import {GenericProps} from "@/components/GenericProps.tsx";
 
@@ -6,7 +7,7 @@ const linkClass = "text-primary-text underline"
 export const Faq = () => {
 
     return (
-        <Col className="bg-background grow p-4 md:p-8 gap-10 md:overflow-auto md:no-scrollbar justify-start">
+        <ScrollRegion label="FAQ" className="flex flex-col bg-background grow p-4 md:p-8 gap-10 md:no-scrollbar justify-start">
             <FaqItem title="What is this tool?">
                 <b className="text-primary-text">Monke</b> is a word generator for conlang creators. You describe the
                 sound patterns of your language with rules, and it generates as many words as you need. The Reference explains
@@ -40,7 +41,7 @@ export const Faq = () => {
                             rel="noreferrer noopener">Wrdz<span className="sr-only"> (opens in a new tab)</span></a> by
                 Collin Brennan, a word generator with a simpler interface and one of Monke's inspirations.
             </FaqItem>
-        </Col>
+        </ScrollRegion>
     )
 }
 

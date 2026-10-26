@@ -1,5 +1,6 @@
-import {describe, expect, it} from "vitest"
-import {render, screen, waitFor} from "@testing-library/react"
+import {describe, expect, it, vi} from "vitest"
+import userEvent from "@testing-library/user-event"
+import {fireEvent, render, screen, waitFor} from "@testing-library/react"
 import {decodeConfig} from "@/engine/sharing.ts"
 import {Reference} from "./Reference.tsx"
 import {exampleToConfig, firstGrammar} from "./referenceExamples.ts"
@@ -23,5 +24,22 @@ describe("reference Try it links", () => {
     it("render a link for every example once encoded", async () => {
         render(<Reference/>)
         await waitFor(() => expect(screen.getAllByRole("link", {name: /^Try it: /}).length).toBeGreaterThan(1))
+    })
+})
+
+describe("reference back to top", () => {
+    it("appears only after scrolling and returns focus to the top heading", async () => {
+        const user = userEvent.setup()
+        const {container} = render(<Reference/>)
+        const region = container.querySelector<HTMLElement>("[data-scroll-region]")!
+        region.scrollTo = vi.fn() as unknown as typeof region.scrollTo
+        expect(screen.queryByRole("button", {name: "Back to top of reference"})).not.toBeInTheDocument()
+
+        region.scrollTop = 500
+        fireEvent.scroll(region)
+        await user.click(await screen.findByRole("button", {name: "Back to top of reference"}))
+
+        expect(region.scrollTo).toHaveBeenCalledWith(expect.objectContaining({top: 0}))
+        expect(screen.getByRole("heading", {name: "Contents"})).toHaveFocus()
     })
 })
