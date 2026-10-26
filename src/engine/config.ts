@@ -1,3 +1,11 @@
+export type Config = {
+    language: string,
+    rules: Rule[],
+    root: string | null
+    enableWeights: boolean,
+    enableSerif: boolean,
+}
+
 export type Rule = {
     id: string
     name: string
@@ -21,7 +29,6 @@ export type RewritePattern = {
     match: string,
     replace: string
 }
-
 
 export type ExclusionPattern = {
     id: string

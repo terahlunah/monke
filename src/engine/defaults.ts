@@ -1,4 +1,4 @@
-import {Rule} from "../models/ui.ts";
+import {Config, Rule} from "./config.ts";
 
 
 export const tokiPonaRoot = "Word"
@@ -180,3 +180,18 @@ export const tokiPonaWeightedRules: Rule[] = [
         collapsed: false,
     },
 ]
+export const emptyConfig: Config = {
+    language: "",
+    rules: [],
+    root: null,
+    enableWeights: false,
+    enableSerif: false,
+}
+
+export const defaultConfig: Config = {
+    language: "toki pona",
+    rules: tokiPonaRules,
+    root: tokiPonaRoot,
+    enableWeights: false,
+    enableSerif: false,
+}

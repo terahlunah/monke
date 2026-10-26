@@ -2,9 +2,9 @@ import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
-import {RewritePattern, Rule} from "../models/ui.ts";
+import {RewritePattern, Rule} from "../engine/config.ts";
 import {SortableList, SortableRow} from "../components/SortableList.tsx";
-import {removeAt, updateAt} from "../logic/list.ts";
+import {removeAt, updateAt} from "../engine/list.ts";
 
 
 export type RewriteSectionProps = {

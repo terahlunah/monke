@@ -1,8 +1,8 @@
 import {describe, expect, it} from "vitest"
 import {decodeConfig, encodeConfig} from "./sharing.ts"
-import {Config} from "../models/config.ts"
+import {Config} from "./config.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
-import {makeConfig, makeRule} from "../test-helpers.ts"
+import {makeConfig, makeRule} from "./test-helpers.ts"
 
 // Rule/pattern ids are regenerated on decode, so compare without them.
 const stripIds = (c: Config) =>

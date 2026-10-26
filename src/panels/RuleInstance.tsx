@@ -5,7 +5,7 @@ import {FormEvent} from "react";
 import {Col} from "../components/Col.tsx";
 import {ToggleLabel} from "../components/ToggleLabel.tsx";
 import {SortableRow} from "../components/SortableList.tsx";
-import {Rule} from "../models/ui.ts";
+import {Rule} from "../engine/config.ts";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";

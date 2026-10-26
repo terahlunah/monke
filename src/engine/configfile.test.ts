@@ -1,6 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {parseConfigFile} from "./configfile.ts"
-import {makeConfig, makeRule} from "../test-helpers.ts"
+import {makeConfig, makeRule} from "./test-helpers.ts"
 
 const valid = makeConfig("R", [makeRule("R", ["'a'", "'b'"], {
     showRewrites: true,

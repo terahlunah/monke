@@ -6,32 +6,15 @@ import {useEffect, useMemo, useRef, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 import {Col} from "../components/Col.tsx";
 import {Row} from "../components/Row.tsx";
-import {tokiPonaRoot, tokiPonaRules} from "../logic/defaults.ts";
+import {defaultConfig, emptyConfig} from "../engine/defaults.ts";
 import {GithubIcon} from "../components/GithubIcon.tsx";
-import {configToGrammar} from "../logic/parser.ts";
-import {Rule} from "../models/ui.ts";
-import {Config} from "../models/config.ts";
-import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
+import {configToGrammar} from "../engine/buildGrammar.ts";
+import {Config, Rule} from "../engine/config.ts";
+import {encodeConfig, decodeConfig} from "../engine/sharing.ts"
 import {Faq} from "../panels/Faq.tsx";
 import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
 import {MenuIcon} from "lucide-react";
 import {GenericProps} from "../components/GenericProps.tsx";
-
-const emptyConfig: Config = {
-    language: "",
-    rules: [],
-    root: null,
-    enableWeights: false,
-    enableSerif: false,
-}
-
-const defaultConfig: Config = {
-    language: "toki pona",
-    rules: tokiPonaRules,
-    root: tokiPonaRoot,
-    enableWeights: false,
-    enableSerif: false,
-}
 
 export const Home = () => {
 
@@ -175,7 +158,6 @@ export const Home = () => {
         </>
     )
 }
-
 
 type NavbarProps = {
     tab: string

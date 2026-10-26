@@ -2,13 +2,13 @@ import {Col} from "../components/Col.tsx";
 import {RuleInstance} from "./RuleInstance.tsx";
 import {Row} from "../components/Row.tsx";
 import {SortableList} from "../components/SortableList.tsx";
-import {removeAt, updateAt} from "../logic/list.ts";
-import {Config} from "../models/config.ts";
-import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
+import {removeAt, updateAt} from "../engine/list.ts";
+import {Config} from "../engine/config.ts";
+import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../engine/defaults.ts";
 import {Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions} from "@headlessui/react";
 import {FormEvent} from "react";
 import {CheckIcon, ChevronsUpDownIcon} from "lucide-react";
-import {Rule} from "../models/ui.ts";
+import {Rule} from "../engine/config.ts";
 
 type ConfigurationProps = {
     config: Config

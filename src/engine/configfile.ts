@@ -1,4 +1,4 @@
-import {Config} from "../models/config.ts";
+import {Config} from "./config.ts";
 
 type Obj = Record<string, unknown>
 

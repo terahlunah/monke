@@ -1,18 +1,14 @@
-import {afterEach, describe, expect, it, vi} from "vitest"
-import {countCombinations, detectCycle, generate} from "./wordgen.ts"
-import {makeGrammar, makeRule} from "../test-helpers.ts"
+import {describe, expect, it} from "vitest"
+import {generate} from "./generate.ts"
+import {countCombinations, detectCycle} from "./analysis.ts"
+import {makeGrammar, makeRule, mulberry32, sequenceRng} from "./test-helpers.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
 
-// Feeds Math.random a repeating sequence so picks are exact. Every rule
-// consumes one value for its own pattern choice before its contents.
-const mockRandom = (...values: number[]) => {
-    let i = 0
-    vi.spyOn(Math, "random").mockImplementation(() => values[i++ % values.length])
+// Exact-pick tests pass sequenceRng: every rule consumes one value for its own pattern choice before its contents.
+const sample = (g: Parameters<typeof generate>[0], n = 300) => {
+    const rng = mulberry32(1)
+    return Array.from({length: n}, () => generate(g, rng))
 }
-
-const sample = (g: Parameters<typeof generate>[0], n = 300) => Array.from({length: n}, () => generate(g))
-
-afterEach(() => vi.restoreAllMocks())
 
 describe("generate", () => {
     it("expands sequences of atoms", () => {
@@ -26,20 +22,19 @@ describe("generate", () => {
 
     it("picks choices uniformly when weights are off", () => {
         const g = makeGrammar("R", [makeRule("R", ["'a' / 'b' / 'c'"])])
-        mockRandom(0, 0, 0, 0.5, 0, 0.99)
-        expect([generate(g), generate(g), generate(g)]).toEqual(["a", "b", "c"])
+        const rng = sequenceRng(0, 0, 0, 0.5, 0, 0.99)
+        expect([generate(g, rng), generate(g, rng), generate(g, rng)]).toEqual(["a", "b", "c"])
     })
 
     it("ignores weights when disabled", () => {
         const g = makeGrammar("R", [makeRule("R", ["'a'*100 / 'b'*0"])])
-        mockRandom(0.9)
-        expect(generate(g)).toBe("b")
+        expect(generate(g, sequenceRng(0.9))).toBe("b")
     })
 
     it("honors weights when enabled", () => {
         const g = makeGrammar("R", [makeRule("R", ["'a'*1 / 'b'*3"])], {enableWeights: true})
-        mockRandom(0, 0.1, 0, 0.3, 0, 0.9)
-        expect([generate(g), generate(g), generate(g)]).toEqual(["a", "b", "b"])
+        const rng = sequenceRng(0, 0.1, 0, 0.3, 0, 0.9)
+        expect([generate(g, rng), generate(g, rng), generate(g, rng)]).toEqual(["a", "b", "b"])
     })
 
     it("never picks zero-weight choices", () => {
@@ -56,8 +51,8 @@ describe("generate", () => {
 
     it("handles optionals", () => {
         const g = makeGrammar("R", [makeRule("R", ["'a'.('b')"])], {enableWeights: true})
-        mockRandom(0, 0.2, 0, 0.8)
-        expect([generate(g), generate(g)]).toEqual(["ab", "a"])
+        const rng = sequenceRng(0, 0.2, 0, 0.8)
+        expect([generate(g, rng), generate(g, rng)]).toEqual(["ab", "a"])
     })
 
     it("only emits optionals when weights allow, over many samples", () => {
