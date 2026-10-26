@@ -1,5 +1,5 @@
 import {Row} from "@/components/Row.tsx";
-import {ChevronDownIcon, ChevronUpIcon, CopyIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
+import {CopyIcon, SquareMinusIcon, SquarePlusIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {Dispatch, FormEvent} from "react";
 import {Col} from "@/components/Col.tsx";
@@ -46,36 +46,29 @@ export const RuleInstance = ({
             {({handleProps}) => (
             <Col className="group/rule rounded-sm bg-surface px-2 pb-2 gap-2">
                 <h3 className="sr-only">Rule {rule.name}</h3>
-                <Row className="items-center justify-between pt-2">
+                {/* Identity on the left (handle, disclosure, name, filters), actions on the right with delete set apart at the end. */}
+                <Row className="flex-wrap items-center justify-between gap-y-2 pt-2">
                     <Row className="items-center justify-start">
-                        <div className="pl-1 pr-1 md:pl-2 md:pr-3 touch-none" {...handleProps} aria-label={`Reorder rule ${rule.name}`}>
+                        <div className="pr-0.5 md:pl-2 md:pr-2 touch-none" {...handleProps} aria-label={`Reorder rule ${rule.name}`}>
                             <EllipsisVerticalIcon className="size-5"/>
                         </div>
-                        <MoveButtons label={`rule ${rule.name || index + 1}`} index={index} total={total} onMove={onMove}
-                                     orientation="vertical" scope="rule"
-                                     buttonClassName="border border-white/30 rounded-sm p-2 mr-1 md:mr-2 disabled:opacity-40"
-                                     iconClassName="size-5"/>
-                        <button onClick={() => dispatch({type: "toggleCollapse", ruleId})} className="border border-white/30 rounded-sm p-2 mr-1 md:mr-2"
+                        <button onClick={() => dispatch({type: "toggleCollapse", ruleId})} className="rounded-sm p-1 hover:bg-white/10"
                                 aria-expanded={!rule.collapsed} aria-label={`Details of rule ${rule.name}`}>
                             {
                                 rule.collapsed ?
-                                    <ChevronDownIcon className="size-5 stroke-[2.5]"/> :
-                                    <ChevronUpIcon className="size-5 stroke-[2.5]"/>
+                                    <SquarePlusIcon className="size-5"/> :
+                                    <SquareMinusIcon className="size-5"/>
                             }
                         </button>
-                        <button onClick={() => dispatch({type: "duplicateRule", ruleId})} className="border border-white/30 rounded-sm p-2"
-                                aria-label={`Duplicate rule ${rule.name}`}>
-                            <CopyIcon className="size-5"/>
-                        </button>
-                        <div className="rounded-sm overflow-clip mx-2 md:mx-4">
+                        <div className="rounded-sm overflow-clip mx-1.5 md:mx-3">
                             <AutowidthInput value={rule.name} onInput={onRuleNameInput} aria-label="Rule name" {...invalid}
-                                            className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-3 md:px-4 text-lg`}/>
+                                            className={`${rule.terminalOnly ? "bg-primary/40" : "bg-secondary/40"} text-center h-10 outline-0 px-2 md:px-4 text-lg`}/>
                         </div>
                         {
                             !rule.terminalOnly ?
                                 <>
-                                    <div className="w-0.5 h-8 bg-white/10"/>
-                                    <Row className="gap-2 items-center">
+                                    <div className="w-0.5 h-8 bg-white/10 mr-1.5 md:mr-2"/>
+                                    <Row className="gap-1.5 md:gap-2 items-center">
                                         <ToggleLabel label="Rw" accessibleName={`Rw, rewrites of rule ${rule.name}`} checked={rule.showRewrites}
                                                      onChange={show => dispatch({type: "setShowRewrites", ruleId, show})}
                                                      enabledColor="bg-accent-warning"
@@ -89,9 +82,20 @@ export const RuleInstance = ({
                                 : null
                         }
                     </Row>
-                    <button onClick={() => dispatch({type: "removeRule", ruleId})} className="bg-accent-danger/50 rounded-sm p-1" aria-label={`Delete rule ${rule.name}`}>
-                        <XIcon className="size-5"/>
-                    </button>
+                    <Row className="items-center md:gap-1 ml-auto">
+                        <MoveButtons label={`rule ${rule.name || index + 1}`} index={index} total={total} onMove={onMove}
+                                     orientation="vertical" scope="rule"
+                                     buttonClassName="rounded-sm p-1 md:p-1.5 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent"
+                                     iconClassName="size-5"/>
+                        <button onClick={() => dispatch({type: "duplicateRule", ruleId})} className="rounded-sm p-1 md:p-1.5 hover:bg-white/10"
+                                aria-label={`Duplicate rule ${rule.name}`}>
+                            <CopyIcon className="size-5"/>
+                        </button>
+                        <div className="w-0.5 h-6 bg-white/10 mx-1 md:mx-2"/>
+                        <button onClick={() => dispatch({type: "removeRule", ruleId})} className="bg-accent-danger/50 rounded-sm p-1" aria-label={`Delete rule ${rule.name}`}>
+                            <XIcon className="size-5"/>
+                        </button>
+                    </Row>
                 </Row>
                 {
                     rule.collapsed ? <></> :
