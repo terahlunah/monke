@@ -5,12 +5,42 @@
 @theme {
     --font-sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-serif: "Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    --color-on-surface: #ffffff;
-    --color-surface: #2c2b2b;
-    --color-background: #1f1f1f;
-    --color-primary: #198282;
-    --color-primary-text: #43a2a2;
+    /* Neutrals. Every text/background pair below was checked for WCAG AA (4.5:1); see the notes beside the exceptions. */
+    --color-background: #16161a;
+    --color-surface: #1b1b20;
+    --color-on-surface: #ececf0;
+    --color-line: #2c2c33;
+    --color-line-strong: #34343c;
+    --color-line-row: #24242a;
+    --color-muted: #a3a3ad;
+    --color-subtle: #8f8f99;
+    /* Grip handles and disabled arrows: non-text or disabled, so only the 3:1 non-text ratio applies. */
+    --color-handle: #6b6b75;
+
+    /* Primary: links, the active view and filled actions (white text on the fill is 4.8:1). */
+    --color-primary: #1d7f7c;
+    --color-primary-text: #7fd3cf;
+    --color-primary-soft: #24333a;
+
+    /* One hue per kind of thing, never reused for another: terminals sky, patterns violet, rewrites amber,
+       exclusions orchid, features lime, deletion red. */
+    --color-terminal: #8cc8ff;
+    --color-pattern: #c3a6ff;
+    --color-rewrite: #f0c674;
+    --color-rewrite-bg: #3a3020;
+    --color-rewrite-line: #6b5520;
+    --color-exclusion: #e895d6;
+    --color-exclusion-bg: #3a2436;
+    --color-exclusion-line: #6b3a62;
+    --color-feature: #b5d96a;
+    --color-feature-dim: #94b356;
+    --color-feature-line: #3d4a26;
+    --color-danger: #4a2626;
+    --color-danger-text: #f2b8b8;
+
+    /* Legacy palette still used by the reference examples until they are restyled. */
     --color-secondary: #3b4c9d;
     --color-accent-warning: #966c1f;
     --color-accent-caution: #b35e27;
@@ -32,13 +62,13 @@
         stroke-width: 1.5;
     }
 
-    /* Tailwind 3 defaults, which the layout was designed against: v4 uses currentColor for borders and a default cursor on buttons. */
+    /* Tailwind v4 borders default to currentColor; the design uses one quiet line colour unless a utility says otherwise. */
     *,
     ::after,
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--color-line);
     }
 
     button:not(:disabled),
