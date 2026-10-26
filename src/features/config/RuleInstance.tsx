@@ -137,7 +137,7 @@ export const RuleInstance = ({
                                         minWidth={96}
                                         className={`h-9 md:h-8 rounded-md border border-line-strong bg-background px-2.5 text-[15px] font-semibold outline-0 ${rule.terminalOnly ? "text-terminal" : "text-pattern"}`}/>
                         <span className="text-xs md:text-[13px] text-subtle">
-                            {rule.terminalOnly ? "terminal rule" : "pattern rule"}{isRoot ? " · start rule" : ""}
+                            {rule.terminalOnly ? "terminal" : "pattern"}<span className="max-md:hidden"> rule</span>{isRoot ? " · start" : ""}<span className="max-md:hidden">{isRoot ? " rule" : ""}</span>
                         </span>
                         {inventory ?
                             <span className={`min-w-0 max-w-full truncate text-[13px] text-muted ${valueFont(enableSerif)}`}>{inventory}</span> :

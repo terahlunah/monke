@@ -51,9 +51,10 @@ describe("rule header", () => {
         await renderApp()
         const card = (name: string) => screen.getByRole("heading", {name: `Rule ${name}`}).parentElement!
 
-        expect(within(card("Vowel")).getByText("terminal rule")).toBeInTheDocument()
-        expect(within(card("Syllable")).getByText("pattern rule")).toBeInTheDocument()
-        expect(within(card("Word")).getByText("pattern rule · start rule")).toBeInTheDocument()
+        expect(card("Vowel")).toHaveTextContent("terminal rule")
+        expect(card("Syllable")).toHaveTextContent("pattern rule")
+        expect(card("Syllable")).not.toHaveTextContent("start rule")
+        expect(card("Word")).toHaveTextContent("pattern rule · start rule")
     })
 
     it("shows a collapsed terminal rule's inventory in its header", async () => {
