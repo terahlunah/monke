@@ -75,7 +75,7 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
                             onDragEnd={onExclusionPatternDragEnd}>
                     <SortableContext items={rule.exclusions} strategy={horizontalListSortingStrategy}>
                         {rule.exclusions.map((e, index) =>
-                            <ExclusionPatternItem exclusion={e}
+                            <ExclusionPatternItem key={e.id} exclusion={e}
                                                   onChange={onExclusionPatternChangeIndex(index)}
                                                   onDelete={onExclusionPatternDeleteIndex(index)}
                                                   enableSerif={enableSerif}/>
@@ -127,7 +127,7 @@ export const ExclusionPatternItem = ({
     }
 
     return (
-        <div ref={setNodeRef} style={style} key={exclusion.id} id={exclusion.id}>
+        <div ref={setNodeRef} style={style} id={exclusion.id}>
             <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`bg-accent-caution p-1 h-8`} {...listeners} aria-label="Drag exclusion pattern">
                     <EllipsisVerticalIcon className="h-4"/>

@@ -70,7 +70,7 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ge
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onRulePatternDragEnd}>
                 <SortableContext items={rule.patterns} strategy={horizontalListSortingStrategy}>
                     {rule.patterns.map((p, index) =>
-                        <RulePatternItem pattern={p}
+                        <RulePatternItem key={p.id} pattern={p}
                                          onChange={onRuleChangeIndex(index)}
                                          terminalOnly={rule.terminalOnly}
                                          onDelete={onRuleDeleteIndex(index)}
@@ -154,7 +154,7 @@ export const RulePatternItem = ({
     }
 
     return (
-        <div ref={setNodeRef} style={style} key={pattern.id} id={pattern.id}>
+        <div ref={setNodeRef} style={style} id={pattern.id}>
             <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...listeners}
                         aria-label="Drag pattern">

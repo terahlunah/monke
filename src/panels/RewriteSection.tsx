@@ -75,7 +75,7 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
                             onDragEnd={onRewritePatternDragEnd}>
                     <SortableContext items={rule.rewrites} strategy={horizontalListSortingStrategy}>
                         {rule.rewrites.map((r, index) =>
-                            <RewritePatternItem rewrite={r}
+                            <RewritePatternItem key={r.id} rewrite={r}
                                                 onChange={onRewritePatternChangeIndex(index)}
                                                 onDelete={onRewritePatternDeleteIndex(index)}
                                                 enableSerif={enableSerif}/>
@@ -131,7 +131,7 @@ export const RewritePatternItem = ({
 
 
     return (
-        <div ref={setNodeRef} style={style} key={rewrite.id} id={rewrite.id}>
+        <div ref={setNodeRef} style={style} id={rewrite.id}>
             <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`bg-accent-warning p-1 h-8`} {...listeners} aria-label="Drag rewrite pattern">
                     <EllipsisVerticalIcon className="h-4"/>

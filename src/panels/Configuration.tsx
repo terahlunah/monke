@@ -31,8 +31,15 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
 
     const onRuleCloneIndex = (index: number) => {
         return () => {
-            const rule = cloneDeep(config.rules[index])
-            rule.name = `${rule.name} clone`
+            const source = config.rules[index]
+            const rule: Rule = {
+                ...source,
+                id: uid(),
+                name: `${source.name} clone`,
+                patterns: source.patterns.map(p => ({...p, id: uid()})),
+                rewrites: source.rewrites.map(p => ({...p, id: uid()})),
+                exclusions: source.exclusions.map(p => ({...p, id: uid()})),
+            }
 
             const newRules = cloneDeep(config.rules)
             newRules.splice(index + 1, 0, rule)
@@ -228,6 +235,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                                               onDelete={onRuleDeleteIndex(index)}
                                               enableWeights={config.enableWeights}
                                               enableSerif={config.enableSerif}
+                                              key={r.id}
                                               onClone={onRuleCloneIndex(index)}
                                 />)}
                         </SortableContext>

@@ -65,7 +65,7 @@ export const RuleInstance = ({
     };
 
     return (
-        <div ref={setNodeRef} style={style} key={rule.id} id={rule.id}
+        <div ref={setNodeRef} style={style} id={rule.id}
              className={`${isDragging ? "z-30 shadow-sm border-white/20 border" : ""}`}>
             <Col className={`${className} rounded-sm bg-surface px-2 pb-2 gap-2`}>
                 <Row className="items-center justify-between pt-2">
