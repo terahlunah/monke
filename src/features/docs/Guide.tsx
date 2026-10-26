@@ -9,7 +9,7 @@ export const Guide = () => {
     return (
         <Col className="bg-background grow p-8 gap-2 md:overflow-auto md:no-scrollbar pb-64">
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Grammar</h1>
+                <h2 className="font-bold text-xl">Grammar</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
 
@@ -17,7 +17,7 @@ export const Guide = () => {
             <p>The grammar is made up of rules. The start rule is the entry point for the generator.</p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Terminal Rule</h1>
+                <h2 className="font-bold text-xl">Terminal Rule</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
 
@@ -40,7 +40,7 @@ export const Guide = () => {
             <p>The terminals can contain multiple letters and non-ascii characters.</p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Rule</h1>
+                <h2 className="font-bold text-xl">Rule</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
 
@@ -57,7 +57,7 @@ export const Guide = () => {
 
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Expression</h1>
+                <h2 className="font-bold text-xl">Expression</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <p>Expressions are the main component of the generator, they are used by Patterns, Rewrites and
@@ -172,7 +172,7 @@ export const Guide = () => {
             </ul>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Rewrite</h1>
+                <h2 className="font-bold text-xl">Rewrite</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <p>Rewrites are expression than can be used to transform the output of a rule. They can be enabled
@@ -217,7 +217,7 @@ export const Guide = () => {
             </p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Exclusion</h1>
+                <h2 className="font-bold text-xl">Exclusion</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <p>Exclusions are expression than can be used to cancel the output of a rule an disallow certain
@@ -233,7 +233,7 @@ export const Guide = () => {
             <p>Any expression can be used in the "match".</p>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
-                <h1 className="font-bold text-xl">Weight Probabilities</h1>
+                <h2 className="font-bold text-xl">Weight Probabilities</h2>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <p>Probability weight can be enabled using the toggle on the top right.</p>

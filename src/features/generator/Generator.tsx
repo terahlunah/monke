@@ -1,4 +1,4 @@
-import {Col} from "@/components/Col.tsx";
+
 import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 import {Row} from "@/components/Row.tsx";
 import {ClipboardListIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
@@ -143,8 +143,10 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     }
 
     return (
-        <Col
-            className="grow bg-background md:w-1/2 p-6 gap-4 md:overflow-auto md:no-scrollbar md:border-l-8 border-l-surface">
+        <section id="generator" aria-labelledby="generator-heading" tabIndex={-1}
+                 className="flex flex-col grow bg-background md:w-1/2 p-6 gap-4 md:overflow-auto md:no-scrollbar md:border-l-8 border-l-surface outline-none">
+            <h2 id="generator-heading" className="sr-only">Generator</h2>
+
 
             <SwitchLabel checked={config.enableWeights} onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
                          label="Enable probability weights"
@@ -238,6 +240,6 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                 {text}
             </p>
 
-        </Col>
+        </section>
     )
 }

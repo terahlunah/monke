@@ -23,7 +23,7 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
     return (
         <>
             <Row className="items-baseline justify-between gap-4">
-                <div>Rewrites</div>
+                <h4>Rewrites</h4>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <Row className="gap-4 flex-wrap">

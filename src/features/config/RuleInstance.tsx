@@ -45,6 +45,7 @@ export const RuleInstance = ({
         <SortableRow id={rule.id} draggingClassName="z-30 shadow-sm border-white/20 border">
             {({handleProps}) => (
             <Col className="rounded-sm bg-surface px-2 pb-2 gap-2">
+                <h3 className="sr-only">Rule {rule.name}</h3>
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
                         <div className="pl-1 pr-1 md:pl-2 md:pr-3 touch-none" {...handleProps} aria-label={`Reorder rule ${rule.name}`}>
@@ -97,7 +98,7 @@ export const RuleInstance = ({
                     rule.collapsed ? <></> :
                         <>
                             <Row className="items-baseline justify-between gap-4">
-                                <div>{rule.terminalOnly ? "Terminals" : "Patterns"}</div>
+                                <h4>{rule.terminalOnly ? "Terminals" : "Patterns"}</h4>
                                 <div className="h-0.5 bg-white/10 grow"/>
                             </Row>
                             <RuleSection rule={rule} dispatch={dispatch} enableSerif={enableSerif}

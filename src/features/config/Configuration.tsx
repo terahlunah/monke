@@ -21,7 +21,10 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
 
     return (
 
-        <Col className="bg-background md:w-2/3 p-6 gap-2 md:overflow-auto md:no-scrollbar">
+        <section aria-labelledby="config-heading"
+                 className="flex flex-col bg-background md:w-2/3 p-6 gap-2 md:overflow-auto md:no-scrollbar">
+            <h2 id="config-heading" className="sr-only">Grammar configuration</h2>
+
 
             <Row className="gap-4">
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
@@ -60,7 +63,7 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
                     <div className="w-72 z-10">
                         <div className="relative">
                             <ListboxButton
-                                className="min-h-8 relative w-full cursor-default rounded-sm bg-surface py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
+                                className="min-h-8 relative w-full cursor-default rounded-sm bg-surface py-2 pl-3 pr-10 text-left shadow-md sm:text-sm">
                                 <span className="block truncate">{config.root}</span>
                                 <span
                                     className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -132,6 +135,6 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
 
             </Col>
 
-        </Col>
+        </section>
     )
 }

@@ -37,6 +37,22 @@
     }
 }
 
+/* One keyboard focus ring for every control. Unlayered so it beats the `outline-0` utility on the text inputs. */
+:focus-visible {
+    outline: 2px solid var(--color-on-surface);
+    outline-offset: 2px;
+}
+
+/* Chips and inputs sit in clipped rows, which would cut off an outside ring. */
+.overflow-clip :focus-visible {
+    outline-offset: -2px;
+}
+
+/* Landmarks and sections are focused from code (skip link, view change), not tabbed to, so they get no ring. */
+[tabindex="-1"]:focus-visible {
+    outline: none;
+}
+
 @utility debug {
     @apply border-2 border-red-500;
 }

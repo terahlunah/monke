@@ -7,7 +7,8 @@ afterEach(cleanup)
 
 // jsdom lacks these browser APIs used by headlessui / textarea-autosize.
 window.matchMedia ??= ((query: string) => ({
-    matches: false,
+    // Tests render the desktop layout; a test can override matchMedia to get the mobile one.
+    matches: /min-width/.test(query),
     media: query,
     onchange: null,
     addEventListener: () => {},

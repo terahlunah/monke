@@ -23,7 +23,7 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
     return (
         <>
             <Row className="items-baseline justify-between gap-4">
-                <div>Exclusions</div>
+                <h4>Exclusions</h4>
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <Row className="gap-4 flex-wrap">
