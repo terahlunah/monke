@@ -85,6 +85,20 @@ describe("configToGrammar", () => {
         expect(() => configToGrammar(makeConfig(name, [makeRule(name, ["'a'"])]))).toThrow(/Invalid rule name/)
     })
 
+    it("rejects a duplicate rule name, naming it", () => {
+        expect(() => configToGrammar(makeConfig("A", [makeRule("A", ["'a'"]), makeRule("A", ["'b'"], {terminalOnly: true})])))
+            .toThrow("Duplicate rule name 'A'")
+    })
+
+    it.each(["('a'*1.5)", "('a'*2)"])("rejects an optional probability above 1 in %s, naming the rule", (pattern) => {
+        expect(() => configToGrammar(makeConfig("R", [makeRule("R", [pattern])])))
+            .toThrow(/Optional probability .* must be between 0 and 1 \(rule : 'R'\)/)
+    })
+
+    it.each(["('a'*0)", "('a'*1)", "('a'*0.3)"])("accepts optional probability %s", (pattern) => {
+        expect(() => configToGrammar(makeConfig("R", [makeRule("R", [pattern])]))).not.toThrow()
+    })
+
     it("rejects non-terminal rules without patterns, naming the rule", () => {
         expect(() => configToGrammar(makeConfig("Empty", [makeRule("Empty", [])]))).toThrow(/Empty/)
     })
@@ -116,6 +130,12 @@ describe("configToGrammar", () => {
             const e = failure(makeConfig("A", [makeRule("A", ["'a'"]), makeRule("B", ["Nope"])]))
             expect([e.ruleId, e.itemId]).toEqual(["B", undefined])
             expect(failure(makeConfig("Empty", [makeRule("Empty", [])])).ruleId).toBe("Empty")
+        })
+
+        it("points at the name of the second rule sharing a name", () => {
+            const second = {...makeRule("A", ["'b'"]), id: "second"}
+            const e = failure(makeConfig("A", [makeRule("A", ["'a'"]), second]))
+            expect([e.ruleId, e.itemId]).toEqual(["second", undefined])
         })
     })
 })

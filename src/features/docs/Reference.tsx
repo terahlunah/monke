@@ -76,7 +76,7 @@ export const Reference = () => {
                     <Sub>Rules</Sub>
                     <p>A grammar is a list of named rules. A name starts with a letter or <Code>_</Code> and continues with
                         letters, digits or <Code>_</Code>, so <Code>V</Code>, <Code>Syllable</Code> and <Code>coda_2</Code> all
-                        work. Names are case-sensitive.</p>
+                        work. Names are case-sensitive and must be unique.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li><b>Terminal rules</b> (<b>Add Terminal Rule</b>) hold plain text, usually the sounds of your
                             language. Each terminal is used as written, without quotes: <Code>a</Code>, <Code>ch</Code>
@@ -107,8 +107,9 @@ export const Reference = () => {
                             branches can't be counted. Generation still runs, but if the cycle has no way out it fails with
                             an error.</li>
                         <li><b>Invalid grammar: …</b> names the problem and the rule, and marks the input at fault as invalid.
-                            Common causes: an unknown rule name, an invalid rule name, a rule with no patterns, unbalanced
-                            brackets or quotes, or a missing dot between two parts.</li>
+                            Common causes: an unknown rule name, an invalid rule name, two rules with the same name, a rule
+                            with no patterns, unbalanced brackets or quotes, a missing dot between two parts, or an optional
+                            probability above 1.</li>
                         <li><b>Exclusion rules are too restrictive</b> appears when generating if a rule's exclusions rejected
                             100 outputs in a row.</li>
                     </ul>
@@ -169,7 +170,7 @@ export const Reference = () => {
                         are equivalent:</p>
                     <CodeBlock>{"'a'*2 / 'e'\n'a' / 'e'*0.5"}</CodeBlock>
                     <p>An optional is present half of the time by default. <Code>{"('n'*0.2)"}</Code> makes it present 20% of
-                        the time; keep this probability between 0 and 1.</p>
+                        the time. The probability must be between 0 and 1; a larger value is an error.</p>
                     <p>Quantifiers like <Code>{"{1:3}"}</Code> always pick each count with the same probability. To favour some
                         lengths, use weighted alternatives instead, such as <Code>{"Syllable*3 / Syllable.Syllable"}</Code>.</p>
                     <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "weighted")!}/>

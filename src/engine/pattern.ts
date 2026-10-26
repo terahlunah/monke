@@ -224,6 +224,9 @@ export class Parser {
         let weight = 0.5
         if (this.consume('*')) {
             weight = this.parseWeight()
+            if (weight > 1) {
+                this.error(`Optional probability ${weight} must be between 0 and 1`)
+            }
         }
 
         if (!this.consume(")")) {

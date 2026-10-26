@@ -24,6 +24,14 @@ export const configToGrammar = (config: Config): Grammar | null => {
     const rules = config.rules.map(configRuleToGrammarRule)
 
     const rulesNames = rules.map(r => r.name)
+    const seen = new Set<string>()
+    for (const [i, name] of rulesNames.entries()) {
+        if (seen.has(name)) {
+            throw new GrammarError(`Duplicate rule name '${name}'`, config.rules[i].id)
+        }
+        seen.add(name)
+    }
+
     for (const [i, rule] of rules.entries()) {
         const edges = getRuleEdges(rule)
 
