@@ -16,15 +16,16 @@ type MoveButtonsProps = {
     iconClassName: string
 }
 
-// Collapsed to zero width rather than display:none so the buttons stay focusable and in the accessibility tree.
-// Tailwind only generates complete literal class names, hence the lookup. `hover:` variants apply to hover-capable pointers only,
-// so touch devices rely on focus.
+// Chip buttons are collapsed to zero width rather than display:none so they stay focusable and in the accessibility tree.
+// They open on keyboard focus only: revealing on hover shifted the targets under the mouse pointer.
+// Rule buttons are few and sit next to other rule controls, so they are always shown to keep that row stable.
+// Tailwind only generates complete literal class names, hence the lookup.
 const reveal = {
-    chip: "group-focus-within/chip:max-w-24 group-hover/chip:max-w-24",
-    rule: "group-focus-within/rule:max-w-24 group-hover/rule:max-w-24",
+    chip: "max-w-0 group-has-[:focus-visible]/chip:max-w-24",
+    rule: "max-w-24",
 }
 
-// Keyboard and screen reader alternative to dragging. Sits inline in the item row; collapsed unless the item is focused or hovered, or the viewer opted to always show it.
+// Keyboard and screen reader alternative to dragging. Sits inline in the item row.
 export const MoveButtons = ({label, index, total, onMove, orientation, scope, buttonClassName, iconClassName}: MoveButtonsProps) => {
     const up = useRef<HTMLButtonElement>(null)
     const down = useRef<HTMLButtonElement>(null)
@@ -48,7 +49,7 @@ export const MoveButtons = ({label, index, total, onMove, orientation, scope, bu
     }, [index])
 
     return (
-        <span className={`flex shrink-0 overflow-hidden transition-[max-width] duration-150 motion-reduce:transition-none ${always ? "max-w-24" : `max-w-0 ${reveal[scope]}`}`}
+        <span className={`flex shrink-0 overflow-hidden transition-[max-width] duration-150 motion-reduce:transition-none ${always ? "max-w-24" : reveal[scope]}`}
               data-reorder-visible={always}>
             <button type="button" ref={up} className={`${buttonClassName} focus-visible:-outline-offset-2`} disabled={index === 0}
                     aria-label={`Move ${label} ${backward}`}

@@ -90,7 +90,7 @@ describe("reorder button visibility", () => {
         const button = screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"})
 
         expect(group("Move terminal 1 of rule Vowel right").className).toContain("max-w-0")
-        expect(group("Move terminal 1 of rule Vowel right").className).toContain("group-focus-within/chip:max-w-24")
+        expect(group("Move terminal 1 of rule Vowel right").className).toContain("group-has-[:focus-visible]/chip:max-w-24")
         button.focus()
         expect(button).toHaveFocus()
         await user.tab()
