@@ -7,6 +7,16 @@ import {countCombinations, detectCycle, generate} from "../logic/wordgen.ts";
 import {Config} from "../pages/Home.tsx";
 import {toast} from "react-toastify";
 import {Grammar} from "../models/grammar.ts";
+import {parseConfigFile} from "../logic/configfile.ts";
+
+const MAX_WORD_COUNT = 10000
+
+// Word counts are whole numbers in 1..MAX_WORD_COUNT; anything unparsable falls back to a small default.
+const clampWordCount = (value: string): number => {
+    const n = Math.trunc(Number(value))
+    if (value.trim() === "" || Number.isNaN(n)) return 10
+    return Math.min(Math.max(n, 1), MAX_WORD_COUNT)
+}
 
 type GeneratorProps = {
     config: Config
@@ -32,9 +42,12 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
         e.target.value = ""
         if (!file) return
 
-        const newConfig = JSON.parse(await file.text())
-        updateConfig(newConfig)
-        toast("Config imported")
+        try {
+            updateConfig(parseConfigFile(await file.text()))
+            toast("Config imported")
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Failed to import config")
+        }
     }
 
     const filteredWords = useMemo(
@@ -56,33 +69,20 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
         [filteredWords, outputList]
     )
 
-    const [cycle, combinations] = useMemo((): [string[], number] => {
-            if (grammar) {
-                const cycles = detectCycle(grammar) ?? []
+    const [cycle, combinations] = useMemo((): [string[] | null, number] => {
+            if (!grammar) return [null, 0]
 
-                let combinations: number
+            const cycle = detectCycle(grammar)
+            if (cycle) return [cycle, 0]
 
-                try {
-                    combinations = cycles.length != 0 ? 0 : countCombinations(grammar)
-                } catch {
-                    combinations = 0
-                }
-
-                return [cycles, combinations]
-            } else {
-                return [[""], 0]
+            try {
+                return [null, countCombinations(grammar)]
+            } catch {
+                return [null, 0]
             }
         },
         [grammar]
     )
-
-    function isPositiveNumber(value?: string | number): boolean {
-        return ((value != null) &&
-            (value !== '') &&
-            !isNaN(Number(value.toString())) &&
-            Number(value.toString()) >= 0
-        );
-    }
 
     const onWordCountInput = (e: FormEvent<HTMLInputElement>) => {
         const v = e.currentTarget.value
@@ -90,27 +90,23 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
     }
 
     const onWordCountBlur = () => {
-        if (!isPositiveNumber(wordCount)) {
-            setWordCount('10')
-        }
+        setWordCount(String(clampWordCount(wordCount)))
     }
 
     const onGenerate = () => {
-
-        setGenerationError("")
+        setGenerationError(null)
 
         if (grammar) {
-            const words = []
-            const count = Number(wordCount)
+            const words: string[] = []
+            const count = clampWordCount(wordCount)
+            setWordCount(String(count))
 
-            for (let i = 0; i < count; i++) {
-
-                try {
+            try {
+                for (let i = 0; i < count; i++) {
                     words.push(generate(grammar))
-                } catch (e) {
-                    setGenerationError((e as Error).message)
                 }
-
+            } catch (e) {
+                setGenerationError((e as Error).message)
             }
 
             setGeneratedWords(words)
@@ -188,10 +184,10 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
 
             <h3 className="text-gray-300">
                 {grammar ?
-                    (cycle.length != 0 ?
-                        `Grammar has at least cycle one cycle: ${cycle}` :
+                    (cycle ?
+                        `Grammar has at least one cycle: ${cycle.join(" > ")}` :
                         `Grammar has ${combinations} possible branches`) :
-                    `Invalid grammar: ${error}`
+                    (error ? `Invalid grammar: ${error}` : "No grammar: choose a start rule")
                 }
             </h3>
 
