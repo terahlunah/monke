@@ -47,6 +47,26 @@ describe("accessibility (axe)", () => {
         await check(container)
     })
 
+    it("Awkwords import dialog with an error", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await user.click(screen.getByRole("button", {name: "Import Awkwords"}))
+        await user.type(await screen.findByLabelText("Awkwords pattern or file contents"), "a)")
+        await user.click(screen.getByRole("button", {name: "Import"}))
+        await screen.findByRole("alert")
+        await check(document.body)
+    })
+
+    it("generator view with Awkwords import notes", async () => {
+        const user = userEvent.setup()
+        const {container} = await renderApp()
+        await user.click(screen.getByRole("button", {name: "Import Awkwords"}))
+        await user.type(await screen.findByLabelText("Awkwords pattern or file contents"), "CV^a/C")
+        await user.click(screen.getByRole("button", {name: "Import"}))
+        await screen.findByRole("region", {name: "Awkwords import notes"})
+        await check(container)
+    })
+
     it("generator view with a pattern error", async () => {
         const user = userEvent.setup()
         const {container} = await renderApp()

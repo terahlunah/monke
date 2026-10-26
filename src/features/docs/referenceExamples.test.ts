@@ -4,7 +4,8 @@ import {generate} from "@/engine/generate.ts"
 import {matchesExclusion} from "@/engine/match.ts"
 import {parsePattern} from "@/engine/pattern.ts"
 import {mulberry32} from "@/engine/test-helpers.ts"
-import {exampleToConfig, ExampleRule, exclusionDemos, firstGrammar, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
+import {importAwkwords} from "@/engine/awkwords.ts"
+import {awkwordsImportDemo, exampleToConfig,ExampleRule, exclusionDemos, firstGrammar, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
 const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
@@ -90,5 +91,17 @@ describe("reference grammars", () => {
         const ws = words("awkwords")
         for (const w of ws) expect(w).toMatch(/^[aiu]{2}t([aiu])(?!\1)[aiu]$/)
         expect(ws.some(w => w[0] === w[1])).toBe(true)
+    })
+})
+
+describe("Awkwords import demo", () => {
+    it("matches what the importer produces and keeps only ab", () => {
+        const {config} = importAwkwords(awkwordsImportDemo.awkwords)
+        const helper = config.rules.find(r => r.name === awkwordsImportDemo.rule)!
+        expect(helper.patterns.map(p => p.pattern)).toEqual(awkwordsImportDemo.patterns.map(p => `'${p}'`))
+        expect(helper.exclusions.map(e => e.match)).toEqual([awkwordsImportDemo.exclusion])
+        const grammar = configToGrammar(config)!
+        const rng = mulberry32(3)
+        expect(new Set(Array.from({length: 50}, () => generate(grammar, rng)))).toEqual(new Set(["ab"]))
     })
 })

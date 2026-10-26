@@ -226,3 +226,11 @@ export const recipes: Recipe[] = [
         ],
     },
 ]
+
+// How the Awkwords importer translates a filter whose fragment has outputs containing the filter text.
+export const awkwordsImportDemo = {
+    awkwords: "[a/ab]^a",
+    rule: "Filtered1",
+    patterns: ["a", "ab"],
+    exclusion: "^.'a'.$",
+}

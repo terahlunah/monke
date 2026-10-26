@@ -12,6 +12,8 @@ import {Grammar} from "@/engine/grammar.ts";
 import {parseConfigFile} from "@/engine/configfile.ts";
 import {setAlwaysShowReorder, useAlwaysShowReorder} from "@/components/reorderPref.ts";
 import {GRAMMAR_ERROR_ID} from "@/features/config/grammarError.ts";
+import {AwkwordsImport} from "./AwkwordsImport.tsx";
+import {AwkwordsImport as AwkwordsResult, AwkwordsWarning} from "@/engine/awkwords.ts";
 
 const MAX_WORD_COUNT = 10000
 
@@ -50,7 +52,21 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
 
 
+    // Kept until dismissed: a toast would vanish before a long list can be read.
+    const [importNotes, setImportNotes] = useState<AwkwordsWarning[]>([])
+
     const alwaysShowReorder = useAlwaysShowReorder()
+
+    const onAwkwordsImported = (result: AwkwordsResult) => {
+        dispatch({type: "load", config: result.config})
+        if (result.wordCount !== undefined) setWordCount(String(clampWordCount(String(result.wordCount))))
+        if (result.filterDuplicates !== undefined) setFilterDuplicates(result.filterDuplicates)
+        if (result.listOutput !== undefined) setOutputList(result.listOutput)
+        setImportNotes(result.warnings)
+        const n = result.warnings.length
+        const rules = `${result.config.rules.length} ${result.config.rules.length === 1 ? "rule" : "rules"}`
+        toast(n === 0 ? `Awkwords imported: ${rules}` : `Awkwords imported: ${rules}, ${n} ${n === 1 ? "note" : "notes"} to review`)
+    }
 
     const fileInput = useRef<HTMLInputElement>(null)
 
@@ -188,20 +204,20 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             <div className="border-t border-white/20"/>
 
-            <Row className="gap-4">
-                <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onCopyLink} aria-label="Share link">
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                <button className="grow bg-secondary rounded-sm p-2" onClick={onCopyLink} aria-label="Share link">
                     <Row className="items-center justify-center gap-2">
                         <span>Share link</span>
                         <LinkIcon className="size-5"/>
                     </Row>
                 </button>
-                <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onExport} aria-label="Export config">
+                <button className="grow bg-secondary rounded-sm p-2" onClick={onExport} aria-label="Export config">
                     <Row className="items-center justify-center gap-2">
                         <span>Export Config</span>
                         <UploadIcon className="size-5"/>
                     </Row>
                 </button>
-                <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onImport} aria-label="Import config">
+                <button className="grow bg-secondary rounded-sm p-2" onClick={onImport} aria-label="Import config">
                     <Row className="items-center justify-center gap-2">
                         <span>Import Config</span>
                         <DownloadIcon className="size-5"/>
@@ -209,7 +225,22 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                 </button>
                 <input ref={fileInput} type="file" accept=".monke" className="hidden" onChange={onFileSelected}
                        aria-hidden="true" tabIndex={-1}/>
-            </Row>
+                <AwkwordsImport onImported={onAwkwordsImported}/>
+            </div>
+
+            {importNotes.length !== 0 ?
+                <section aria-labelledby="awkwords-notes-heading"
+                         className="flex flex-col gap-2 rounded-sm bg-surface p-4 border-l-4 border-accent-warning">
+                    <h3 id="awkwords-notes-heading" className="font-bold">Awkwords import notes</h3>
+                    <ul className="list-disc pl-6 flex flex-col gap-1">
+                        {importNotes.map((w, i) => <li key={i}>{w.message}</li>)}
+                    </ul>
+                    <button className="self-end rounded-sm p-2 px-4 bg-white/10" onClick={() => setImportNotes([])}>
+                        Dismiss import notes
+                    </button>
+                </section> :
+                null
+            }
 
             <div className="border-t border-white/20"/>
 

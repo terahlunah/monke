@@ -4,6 +4,7 @@ import {scrollRegionTo} from "@/components/scroll.ts";
 import {ExampleCard} from "./ExampleCard.tsx";
 import {useExampleHrefs} from "./useExampleHrefs.ts";
 import {
+    awkwordsImportDemo,
     exclusionDemos,
     firstGrammar,
     itemText,
@@ -388,6 +389,47 @@ export const Reference = () => {
                         Awkwords help, <Code>{"[VV]t[VV]^aa^ii^uu"}</Code>, only the second pair of vowels may not repeat a
                         vowel.</p>
                     <ExampleCard hrefs={hrefs} example={awkwordsExample} summary={awkwordsExample.summary}/>
+
+                    <Sub>Importing Awkwords files</Sub>
+                    <p>On the Generator page, <b>Import Awkwords</b> converts an Awkwords pattern into a Monke grammar. Choose
+                        an <Code>.awkw</Code> file saved by Awkwords, or paste a pattern. To paste subpatterns as well, write
+                        them one per line as a saved file does: <Code>V:a/i/u</Code>, then <Code>r:CV</Code> for the main
+                        pattern. The import replaces the current grammar; the browser's Back button undoes it.</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-1">
+                        <li>Each subpattern becomes a rule named by its letter, and the main pattern becomes the root
+                            rule <Code>Word</Code>. Plain alternatives become terminal rules.</li>
+                        <li>Brackets, optionals, escapes and weights are translated as in the table above. Weights are
+                            enabled when the pattern uses any.</li>
+                        <li>The number of words fills the word count; <b>filter duplicates</b> and <b>new line each</b> set
+                            Filter Duplicates and Output as list.</li>
+                        <li>Each filtered fragment becomes a rule named <Code>Filtered1</Code>, <Code>Filtered2</Code>, and
+                            so on, holding just that fragment, with one exclusion per filter.</li>
+                    </ul>
+                    <p>An imported exclusion is written <Code>{"^.'text'.$"}</Code>: <Code>^</Code> and <Code>$</Code> pin
+                        it to the start and end of the rule's output, so it rejects the output only when it is exactly the
+                        filter text, as Awkwords did. For <Code>{awkwordsImportDemo.awkwords}</Code>, the rule{" "}
+                        <Code>{awkwordsImportDemo.rule}</Code> has the patterns <Code>{awkwordsImportDemo.patterns.join(", ")}</Code> and
+                        the exclusion <Code>{awkwordsImportDemo.exclusion}</Code>, so it gives only <Code>ab</Code>. A plain
+                        exclusion <Code>{"'a'"}</Code> would reject <Code>ab</Code> too. A filter made only of spaces rejects
+                        an empty result; that case uses a helper rule ending in <Code>Marked</Code> that adds an invisible
+                        marker, which a rewrite then removes.</p>
+                    <p>When something does not translate exactly, the import lists notes under the import buttons until you
+                        dismiss them. The most common ones:</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-1">
+                        <li><b>Probabilities may differ slightly</b>: the filtered fragment is inside an alternative or an
+                            optional. You get the same words, but with different odds (see Filters versus exclusions).</li>
+                        <li><b>Removes every possible result</b> or <b>reject N% of results</b>: Monke retries a rule 100
+                            times, then reports it as too restrictive.</li>
+                        <li><b>No subpattern</b>: a capital letter without a subpattern generated nothing in Awkwords; it
+                            becomes an empty rule.</li>
+                        <li><b>Empty alternative</b>: a <Code>/</Code> at the end of a list, as in <Code>{"[a/]"}</Code>,
+                            is kept as an empty alternative, although Awkwords 1.2 ignored it.</li>
+                        <li><b>Weight read as</b>: a weight outside 1 to 128, or several in one alternative, is imported
+                            with the value Awkwords used.</li>
+                    </ul>
+                    <p>Unmatched brackets stop the import with the line and column at fault, since Awkwords refused them
+                        too. A letter right after a filter, as in <Code>{"[VV]^aaC"}</Code>, is kept, although Awkwords
+                        skipped it.</p>
 
                     <Sub>Only in Monke</Sub>
                     <p>Repetition with <Code>{"{min:max}"}</Code>, rewrites with back-references, exclusions that match
