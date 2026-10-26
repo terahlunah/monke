@@ -206,7 +206,8 @@ describe("generator output", () => {
 
         await user.click(screen.getByRole("button", {name: "New words (new seed)"}))
 
-        await waitFor(() => expect(within(screen.getByRole("list")).getAllByRole("listitem")).toHaveLength(50))
+        const output = within(screen.getByRole("region", {name: "Generator"}))
+        await waitFor(() => expect(within(output.getByRole("list")).getAllByRole("listitem")).toHaveLength(50))
     })
 })
 

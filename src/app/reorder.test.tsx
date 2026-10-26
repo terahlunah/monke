@@ -45,10 +45,10 @@ describe("reordering without dragging", () => {
         const values = () => screen.getAllByLabelText(/^Terminal \d+ of rule Vowel$/).map(i => (i as HTMLInputElement).value)
         const before = values()
 
-        await user.click(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"}))
+        await user.click(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel down"}))
 
         expect(values().slice(0, 2)).toEqual([before[1], before[0]])
-        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel right"})).toHaveFocus()
+        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel down"})).toHaveFocus()
     })
 
     // With two rewrites the moved item ends last, so focus lands on its up button.
@@ -58,10 +58,10 @@ describe("reordering without dragging", () => {
         const matches = () => screen.getAllByLabelText(/^Rewrite \d+ of rule Word, match$/).map(i => (i as HTMLInputElement).value)
         const before = matches()
 
-        await user.click(screen.getByRole("button", {name: "Move rewrite 1 of rule Word right"}))
+        await user.click(screen.getByRole("button", {name: "Move rewrite 1 of rule Word down"}))
 
         expect(matches()).toEqual([before[1], before[0]])
-        expect(screen.getByRole("button", {name: "Move rewrite 2 of rule Word left"})).toHaveFocus()
+        expect(screen.getByRole("button", {name: "Move rewrite 2 of rule Word up"})).toHaveFocus()
     })
 
     it("moves exclusions", async () => {
@@ -87,21 +87,24 @@ describe("reorder button visibility", () => {
     it("keeps collapsed buttons focusable and in the accessibility tree", async () => {
         const user = userEvent.setup()
         await renderApp()
-        const button = screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"})
+        const button = screen.getByRole("button", {name: "Move terminal 1 of rule Vowel down"})
 
-        expect(group("Move terminal 1 of rule Vowel right").className).toContain("max-w-0")
-        expect(group("Move terminal 1 of rule Vowel right").className).toContain("group-has-[:focus-visible]/chip:max-w-24")
+        expect(group("Move terminal 1 of rule Vowel down").className).toContain("max-w-0")
+        expect(group("Move terminal 1 of rule Vowel down").className).toContain("group-has-[:focus-visible]/row:max-w-24")
         button.focus()
         expect(button).toHaveFocus()
         await user.tab()
         expect(button).not.toHaveFocus()
     })
 
-    it("labels chips left and right and rules up and down", async () => {
+    it("labels list rows and rules up and down and exclusion chips left and right", async () => {
         await renderApp()
-        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel left"})).toBeInTheDocument()
-        expect(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel right"})).toBeInTheDocument()
-        expect(screen.queryByRole("button", {name: /Move terminal \d of rule Vowel (up|down)/})).toBeNull()
+        expect(screen.getByRole("button", {name: "Move terminal 2 of rule Vowel up"})).toBeInTheDocument()
+        expect(screen.getByRole("button", {name: "Move terminal 1 of rule Vowel down"})).toBeInTheDocument()
+        expect(screen.getByRole("button", {name: "Move rewrite 1 of rule Word down"})).toBeInTheDocument()
+        expect(screen.queryByRole("button", {name: /Move terminal d of rule Vowel (left|right)/})).toBeNull()
+        expect(screen.getByRole("button", {name: "Move exclusion 2 of rule Word left"})).toBeInTheDocument()
+        expect(screen.getByRole("button", {name: "Move exclusion 1 of rule Word right"})).toBeInTheDocument()
         expect(screen.getByRole("button", {name: `Move rule ${ruleNames()[1]} up`})).toBeInTheDocument()
     })
 
@@ -112,7 +115,7 @@ describe("reorder button visibility", () => {
         await user.click(screen.getByRole("switch", {name: "Always show reorder buttons"}))
 
         expect(screen.getByRole("switch", {name: "Always show reorder buttons"})).toBeChecked()
-        expect(group("Move terminal 1 of rule Vowel right").className).not.toContain("max-w-0")
+        expect(group("Move terminal 1 of rule Vowel down").className).not.toContain("max-w-0")
         expect(window.localStorage.getItem("monke.alwaysShowReorderButtons")).toBe("true")
     })
 

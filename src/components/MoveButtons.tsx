@@ -8,20 +8,21 @@ type MoveButtonsProps = {
     index: number
     total: number
     onMove: (to: number) => void
-    // Chips flow horizontally and move left/right; vertical lists move up/down.
+    // Chips flow horizontally and move left/right; rows of a vertical list move up/down.
     orientation: "horizontal" | "vertical"
-    // Which enclosing group (`group/chip` or `group/rule`) reveals the buttons.
-    scope: "chip" | "rule"
+    // Which enclosing group (`group/chip`, `group/row` or `group/rule`) reveals the buttons.
+    scope: "chip" | "row" | "rule"
     buttonClassName: string
     iconClassName: string
 }
 
-// Chip buttons are collapsed to zero width rather than display:none so they stay focusable and in the accessibility tree.
+// Chip and row buttons are collapsed to zero width rather than display:none so they stay focusable and in the accessibility tree.
 // They open on keyboard focus only: revealing on hover shifted the targets under the mouse pointer.
 // Rule buttons are few and sit next to other rule controls, so they are always shown to keep that row stable.
 // Tailwind only generates complete literal class names, hence the lookup.
 const reveal = {
     chip: "max-w-0 group-has-[:focus-visible]/chip:max-w-24",
+    row: "max-w-0 group-has-[:focus-visible]/row:max-w-24",
     rule: "max-w-24",
 }
 

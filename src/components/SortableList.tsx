@@ -82,19 +82,23 @@ export const SortableList = <T extends { id: string }>({items, onMove, direction
 
 type SortableRowProps = {
     id: string
+    role?: string
+    // Applies at rest; the dragging class is added on top while the row is picked up.
+    className?: string
     draggingClassName?: string
     // Receives the props that make an element the drag handle.
     children: (state: { handleProps: object, isDragging: boolean }) => ReactNode
 }
 
-export const SortableRow = ({id, draggingClassName, children}: SortableRowProps) => {
+export const SortableRow = ({id, role, className, draggingClassName, children}: SortableRowProps) => {
     const {attributes, listeners, setNodeRef, transform, transition, isDragging} = useSortable({id})
 
     return (
         <div ref={setNodeRef}
              style={{transform: CSS.Transform.toString(transform), transition}}
              id={id}
-             className={isDragging ? draggingClassName : undefined}>
+             role={role}
+             className={`${className ?? ""} ${isDragging ? draggingClassName ?? "" : ""}`}>
             {children({handleProps: {...attributes, ...listeners}, isDragging})}
         </div>
     )

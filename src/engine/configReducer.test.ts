@@ -102,6 +102,15 @@ describe("pattern actions", () => {
         expect(c.rules[0].patterns.map(p => p.id)).toEqual(["A0", c.rules[0].patterns[1].id])
         expect(c.rules[1].patterns).toHaveLength(1)
     })
+
+    it("adds several patterns at once, in order, with their own ids and weight 1", () => {
+        const c = apply({type: "addPatterns", ruleId: "A", patterns: ["p", "t", "k"]})
+
+        expect(c.rules[0].patterns.map(p => p.pattern)).toEqual(["'a'", "'b'", "p", "t", "k"])
+        expect(c.rules[0].patterns.slice(2).map(p => p.weight)).toEqual([1, 1, 1])
+        expect(new Set(c.rules[0].patterns.map(p => p.id)).size).toBe(5)
+        expect(c.rules[1].patterns).toHaveLength(1)
+    })
 })
 
 describe("rewrite and exclusion actions", () => {

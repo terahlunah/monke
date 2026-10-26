@@ -196,7 +196,7 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
 
     return (
         <section id="generator" aria-labelledby="generator-heading" tabIndex={-1}
-                 className="flex flex-col bg-surface p-4 md:p-6 gap-4 md:basis-0 md:grow md:overflow-auto md:no-scrollbar md:border-l border-line outline-none">
+                 className="flex flex-col bg-surface p-4 md:p-6 gap-4 md:basis-[400px] md:grow md:min-w-0 md:overflow-auto md:no-scrollbar md:border-l border-line outline-none">
             <h2 id="generator-heading" className="sr-only">Generator</h2>
 
 

@@ -25,6 +25,7 @@ export type ConfigAction =
     | { type: "setShowExclusions", ruleId: string, show: boolean }
     // Patterns
     | { type: "addPattern", ruleId: string }
+    | { type: "addPatterns", ruleId: string, patterns: string[] }
     | { type: "editPattern", ruleId: string, id: string, patch: Partial<Omit<RulePattern, "id">> }
     | { type: "removePattern", ruleId: string, id: string }
     | { type: "movePattern", ruleId: string, from: number, to: number }
@@ -128,6 +129,10 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
         case "addPattern":
             return updateRule(config, action.ruleId, r => ({
                 patterns: [...r.patterns, {id: crypto.randomUUID(), pattern: "", weight: 1.0}],
+            }))
+        case "addPatterns":
+            return updateRule(config, action.ruleId, r => ({
+                patterns: [...r.patterns, ...action.patterns.map(pattern => ({id: crypto.randomUUID(), pattern, weight: 1.0}))],
             }))
         case "editPattern":
             return updateRule(config, action.ruleId, r => ({patterns: patchById(r.patterns, action.id, action.patch)}))

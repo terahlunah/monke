@@ -1,14 +1,13 @@
 import {ChangeEvent, Dispatch} from "react";
-import {Row} from "@/components/Row.tsx";
-import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
-import {useInvalidProps} from "./grammarError.ts";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {lowerFirst} from "@/components/text.ts";
-import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
+import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
+import {AddButton, GripButton, RowDeleteButton, SectionLabel} from "./ruleParts.tsx";
+import {rowInput, valueFont} from "./ruleStyles.ts";
 
 
 export type RewriteSectionProps = {
@@ -23,14 +22,11 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
 
     return (
         <>
-            <Row className="items-baseline justify-between gap-4">
-                <h4>Rewrites</h4>
-                <div className="h-0.5 bg-white/10 grow"/>
-            </Row>
-            <Row className="gap-4 flex-wrap">
-                <SortableList items={rule.rewrites} onMove={(from, to) => dispatch({type: "moveRewrite", ruleId, from, to})}
-                              direction="horizontal"
-                              describe={r => `rewrite ${r.match || "empty"} to ${r.replace || "empty"}`}>
+            <SectionLabel tone="text-rewrite" count={rule.rewrites.length}>Rewrites</SectionLabel>
+            <SortableList items={rule.rewrites} onMove={(from, to) => dispatch({type: "moveRewrite", ruleId, from, to})}
+                          direction="vertical"
+                          describe={r => `rewrite ${r.match || "empty"} to ${r.replace || "empty"}`}>
+                <div role="list" aria-label={`Rewrites of rule ${rule.name}`} className="flex flex-col gap-1.5">
                     {rule.rewrites.map((r, index) =>
                         <RewritePatternItem key={r.id}
                                             label={`Rewrite ${index + 1} of rule ${rule.name}`}
@@ -43,15 +39,15 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
                                             onDelete={() => dispatch({type: "removeRewrite", ruleId, id: r.id})}
                                             enableSerif={enableSerif}/>
                     )}
-                </SortableList>
-
-                <button onClick={() => dispatch({type: "addRewrite", ruleId})}
-                        className={`bg-accent-warning  mr-4 rounded-sm p-1`}
-                        aria-label={`Add rewrite to rule ${rule.name}`}>
-                    <PlusIcon className="size-6"/>
-                </button>
-            </Row>
+                </div>
+            </SortableList>
             <InlineGrammarError ruleId={ruleId} itemIds={rule.rewrites.map(p => p.id)}/>
+            <div>
+                <AddButton tone="text-primary-text" label={`Add rewrite to rule ${rule.name}`}
+                           onClick={() => dispatch({type: "addRewrite", ruleId})}>
+                    Rewrite
+                </AddButton>
+            </div>
         </>
     );
 }
@@ -81,43 +77,27 @@ export const RewritePatternItem = ({
                                    }: RewritePatternProps) => {
 
     const invalid = useInvalidProps(ruleId, rewrite.id)
-    const onMatchInput = (e: ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value
-        onChange({match: v})
-    }
-    const onReplaceInput = (e: ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value
-        onChange({replace: v})
-    }
+    const onMatchInput = (e: ChangeEvent<HTMLInputElement>) => onChange({match: e.target.value})
+    const onReplaceInput = (e: ChangeEvent<HTMLInputElement>) => onChange({replace: e.target.value})
+    const input = `${rowInput} ${valueFont(enableSerif)}`
 
     return (
-        <SortableRow id={rewrite.id}>
+        <SortableRow id={rewrite.id} role="listitem" className="group/row" draggingClassName="relative z-30 bg-surface shadow-lg">
             {({handleProps}) => (
-                <Row className="group/chip rounded-sm overflow-clip w-min h-8 items-center">
-                    <button className={`bg-accent-warning p-1 h-8`} {...handleProps} aria-label={`Drag ${lowerFirst(label)}`}>
-                        <EllipsisVerticalIcon className="size-4"/>
-                    </button>
-                    <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove} orientation="horizontal" scope="chip"
-                                 buttonClassName="bg-accent-warning/70 p-1 h-8 disabled:opacity-40"
-                                 iconClassName="size-4"/>
-                    <AutowidthInput value={rewrite.match}
-                                    aria-label={`${label}, match`} {...invalid}
-                                    onChange={onMatchInput}
-                                    className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
-                                    type="text"
-                                    minWidth={15}/>
-                    <span className="bg-accent-warning p-1 h-8 flex items-center" aria-hidden="true">
-                        <ChevronsRightIcon className="size-4"/>
-                    </span>
-                    <AutowidthInput value={rewrite.replace}
-                                    aria-label={`${label}, replacement`} {...invalid}
-                                    onChange={onReplaceInput}
-                                    className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
-                                    type="text"
-                                    minWidth={15}/>
-                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
-                            aria-label={`Delete ${lowerFirst(label)}`}><XIcon className="size-4"/></button>
-                </Row>
+                <div className="grid grid-cols-[18px_minmax(0,1fr)_16px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,1fr)_20px_minmax(0,1fr)_auto] items-center gap-x-1.5 md:gap-x-2.5">
+                    <GripButton label={`Drag ${lowerFirst(label)}`} handleProps={handleProps}/>
+                    <input type="text" value={rewrite.match} aria-label={`${label}, match`} {...invalid}
+                           onChange={onMatchInput} spellCheck={false} className={input}/>
+                    <span className="text-center text-muted" aria-hidden="true">→</span>
+                    <input type="text" value={rewrite.replace} aria-label={`${label}, replacement`} {...invalid}
+                           onChange={onReplaceInput} spellCheck={false} className={input}/>
+                    <div className="flex items-center">
+                        <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove} orientation="vertical" scope="row"
+                                     buttonClassName="flex size-9 md:size-[30px] items-center justify-center rounded-md hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
+                                     iconClassName="size-4"/>
+                        <RowDeleteButton label={`Delete ${lowerFirst(label)}`} onClick={onDelete}/>
+                    </div>
+                </div>
             )}
         </SortableRow>
     );

@@ -1,55 +1,54 @@
-import {Col} from "@/components/Col.tsx";
-import {RuleInstance} from "./RuleInstance.tsx";
-import {Row} from "@/components/Row.tsx";
+import {Dispatch} from "react";
+import {PlusIcon} from "lucide-react";
 import {SortableList} from "@/components/SortableList.tsx";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
-import {Dispatch} from "react";
+import {RuleInstance} from "./RuleInstance.tsx";
 
 type ConfigurationProps = {
     config: Config
     dispatch: Dispatch<ConfigAction>
 }
 
+const addRule = "flex h-11 md:h-10 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface hover:bg-white/5"
+
 export const Configuration = ({config, dispatch}: ConfigurationProps) => {
 
     return (
-
         <section aria-labelledby="config-heading"
-                 className="flex flex-col grow bg-background p-4 md:p-6 gap-2 md:basis-0 md:grow-[2] md:overflow-auto md:no-scrollbar">
+                 className="flex flex-col p-4 md:p-6 gap-3 md:basis-[640px] md:grow-[999] md:min-w-0 md:overflow-auto md:no-scrollbar">
             <h2 id="config-heading" className="sr-only">Grammar configuration</h2>
 
+            <SortableList items={config.rules} onMove={(from, to) => dispatch({type: "moveRule", from, to})}
+                          direction="vertical"
+                          describe={r => `rule ${r.name || "unnamed"}`}>
+                <div className="flex flex-col gap-3">
+                    {config.rules.map((r, index) =>
+                        <RuleInstance rule={r}
+                                      index={index}
+                                      total={config.rules.length}
+                                      isRoot={r.name === config.root}
+                                      onMove={to => dispatch({type: "moveRule", from: index, to})}
+                                      dispatch={dispatch}
+                                      enableWeights={config.enableWeights}
+                                      enableSerif={config.enableSerif}
+                                      key={r.id}
+                        />)}
+                </div>
+            </SortableList>
 
-            <Col>
-                <Col className="gap-4">
-
-                    <SortableList items={config.rules} onMove={(from, to) => dispatch({type: "moveRule", from, to})}
-                                  direction="vertical"
-                                  describe={r => `rule ${r.name || "unnamed"}`}>
-                        {config.rules.map((r, index) =>
-                            <RuleInstance rule={r}
-                                          index={index}
-                                          total={config.rules.length}
-                                          onMove={to => dispatch({type: "moveRule", from: index, to})}
-                                          dispatch={dispatch}
-                                          enableWeights={config.enableWeights}
-                                          enableSerif={config.enableSerif}
-                                          key={r.id}
-                            />)}
-                    </SortableList>
-
-                    <Row className="gap-4">
-                        <button onClick={() => dispatch({type: "addRule", terminalOnly: true})} className="grow bg-primary rounded-sm p-1">
-                            Add Terminal Rule
-                        </button>
-                        <button onClick={() => dispatch({type: "addRule", terminalOnly: false})} className="grow bg-secondary rounded-sm p-1">
-                            Add Rule
-                        </button>
-                    </Row>
-                </Col>
-
-            </Col>
-
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
+                <button type="button" onClick={() => dispatch({type: "addRule", terminalOnly: true})}
+                        className={`${addRule} text-terminal`} aria-label="Add terminal rule">
+                    <PlusIcon className="size-4" aria-hidden="true"/>
+                    Terminal rule
+                </button>
+                <button type="button" onClick={() => dispatch({type: "addRule", terminalOnly: false})}
+                        className={`${addRule} text-pattern`} aria-label="Add pattern rule">
+                    <PlusIcon className="size-4" aria-hidden="true"/>
+                    Pattern rule
+                </button>
+            </div>
         </section>
     )
 }
