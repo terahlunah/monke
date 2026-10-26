@@ -5,7 +5,8 @@ import {ByteBuffer} from "./bytebuffer.ts"
 // Version 3 widens counts to uint16 and string lengths to uint32. Earlier
 // versions used int8 counts and uint8 lengths, which overflowed past 127/255.
 // Version 4 adds the repeatRewrites flag after enableSerif.
-const LATEST_VERSION = 4
+// Version 5 adds the seed text after repeatRewrites.
+const LATEST_VERSION = 5
 
 export const encodeConfig = async (config: Config): Promise<string> => {
 
@@ -17,6 +18,7 @@ export const encodeConfig = async (config: Config): Promise<string> => {
     buf.writeInt8(config.enableWeights ? 1 : 0)
     buf.writeInt8(config.enableSerif ? 1 : 0)
     buf.writeInt8(config.repeatRewrites ? 1 : 0)
+    buf.writeText(config.seed)
 
     // Rules
     buf.writeUint16(config.rules.length)
@@ -57,6 +59,7 @@ type Layout = {
     readCount: (buf: ByteBuffer) => number
     hasCollapsed: boolean
     hasRepeatRewrites: boolean
+    hasSeed: boolean
 }
 
 const narrow = (hasCollapsed: boolean): Layout => ({
@@ -64,21 +67,24 @@ const narrow = (hasCollapsed: boolean): Layout => ({
     readCount: buf => buf.readInt8(),
     hasCollapsed,
     hasRepeatRewrites: false,
+    hasSeed: false,
 })
 
-const wide = (hasRepeatRewrites: boolean): Layout => ({
+const wide = (hasRepeatRewrites: boolean, hasSeed = false): Layout => ({
     readString: buf => buf.readText(),
     readCount: buf => buf.readUint16(),
     hasCollapsed: true,
     hasRepeatRewrites,
+    hasSeed,
 })
 
-const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRepeatRewrites}: Layout): Config => {
+const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRepeatRewrites, hasSeed}: Layout): Config => {
     const language = readString(buf)
     const root = readString(buf)
     const enableWeights = buf.readInt8() === 1
     const enableSerif = buf.readInt8() === 1
     const repeatRewrites = hasRepeatRewrites ? buf.readInt8() === 1 : false
+    const seed = hasSeed ? readString(buf) : ""
 
     const ruleCount = readCount(buf)
     const rules: Rule[] = []
@@ -124,7 +130,7 @@ const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRe
         })
     }
 
-    return {language, root, rules, enableWeights, enableSerif, repeatRewrites}
+    return {language, root, rules, enableWeights, enableSerif, repeatRewrites, seed}
 }
 
 // Old links must keep decoding, so a version's decoder is never edited once shipped.
@@ -133,6 +139,7 @@ const decoders: Record<number, (buf: ByteBuffer) => Config> = {
     2: buf => readConfig(buf, narrow(true)),
     3: buf => readConfig(buf, wide(false)),
     4: buf => readConfig(buf, wide(true)),
+    5: buf => readConfig(buf, wide(true, true)),
 }
 
 export const decodeConfig = async (data: string): Promise<Config> => {

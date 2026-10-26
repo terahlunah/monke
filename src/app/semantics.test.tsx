@@ -23,9 +23,23 @@ describe("grammar errors", () => {
         const alert = await screen.findByRole("alert")
         expect(alert).toHaveTextContent(/Invalid grammar/)
         expect(input).toBeInvalid()
-        expect(input).toHaveAccessibleDescription(alert.textContent!)
+        // The input is described by the copy of the message shown right below it.
+        expect(input).toHaveAccessibleDescription(alert.textContent!.replace("Invalid grammar: ", ""))
+        expect(screen.getByText(alert.textContent!.replace("Invalid grammar: ", ""), {selector: "p:not([role])"})).toBeVisible()
         // Only the input at fault is flagged.
         expect(screen.getByLabelText("Pattern 1 of rule Word")).toBeValid()
+    })
+
+    it("suggests the closest rule name under the pattern with a typo", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const input = screen.getByLabelText("Pattern 1 of rule Syllable")
+        await user.clear(input)
+        await user.type(input, "Consonant.Vowl")
+
+        expect(await screen.findByRole("alert")).toHaveTextContent("Did you mean `Vowel`?")
+        expect(input).toBeInvalid()
+        expect(input).toHaveAccessibleDescription("Unknown rule 'Vowl' (rule : 'Syllable'). Did you mean `Vowel`?")
     })
 
     it("clears the flag once the pattern is fixed", async () => {

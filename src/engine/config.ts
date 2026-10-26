@@ -6,6 +6,8 @@ export type Config = {
     enableSerif: boolean,
     // Opt-in because repeating changes the output of grammars whose rewrites feed each other or grow their own match.
     repeatRewrites: boolean,
+    // Drives the random draws so the same seed and grammar give the same words; empty means a fresh random run each time.
+    seed: string,
 }
 
 export type Rule = {

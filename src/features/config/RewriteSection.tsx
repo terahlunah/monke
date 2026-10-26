@@ -8,6 +8,7 @@ import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
+import {InlineGrammarError} from "./InlineGrammarError.tsx";
 
 
 export type RewriteSectionProps = {
@@ -50,6 +51,7 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
                     <PlusIcon className="size-6"/>
                 </button>
             </Row>
+            <InlineGrammarError ruleId={ruleId} itemIds={rule.rewrites.map(p => p.id)}/>
         </>
     );
 }

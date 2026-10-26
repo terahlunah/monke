@@ -12,6 +12,7 @@ export type ConfigAction =
     | { type: "setEnableWeights", enabled: boolean }
     | { type: "setEnableSerif", enabled: boolean }
     | { type: "setRepeatRewrites", enabled: boolean }
+    | { type: "setSeed", seed: string }
     // Rules
     | { type: "addRule", terminalOnly: boolean }
     | { type: "removeRule", ruleId: string }
@@ -88,6 +89,8 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
             return {...config, enableWeights: action.enabled}
         case "setEnableSerif":
             return {...config, enableSerif: action.enabled}
+        case "setSeed":
+            return {...config, seed: action.seed}
         case "setRepeatRewrites":
             return {...config, repeatRewrites: action.enabled}
 

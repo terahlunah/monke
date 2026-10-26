@@ -1,6 +1,7 @@
 import {Config, Rule as ConfigRule, RulePattern} from "./config.ts";
 import {containsBoundary, Expr, findInvalidBackReference, findInvalidMatchIndex, getRuleEdges, Grammar, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule} from "./grammar.ts";
 import {parsePattern} from "./pattern.ts";
+import {closest} from "./suggest.ts";
 
 // Locates a grammar problem in the config so the UI can flag the offending input: the pattern/rewrite/exclusion
 // when known, otherwise the rule itself.
@@ -37,13 +38,19 @@ export const configToGrammar = (config: Config): Grammar | null => {
 
         for (const e of edges) {
             if (!rulesNames.includes(e)) {
-                throw new GrammarError(`Unknown rule '${e}' (rule : '${rule.name}')`, config.rules[i].id)
+                const suggestion = closest(e, rulesNames)
+                const hint = suggestion ? `. Did you mean \`${suggestion}\`?` : ""
+                throw new GrammarError(`Unknown rule '${e}' (rule : '${rule.name}')${hint}`, config.rules[i].id, patternReferencing(config.rules[i], e))
             }
         }
     }
 
     return makeGrammar(config.root, rules, config.enableWeights, config.repeatRewrites)
 }
+
+// The pattern that uses an unknown name, so the error lands on that input rather than on the whole rule.
+const patternReferencing = (rule: ConfigRule, name: string): string | undefined =>
+    rule.patterns.find(p => getRuleEdges(makeRule(rule.name, parsePattern(rule.name, p.pattern), [], [])).includes(name))?.id
 
 const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
     if (!/^[A-Za-z_][A-Za-z_0-9]*$/.test(rule.name)) {

@@ -31,6 +31,7 @@ export const exampleToConfig = (example: ReferenceExample, enableSerif = false):
     enableWeights: example.weights ?? false,
     enableSerif,
     repeatRewrites: example.repeatRewrites ?? false,
+    seed: "",
     rules: example.rules.map((r): Rule => ({
         id: crypto.randomUUID(),
         name: r.name,
@@ -249,3 +250,21 @@ export const listAllDemo = {
     } satisfies ReferenceExample,
     words: ["ka", "kan", "ki", "kim", "ta", "tan"],
 }
+
+// The first five words of firstGrammar with this seed; any change to the generator's draws shows up here.
+export const seedDemo = {
+    seed: "monke",
+    words: ["meku", "tin", "pun", "matunmon", "mantun"],
+}
+
+export type ErrorHintDemo = {
+    pattern: string
+    message: string
+}
+
+// Patterns for the Word rule of firstGrammar (rules C, V, Syllable), with the error they produce.
+export const errorHintDemos: ErrorHintDemo[] = [
+    {pattern: "Syllable.Syllabel", message: "Unknown rule 'Syllabel' (rule : 'Word'). Did you mean `Syllable`?"},
+    {pattern: "C.V 'n'", message: "Missing `.` between `V` and `'n'`? (rule : 'Word') at character 5"},
+    {pattern: "C.[V / 'a'", message: "Expected ']' at the end of a group (rule : 'Word') at character 11"},
+]

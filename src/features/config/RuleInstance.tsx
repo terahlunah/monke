@@ -9,6 +9,7 @@ import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {useInvalidProps} from "./grammarError.ts";
+import {InlineGrammarError} from "./InlineGrammarError.tsx";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";
@@ -97,6 +98,9 @@ export const RuleInstance = ({
                         </button>
                     </Row>
                 </Row>
+                {/* A collapsed rule hides its items, so their errors show under the header instead. */}
+                <InlineGrammarError ruleId={ruleId}
+                                    itemIds={[null, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
                 {
                     rule.collapsed ? <></> :
                         <>

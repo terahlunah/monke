@@ -8,6 +8,7 @@ import AutowidthInput from "react-autowidth-input";
 import {ExclusionPattern, Rule} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
+import {InlineGrammarError} from "./InlineGrammarError.tsx";
 
 
 export type ExclusionSectionProps = {
@@ -50,6 +51,7 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
                     <PlusIcon className="size-6"/>
                 </button>
             </Row>
+            <InlineGrammarError ruleId={ruleId} itemIds={rule.exclusions.map(p => p.id)}/>
         </>
     );
 }

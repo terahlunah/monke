@@ -187,6 +187,7 @@ export const emptyConfig: Config = {
     enableWeights: false,
     enableSerif: false,
     repeatRewrites: false,
+    seed: "",
 }
 
 export const defaultConfig: Config = {
@@ -196,4 +197,5 @@ export const defaultConfig: Config = {
     enableWeights: false,
     enableSerif: false,
     repeatRewrites: false,
+    seed: "",
 }

@@ -46,7 +46,7 @@ export const Home = () => {
                 grammar = configToGrammar(config)
             } catch (e) {
                 error = (e as Error).message
-                if (e instanceof GrammarError) location = {ruleId: e.ruleId, itemId: e.itemId}
+                if (e instanceof GrammarError) location = {ruleId: e.ruleId, itemId: e.itemId, message: error}
             }
             return [grammar, error, location]
         },

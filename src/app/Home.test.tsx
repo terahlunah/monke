@@ -130,4 +130,38 @@ describe("Home", () => {
         expect(await screen.findByText("a i ta ti", {selector: "p"})).toBeInTheDocument()
         expect(screen.getByText("Listed 4 words")).toBeInTheDocument()
     })
+
+    // Words of the output paragraph, which the live preview fills without clicking Generate.
+    const outputWords = async (pattern = /^[a-z]+( [a-z]+)*$/) =>
+        (await screen.findByText(pattern, {selector: "p"})).textContent!.split(" ")
+
+    it("updates the output live after an edit", async () => {
+        const user = userEvent.setup()
+        renderAt(`/${customLink}`)
+        await screen.findByText("Grammar has 6 possible branches")
+        expect(await outputWords()).toHaveLength(50)
+
+        const terminal = screen.getByLabelText("Terminal 1 of rule C")
+        await user.clear(terminal)
+        await user.type(terminal, "z")
+
+        await waitFor(async () => expect((await outputWords()).some(w => w.startsWith("z"))).toBe(true))
+    })
+
+    it("draws the same words from the same seed after reopening the link", async () => {
+        const user = userEvent.setup()
+        const view = renderAt(`/${customLink}`)
+        await screen.findByText("Grammar has 6 possible branches")
+        await user.type(screen.getByLabelText("Seed"), "monke")
+        await waitFor(() => expect(window.location.pathname).not.toBe(`/${customLink}`))
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+        const first = await outputWords()
+
+        const link = window.location.pathname
+        view.unmount()
+        renderAt(link)
+        await waitFor(() => expect(screen.getByLabelText("Seed")).toHaveValue("monke"))
+        await user.click(screen.getByRole("button", {name: "Generate"}))
+        expect(await outputWords()).toEqual(first)
+    })
 })

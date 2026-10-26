@@ -21,8 +21,19 @@ export class Parser {
         this.input = input;
     }
 
-    private error(message: string): never {
-        throw new Error(`${message} (rule : '${this.ruleName}')`);
+    // Positions are 1-based characters, as people count them when looking at the input.
+    private error(message: string, position = this.currentPosition): never {
+        throw new Error(`${message} (rule : '${this.ruleName}') at character ${position + 1}`);
+    }
+
+    // A term followed directly by another term is almost always a forgotten `.`; say so instead of
+    // reporting the second term as an unexpected character.
+    private checkMissingDot(termStart: number) {
+        const next = this.peek()
+        if (!next || !(this.isRefCharacter(next, true) || "'([#^$".includes(next))) return
+        const before = this.input.slice(termStart, this.currentPosition).trim()
+        const after = /^('(?:\\.|[^'\\])*'?|[A-Za-z_][A-Za-z_0-9]*|.)/.exec(this.input.slice(this.currentPosition))![0]
+        this.error(`Missing \`.\` between \`${before}\` and \`${after}\`?`)
     }
 
     private parseAtom(): Expr {
@@ -71,15 +82,17 @@ export class Parser {
     private parseRef(): Expr {
         let refName = '';
 
+        // Whitespace ends a name: `C V` is two references, not one named `CV`.
         if (this.isRefCharacter(this.peek(), true)) {
             refName += this.peek();
-            this.advancePosition();
+            this.advancePosition(false);
         }
 
         while (this.isRefCharacter(this.peek())) {
             refName += this.peek();
-            this.advancePosition();
+            this.advancePosition(false);
         }
+        this.skipWhiteSpace();
 
         if (refName.length === 0) {
             this.error("Expected a reference name");
@@ -144,13 +157,16 @@ export class Parser {
     }
 
     private parseSequence(): Expr {
+        let termStart = this.currentPosition
         const items: Expr[] = [this.parseQuantifiedTerm()]; // Start with the first term, which might be quantified
 
         // While the next token indicates a sequence, keep parsing
         while (this.peek() === '.') {
             this.consume('.'); // Consume the SeqOperator
+            termStart = this.currentPosition
             items.push(this.parseQuantifiedTerm()); // Parse the next term in the sequence
         }
+        this.checkMissingDot(termStart)
 
         // If only one item, no need to wrap in a Seq expression
         return items.length === 1 ? items[0] : makeSeq(items);

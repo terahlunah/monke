@@ -81,6 +81,24 @@ describe("configToGrammar", () => {
             .toThrow("Unknown rule 'Nope' (rule : 'B')")
     })
 
+    it("suggests a rule name within two edits and flags the pattern using the unknown name", () => {
+        const config = makeConfig("Word", [makeRule("Vowel", ["a"], {terminalOnly: true}), makeRule("Word", ["'k'.Vowel", "'t'.Vowl"])])
+        let error: unknown
+        try {
+            configToGrammar(config)
+        } catch (e) {
+            error = e
+        }
+        expect(error).toBeInstanceOf(GrammarError)
+        expect((error as GrammarError).message).toBe("Unknown rule 'Vowl' (rule : 'Word'). Did you mean `Vowel`?")
+        expect((error as GrammarError).itemId).toBe(config.rules[1].patterns[1].id)
+    })
+
+    it("does not suggest names more than two edits away", () => {
+        expect(() => configToGrammar(makeConfig("Word", [makeRule("Vowel", ["a"], {terminalOnly: true}), makeRule("Word", ["Vw"])])))
+            .toThrow(/^Unknown rule 'Vw' \(rule : 'Word'\)$/)
+    })
+
     it.each(["1abc", "a-b", "a b"])("rejects invalid rule name %j", (name) => {
         expect(() => configToGrammar(makeConfig(name, [makeRule(name, ["'a'"])]))).toThrow(/Invalid rule name/)
     })
@@ -165,9 +183,12 @@ describe("configToGrammar", () => {
             expect(failure(makeConfig("R", [rw])).itemId).toBe("w")
         })
 
+        it("points at the pattern using an unknown rule", () => {
+            const e = failure(makeConfig("A", [makeRule("A", ["'a'"]), makeRule("B", ["'b'", "Nope"])]))
+            expect([e.ruleId, e.itemId]).toEqual(["B", "B1"])
+        })
+
         it("points at the rule itself when no single item is at fault", () => {
-            const e = failure(makeConfig("A", [makeRule("A", ["'a'"]), makeRule("B", ["Nope"])]))
-            expect([e.ruleId, e.itemId]).toEqual(["B", undefined])
             expect(failure(makeConfig("Empty", [makeRule("Empty", [])])).ruleId).toBe("Empty")
         })
 

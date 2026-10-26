@@ -8,7 +8,9 @@ import {
     exclusionDemos,
     firstGrammar,
     itemText,
+    errorHintDemos,
     listAllDemo,
+    seedDemo,
     recipes,
     rewriteDemos,
     syntaxRows
@@ -316,6 +318,21 @@ export const Reference = () => {
                         <li><b>Enable serifs</b> switches to a serif font, which makes some IPA characters easier to read.</li>
                     </ul>
 
+                    <Sub>Seed</Sub>
+                    <p>The <b>Seed</b> field makes generation repeatable: the same seed and grammar always give the same
+                        words, in the same order, and the seed is saved in share links so others see your exact list. Any
+                        text works; the dice button picks a random one. Leave it empty to get new words on every{" "}
+                        <b>Generate</b>. For example, the first grammar above with the seed <Code>{seedDemo.seed}</Code>{" "}
+                        starts with <Code>{seedDemo.words.join(", ")}</Code>.</p>
+
+                    <Sub>Live preview</Sub>
+                    <p>With <b>Live preview</b> on (the default), the words update by themselves a quarter of a second
+                        after each edit that leaves the grammar valid. They use the seed, or when it is empty a seed fixed
+                        for the session (shown greyed in the field), so an edit shows how the same draws change rather than
+                        a new random list. Live updates are not announced by screen readers, to avoid talking over your
+                        typing; <b>Generate</b> still announces how many words it made. The setting is remembered in this
+                        browser and is not part of share links.</p>
+
                     <Sub>Generate all</Sub>
                     <p><b>Generate all</b> lists every distinct word the start rule can make, sorted, instead of random
                         draws: useful to export a full syllable inventory. Rewrites and exclusions apply exactly as when
@@ -331,9 +348,19 @@ export const Reference = () => {
                         {listAllDemo.words.map(w => <li key={w}><Code>{w}</Code></li>)}
                     </ul>
 
+                    <Sub>Errors and hints</Sub>
+                    <p>When the grammar is invalid, the error appears under the input at fault (and in the generator
+                        panel), and that input is marked invalid for screen readers. Parse errors give the character
+                        position, counting from 1. Two common mistakes get a hint: a rule name one or two letters away from
+                        an existing one suggests it, and two terms side by side suggest the missing <Code>.</Code>. With
+                        the first grammar's rules, a <Code>Word</Code> pattern of:</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-1">
+                        {errorHintDemos.map(d => <li key={d.pattern}><Code>{d.pattern}</Code> reports <Code>{d.message}</Code></li>)}
+                    </ul>
+
                     <Sub>Share links</Sub>
-                    <p>The whole configuration (rules, start rule, language name, weights, repeated rewrites and serif
-                        settings) is encoded in
+                    <p>The whole configuration (rules, start rule, language name, weights, repeated rewrites, serif
+                        settings and seed) is encoded in
                         the page address and updated as you edit. <b>Share link</b> copies it. Anyone opening it gets your
                         grammar; nothing is stored on a server. Links made by older versions of Monke still open.</p>
 

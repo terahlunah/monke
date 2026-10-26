@@ -112,3 +112,23 @@ describe("syntax errors", () => {
         expect(() => new Parser("MyRule", src).parse()).toThrow(/MyRule/)
     })
 })
+
+describe("pattern error hints", () => {
+    it("gives the character position of a parse error", () => {
+        expect(() => parse("'a'.]")).toThrow("Unexpected character `]` (rule : 'R') at character 5")
+    })
+
+    it.each([
+        ["C V", "Missing `.` between `C` and `V`? (rule : 'R') at character 3"],
+        ["'ka''na'", "Missing `.` between `'ka'` and `'na'`? (rule : 'R') at character 5"],
+        ["C.V'n'", "Missing `.` between `V` and `'n'`? (rule : 'R') at character 4"],
+        ["[C / S]V", "Missing `.` between `[C / S]` and `V`? (rule : 'R') at character 8"],
+        ["(C) Vowel", "Missing `.` between `(C)` and `Vowel`? (rule : 'R') at character 5"],
+    ])("suggests a missing dot in %j", (src, message) => {
+        expect(() => parse(src)).toThrow(message)
+    })
+
+    it("does not flag operators after a term", () => {
+        for (const src of ["C.V", "C / V", "C*2 / V", "(C*0.5)", "C{2}.V", "[C].V"]) expect(() => parse(src)).not.toThrow()
+    })
+})

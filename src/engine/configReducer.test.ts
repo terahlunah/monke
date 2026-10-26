@@ -12,8 +12,8 @@ describe("whole-config actions", () => {
     })
 
     it("clear empties the grammar but keeps the display flags", () => {
-        const c = configReducer({...base(), enableWeights: true, enableSerif: true}, {type: "clear"})
-        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true, repeatRewrites: false})
+        const c = configReducer({...base(), enableWeights: true, enableSerif: true, seed: "s"}, {type: "clear"})
+        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true, repeatRewrites: false, seed: "s"})
     })
 
     it("loadExample turns repeated rewrites off, since the example relies on single passes", () => {
@@ -35,8 +35,9 @@ describe("whole-config actions", () => {
             {type: "setEnableWeights", enabled: true},
             {type: "setEnableSerif", enabled: true},
             {type: "setRepeatRewrites", enabled: true},
+            {type: "setSeed", seed: "abc"},
         )
-        expect(c).toMatchObject({language: "x", root: "B", enableWeights: true, enableSerif: true, repeatRewrites: true})
+        expect(c).toMatchObject({language: "x", root: "B", enableWeights: true, enableSerif: true, repeatRewrites: true, seed: "abc"})
     })
 })
 

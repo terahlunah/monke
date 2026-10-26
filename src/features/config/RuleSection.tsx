@@ -8,6 +8,7 @@ import AutowidthInput from "react-autowidth-input";
 import {Rule, RulePattern} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
+import {InlineGrammarError} from "./InlineGrammarError.tsx";
 
 
 export type RuleSectionProps = {
@@ -22,6 +23,7 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
     const ruleId = rule.id
 
     return (
+        <>
         <Row className="gap-4 flex-wrap">
             <SortableList items={rule.patterns} onMove={(from, to) => dispatch({type: "movePattern", ruleId, from, to})}
                           direction="horizontal"
@@ -47,6 +49,8 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
                 <PlusIcon className="size-6"/>
             </button>
         </Row>
+        <InlineGrammarError ruleId={ruleId} itemIds={rule.patterns.map(p => p.id)}/>
+        </>
     );
 }
 

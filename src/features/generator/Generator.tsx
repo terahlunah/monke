@@ -1,9 +1,11 @@
 
 import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 import {Row} from "@/components/Row.tsx";
-import {ClipboardListIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
-import {ChangeEvent, Dispatch, FormEvent, useMemo, useRef, useState} from "react";
-import {generate} from "@/engine/generate.ts";
+import {ClipboardListIcon, DicesIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
+import {ChangeEvent, Dispatch, FormEvent, useEffect, useMemo, useRef, useState} from "react";
+import {generate, Rng} from "@/engine/generate.ts";
+import {randomSeed, seededRng} from "@/engine/seed.ts";
+import {setLivePreview, useLivePreview} from "./livePreviewPref.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
@@ -20,6 +22,23 @@ const MAX_WORD_COUNT = 10000
 // Above this many branches, listing would spend its whole work budget and still show only a sliver of the words.
 const LIST_ALL_MAX_BRANCHES = 1_000_000
 const LIST_ALL_HINT_ID = "list-all-hint"
+
+const LIVE_PREVIEW_DELAY = 250
+const SEED_HINT_ID = "seed-hint"
+
+// Used by the live preview when no seed is set, so edits show how the same draws change instead of reshuffling.
+// Module-level so it survives switching tabs.
+const sessionSeed = randomSeed()
+
+const draw = (grammar: Grammar, rng: Rng, count: number): { words: string[], error: string | null } => {
+    const words: string[] = []
+    try {
+        for (let i = 0; i < count; i++) words.push(generate(grammar, rng))
+    } catch (e) {
+        return {words, error: (e as Error).message}
+    }
+    return {words, error: null}
+}
 
 const formatCount = (n: number) => n.toLocaleString("en-US")
 
@@ -56,7 +75,9 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     const [wordCount, setWordCount] = useState("50")
     const [outputList, setOutputList] = useState(false)
     const [filterDuplicates, setFilterDuplicates] = useState(false)
-    const [generationError, setGenerationError] = useState<string | null>(null)
+    // Live failures are shown but not put in an alert: they would interrupt on every keystroke.
+    const [generationError, setGenerationError] = useState<{ message: string, live: boolean } | null>(null)
+    const livePreview = useLivePreview()
     // Announced politely after each run. The result is deliberately not read out: it can be thousands of words,
     // and screen reader users browse it as text or a list instead.
     const [announcement, setAnnouncement] = useState({text: "", run: 0})
@@ -139,28 +160,28 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
     }
 
     const onGenerate = () => {
-        setGenerationError(null)
+        if (!grammar) return
+        const count = clampWordCount(wordCount)
+        setWordCount(String(count))
 
-        if (grammar) {
-            const words: string[] = []
-            const count = clampWordCount(wordCount)
-            setWordCount(String(count))
-
-            let failed = false
-            try {
-                for (let i = 0; i < count; i++) {
-                    words.push(generate(grammar))
-                }
-            } catch (e) {
-                failed = true
-                setGenerationError((e as Error).message)
-            }
-
-            setGeneratedWords(words)
-            // A failed run is announced by its error alert instead.
-            setAnnouncement(({run}) => ({text: failed ? "" : summarize(words, filterDuplicates), run: run + 1}))
-        }
+        const {words, error} = draw(grammar, config.seed ? seededRng(config.seed) : Math.random, count)
+        setGeneratedWords(words)
+        setGenerationError(error ? {message: error, live: false} : null)
+        // A failed run is announced by its error alert instead.
+        setAnnouncement(({run}) => ({text: error ? "" : summarize(words, filterDuplicates), run: run + 1}))
     }
+
+    // Live updates are deliberately silent: announcing on every edit would talk over the user's typing, and the
+    // words are one Tab away. Explicit Generate still announces its summary.
+    useEffect(() => {
+        if (!livePreview || !grammar) return
+        const timer = setTimeout(() => {
+            const {words, error} = draw(grammar, seededRng(config.seed || sessionSeed), clampWordCount(wordCount))
+            setGeneratedWords(words)
+            setGenerationError(error ? {message: error, live: true} : null)
+        }, LIVE_PREVIEW_DELAY)
+        return () => clearTimeout(timer)
+    }, [livePreview, grammar, config.seed, wordCount])
 
     const [listing, setListing] = useState(false)
 
@@ -181,7 +202,7 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             setAnnouncement(({run}) => ({text: summarizeList(words.length, truncated), run: run + 1}))
         } catch (e) {
             setGeneratedWords([])
-            setGenerationError((e as Error).message)
+            setGenerationError({message: (e as Error).message, live: false})
         } finally {
             setListing(false)
         }
@@ -234,6 +255,9 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             <SwitchLabel checked={outputList} onChange={setOutputList}
                          label="Output as list"
                          enabledColor="bg-secondary" disabledColor="bg-secondary/30"/>
+            <SwitchLabel checked={livePreview} onChange={setLivePreview}
+                         label="Live preview"
+                         enabledColor="bg-primary" disabledColor="bg-primary/30"/>
             <SwitchLabel checked={alwaysShowReorder} onChange={setAlwaysShowReorder}
                          label="Always show reorder buttons"
                          enabledColor="bg-accent-danger" disabledColor="bg-accent-danger/30"/>
@@ -317,6 +341,22 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                 </button>
             </Row>
 
+            <Row className="gap-2 items-center">
+                <label htmlFor="seed" className="shrink-0">Seed</label>
+                <input id="seed" value={config.seed} placeholder={sessionSeed} aria-describedby={SEED_HINT_ID}
+                       onChange={e => dispatch({type: "setSeed", seed: e.target.value})}
+                       className="bg-primary/40 rounded-sm h-10 px-2 outline-0 grow min-w-0"/>
+                <button onClick={() => dispatch({type: "setSeed", seed: randomSeed()})}
+                        className="bg-primary rounded-sm p-2" aria-label="Randomize seed">
+                    <DicesIcon className="size-6"/>
+                </button>
+            </Row>
+            <p id={SEED_HINT_ID} className="text-sm text-gray-300">
+                {config.seed ?
+                    "The same seed and grammar always give the same words. Saved in share links." :
+                    `Empty: Generate draws new words each time; the live preview uses ${sessionSeed}.`}
+            </p>
+
             {listAllBlocker ?
                 <p id={LIST_ALL_HINT_ID} className="text-center italic text-gray-300">{listAllBlocker}</p> :
                 null
@@ -332,8 +372,8 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             {
                 generationError ?
-                    <p role="alert" className="text-center italic text-accent-danger-text">
-                        {generationError}
+                    <p role={generationError.live ? undefined : "alert"} className="text-center italic text-accent-danger-text">
+                        {generationError.message}
                     </p> :
                     null
             }

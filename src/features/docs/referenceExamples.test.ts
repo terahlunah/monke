@@ -6,7 +6,8 @@ import {parsePattern} from "@/engine/pattern.ts"
 import {mulberry32} from "@/engine/test-helpers.ts"
 import {importAwkwords} from "@/engine/awkwords.ts"
 import {enumerate} from "@/engine/enumerate.ts"
-import {awkwordsImportDemo, exampleToConfig,ExampleRule, exclusionDemos, firstGrammar, listAllDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
+import {seededRng} from "@/engine/seed.ts"
+import {awkwordsImportDemo, exampleToConfig,ExampleRule, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
 const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
@@ -110,5 +111,20 @@ describe("Awkwords import demo", () => {
 describe("Generate all demo", () => {
     it("lists exactly the documented words", () => {
         expect(enumerate(grammarOf(listAllDemo.example))).toEqual({words: listAllDemo.words, truncated: false})
+    })
+})
+
+describe("seed demo", () => {
+    it("gives the documented words for the seed", () => {
+        const grammar = grammarOf(firstGrammar)
+        const rng = seededRng(seedDemo.seed)
+        expect(seedDemo.words.map(() => generate(grammar, rng))).toEqual(seedDemo.words)
+    })
+})
+
+describe("error hint demos", () => {
+    it.each(errorHintDemos)("$pattern reports $message", ({pattern, message}) => {
+        const rules = firstGrammar.rules.map(r => r.name === "Word" ? {...r, items: [pattern]} : r)
+        expect(() => grammarOf({...firstGrammar, rules})).toThrow(message)
     })
 })
