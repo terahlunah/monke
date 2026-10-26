@@ -5,8 +5,7 @@ import AutowidthInput from "react-autowidth-input";
 import {FormEvent} from "react";
 import {Col} from "../components/Col.tsx";
 import {ToggleLabel} from "../components/ToggleLabel.tsx";
-import {useSortable} from "@dnd-kit/sortable";
-import {CSS} from "@dnd-kit/utilities";
+import {SortableRow} from "../components/SortableList.tsx";
 import {Rule} from "../models/ui.ts";
 import {RuleSection} from "./RuleSection.tsx";
 import {RewriteSection} from "./RewriteSection.tsx";
@@ -49,27 +48,13 @@ export const RuleInstance = ({
         onRuleChange({...rule, collapsed: !rule.collapsed});
     }
 
-    const {
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        attributes,
-        isDragging,
-    } = useSortable({id: rule.id});
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
-
     return (
-        <div ref={setNodeRef} style={style} id={rule.id}
-             className={`${isDragging ? "z-30 shadow-sm border-white/20 border" : ""}`}>
+        <SortableRow id={rule.id} draggingClassName="z-30 shadow-sm border-white/20 border">
+            {({handleProps}) => (
             <Col className={`${className} rounded-sm bg-surface px-2 pb-2 gap-2`}>
                 <Row className="items-center justify-between pt-2">
                     <Row className="items-center justify-start">
-                        <div className="pl-2 pr-3 touch-none" {...listeners} {...attributes} aria-label="Reorder rule">
+                        <div className="pl-2 pr-3 touch-none" {...handleProps} aria-label="Reorder rule">
                             <EllipsisVerticalIcon className="size-5"/>
                         </div>
                         <button onClick={onRuleToggleCollapse} className="border border-white/30 rounded-sm p-2 mr-2"
@@ -130,7 +115,8 @@ export const RuleInstance = ({
                         </>
                 }
             </Col>
-        </div>
+            )}
+        </SortableRow>
     )
 }
 

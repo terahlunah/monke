@@ -1,13 +1,10 @@
-import {GenericProps} from "../components/GenericProps.tsx";
-import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} from "@dnd-kit/sortable";
-import {CSS} from "@dnd-kit/utilities";
 import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "../models/ui.ts";
-import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
-import cloneDeep from "lodash.clonedeep";
+import {SortableList, SortableRow} from "../components/SortableList.tsx";
+import {removeAt, updateAt} from "../logic/list.ts";
 
 
 export type RewriteSectionProps = {
@@ -16,52 +13,13 @@ export type RewriteSectionProps = {
     enableSerif?: boolean
 }
 
-export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<RewriteSectionProps>) => {
+export const RewriteSection = ({rule, onRuleChange, enableSerif}: RewriteSectionProps) => {
 
-    const sensors = useSensors(
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 5,
-            },
-        }), useSensor(MouseSensor)
-    );
+    const setRewrites = (rewrites: RewritePattern[]) => onRuleChange({...rule, rewrites})
 
-    const onRewritePatternChangeIndex = (index: number) => {
-        return (pattern: RewritePattern) => {
-            const newRule = cloneDeep(rule)
-            newRule.rewrites[index] = pattern
-            onRuleChange(newRule)
-        }
+    const onAdd = () => {
+        setRewrites([...rule.rewrites, {id: crypto.randomUUID(), match: "", replace: ""}])
     }
-
-    const onRewritePatternDeleteIndex = (index: number) => {
-        return () => {
-            const newRule = cloneDeep(rule)
-            newRule.rewrites.splice(index, 1)
-            onRuleChange(newRule)
-        }
-    }
-
-    const onRewritePatternAdd = () => {
-        const newRule = cloneDeep(rule)
-        newRule.rewrites.push({id: crypto.randomUUID(), match: "", replace: ""})
-        onRuleChange(newRule)
-    }
-
-    const onRewritePatternDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-
-        if (active.id !== over?.id) {
-
-            const oldIndex = rule.rewrites.findIndex(it => it.id === active.id);
-            const newIndex = rule.rewrites.findIndex(it => it.id === over?.id);
-
-            const newRule = cloneDeep(rule)
-            newRule.rewrites = arrayMove(newRule.rewrites, oldIndex, newIndex)
-            onRuleChange(newRule)
-        }
-    };
 
     return (
         <>
@@ -70,19 +28,17 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <Row className="gap-4 flex-wrap">
-                <DndContext sensors={sensors} collisionDetection={closestCenter}
-                            onDragEnd={onRewritePatternDragEnd}>
-                    <SortableContext items={rule.rewrites} strategy={horizontalListSortingStrategy}>
-                        {rule.rewrites.map((r, index) =>
-                            <RewritePatternItem key={r.id} rewrite={r}
-                                                onChange={onRewritePatternChangeIndex(index)}
-                                                onDelete={onRewritePatternDeleteIndex(index)}
-                                                enableSerif={enableSerif}/>
-                        )}
-                    </SortableContext>
-                </DndContext>
+                <SortableList items={rule.rewrites} onChange={setRewrites} direction="horizontal">
+                    {rule.rewrites.map((r, index) =>
+                        <RewritePatternItem key={r.id}
+                                            rewrite={r}
+                                            onChange={rewrite => setRewrites(updateAt(rule.rewrites, index, rewrite))}
+                                            onDelete={() => setRewrites(removeAt(rule.rewrites, index))}
+                                            enableSerif={enableSerif}/>
+                    )}
+                </SortableList>
 
-                <button onClick={onRewritePatternAdd}
+                <button onClick={onAdd}
                         className={`bg-accent-warning  mr-4 rounded-sm p-1`}
                         aria-label="Add rewrite pattern">
                     <PlusIcon className="size-6"/>
@@ -100,24 +56,11 @@ type RewritePatternProps = {
     enableSerif?: boolean
 }
 export const RewritePatternItem = ({
-                                       className,
                                        rewrite,
                                        onChange,
                                        onDelete,
                                        enableSerif,
-                                   }: GenericProps<RewritePatternProps>) => {
-
-    const {
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-    } = useSortable({id: rewrite.id});
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
+                                   }: RewritePatternProps) => {
 
     const onMatchInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
@@ -128,28 +71,30 @@ export const RewritePatternItem = ({
         onChange({...rewrite, replace: v})
     }
 
-
     return (
-        <div ref={setNodeRef} style={style} id={rewrite.id}>
-            <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
-                <button className={`bg-accent-warning p-1 h-8`} {...listeners} aria-label="Drag rewrite pattern">
-                    <EllipsisVerticalIcon className="size-4"/>
-                </button>
-                <AutowidthInput value={rewrite.match}
-                                onChange={onMatchInput}
-                                className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
-                                type="text"
-                                minWidth={15}/>
-                <button className="bg-accent-warning p-1 h-8" aria-disabled={true} disabled={true} aria-label="">
-                    <ChevronsRightIcon className="size-4"/>
-                </button>
-                <AutowidthInput value={rewrite.replace}
-                                onChange={onReplaceInput}
-                                className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
-                                type="text"
-                                minWidth={15}/>
-                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/></button>
-            </Row>
-        </div>
+        <SortableRow id={rewrite.id}>
+            {({handleProps}) => (
+                <Row className="rounded-sm overflow-clip w-min h-8 items-center">
+                    <button className={`bg-accent-warning p-1 h-8`} {...handleProps} aria-label="Drag rewrite pattern">
+                        <EllipsisVerticalIcon className="size-4"/>
+                    </button>
+                    <AutowidthInput value={rewrite.match}
+                                    onChange={onMatchInput}
+                                    className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
+                                    type="text"
+                                    minWidth={15}/>
+                    <button className="bg-accent-warning p-1 h-8" aria-disabled={true} disabled={true} aria-label="">
+                        <ChevronsRightIcon className="size-4"/>
+                    </button>
+                    <AutowidthInput value={rewrite.replace}
+                                    onChange={onReplaceInput}
+                                    className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
+                                    type="text"
+                                    minWidth={15}/>
+                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
+                    </button>
+                </Row>
+            )}
+        </SortableRow>
     );
 }

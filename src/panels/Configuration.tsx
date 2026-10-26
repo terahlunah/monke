@@ -1,10 +1,8 @@
 import {Col} from "../components/Col.tsx";
 import {RuleInstance} from "./RuleInstance.tsx";
-import cloneDeep from "lodash.clonedeep";
 import {Row} from "../components/Row.tsx";
-import {closestCenter, DndContext, DragEndEvent, useSensor, useSensors} from "@dnd-kit/core";
-import {arrayMove, SortableContext, verticalListSortingStrategy} from "@dnd-kit/sortable";
-import {SmartMouseSensor, SmartTouchSensor} from "../components/SmartSensor.ts";
+import {SortableList} from "../components/SortableList.tsx";
+import {removeAt, updateAt} from "../logic/list.ts";
 import {Config} from "../pages/Home.tsx";
 import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
 import {Listbox, Transition} from "@headlessui/react";
@@ -22,9 +20,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
 
     const onRuleChangeIndex = (index: number) => {
         return (group: Rule) => {
-            const newRules = cloneDeep(config.rules)
-            newRules[index] = group
-            setRules(config.root, newRules)
+            setRules(config.root, updateAt(config.rules, index, group))
         }
     }
 
@@ -40,9 +36,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
                 exclusions: source.exclusions.map(p => ({...p, id: crypto.randomUUID()})),
             }
 
-            const newRules = cloneDeep(config.rules)
-            newRules.splice(index + 1, 0, rule)
-            setRules(config.root, newRules)
+            setRules(config.root, config.rules.toSpliced(index + 1, 0, rule))
         }
     }
 
@@ -53,9 +47,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
 
             const root = deletedRule == config.root ? null : config.root
 
-            const newRules = cloneDeep(config.rules)
-            newRules.splice(index, 1)
-            setRules(root, newRules)
+            setRules(root, removeAt(config.rules, index))
         }
     }
 
@@ -86,28 +78,6 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
             collapsed: false,
         }])
     }
-
-    const sensors = useSensors(
-        useSensor(SmartMouseSensor), useSensor(SmartTouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 5,
-            },
-        })
-    );
-
-    const onRulePatternDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-
-        if (active.id !== over?.id) {
-
-            const oldIndex = config.rules.findIndex(it => it.id === active.id);
-            const newIndex = config.rules.findIndex(it => it.id === over?.id);
-
-            const newRules = arrayMove(config.rules, oldIndex, newIndex)
-            setRules(config.root, newRules)
-        }
-    };
 
     const onSelectRoot = (root: string | null) => {
         setRules(root, config.rules)
@@ -223,20 +193,18 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
             <Col>
                 <Col className="gap-4">
 
-                    <DndContext sensors={sensors} collisionDetection={closestCenter}
-                                onDragEnd={onRulePatternDragEnd}>
-                        <SortableContext items={config.rules} strategy={verticalListSortingStrategy}>
-                            {config.rules.map((r, index) =>
-                                <RuleInstance rule={r}
-                                              onRuleChange={onRuleChangeIndex(index)}
-                                              onDelete={onRuleDeleteIndex(index)}
-                                              enableWeights={config.enableWeights}
-                                              enableSerif={config.enableSerif}
-                                              key={r.id}
-                                              onClone={onRuleCloneIndex(index)}
-                                />)}
-                        </SortableContext>
-                    </DndContext>
+                    <SortableList items={config.rules} onChange={rules => setRules(config.root, rules)}
+                                  direction="vertical">
+                        {config.rules.map((r, index) =>
+                            <RuleInstance rule={r}
+                                          onRuleChange={onRuleChangeIndex(index)}
+                                          onDelete={onRuleDeleteIndex(index)}
+                                          enableWeights={config.enableWeights}
+                                          enableSerif={config.enableSerif}
+                                          key={r.id}
+                                          onClone={onRuleCloneIndex(index)}
+                            />)}
+                    </SortableList>
 
                     <Row className="gap-4">
                         <button onClick={onGroupAdd} className="grow bg-primary rounded-sm p-1">

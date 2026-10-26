@@ -1,13 +1,10 @@
-import {GenericProps} from "../components/GenericProps.tsx";
-import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} from "@dnd-kit/sortable";
-import {CSS} from "@dnd-kit/utilities";
 import {ChangeEvent} from "react";
 import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
-import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
-import cloneDeep from "lodash.clonedeep";
 import {ExclusionPattern, Rule} from "../models/ui.ts";
+import {SortableList, SortableRow} from "../components/SortableList.tsx";
+import {removeAt, updateAt} from "../logic/list.ts";
 
 
 export type ExclusionSectionProps = {
@@ -16,52 +13,13 @@ export type ExclusionSectionProps = {
     enableSerif?: boolean
 }
 
-export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProps<ExclusionSectionProps>) => {
+export const ExclusionSection = ({rule, onRuleChange, enableSerif}: ExclusionSectionProps) => {
 
-    const sensors = useSensors(
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 5,
-            },
-        }), useSensor(MouseSensor)
-    );
+    const setExclusions = (exclusions: ExclusionPattern[]) => onRuleChange({...rule, exclusions})
 
-    const onExclusionPatternChangeIndex = (index: number) => {
-        return (pattern: ExclusionPattern) => {
-            const newRule = cloneDeep(rule)
-            newRule.exclusions[index] = pattern
-            onRuleChange(newRule)
-        }
+    const onAdd = () => {
+        setExclusions([...rule.exclusions, {id: crypto.randomUUID(), match: ""}])
     }
-
-    const onExclusionPatternDeleteIndex = (index: number) => {
-        return () => {
-            const newRule = cloneDeep(rule)
-            newRule.exclusions.splice(index, 1)
-            onRuleChange(newRule)
-        }
-    }
-
-    const onExclusionPatternAdd = () => {
-        const newRule = cloneDeep(rule)
-        newRule.exclusions.push({id: crypto.randomUUID(), match: ""})
-        onRuleChange(newRule)
-    }
-
-    const onExclusionPatternDragEnd = (event: DragEndEvent) => {
-        const {active, over} = event;
-
-        if (active.id !== over?.id) {
-
-            const oldIndex = rule.exclusions.findIndex(it => it.id === active.id);
-            const newIndex = rule.exclusions.findIndex(it => it.id === over?.id);
-
-            const newRule = cloneDeep(rule)
-            newRule.exclusions = arrayMove(newRule.exclusions, oldIndex, newIndex)
-            onRuleChange(newRule)
-        }
-    };
 
     return (
         <>
@@ -70,19 +28,17 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <Row className="gap-4 flex-wrap">
-                <DndContext sensors={sensors} collisionDetection={closestCenter}
-                            onDragEnd={onExclusionPatternDragEnd}>
-                    <SortableContext items={rule.exclusions} strategy={horizontalListSortingStrategy}>
-                        {rule.exclusions.map((e, index) =>
-                            <ExclusionPatternItem key={e.id} exclusion={e}
-                                                  onChange={onExclusionPatternChangeIndex(index)}
-                                                  onDelete={onExclusionPatternDeleteIndex(index)}
-                                                  enableSerif={enableSerif}/>
-                        )}
-                    </SortableContext>
-                </DndContext>
+                <SortableList items={rule.exclusions} onChange={setExclusions} direction="horizontal">
+                    {rule.exclusions.map((e, index) =>
+                        <ExclusionPatternItem key={e.id}
+                                              exclusion={e}
+                                              onChange={exclusion => setExclusions(updateAt(rule.exclusions, index, exclusion))}
+                                              onDelete={() => setExclusions(removeAt(rule.exclusions, index))}
+                                              enableSerif={enableSerif}/>
+                    )}
+                </SortableList>
 
-                <button onClick={onExclusionPatternAdd}
+                <button onClick={onAdd}
                         className={`bg-accent-caution  mr-4 rounded-sm p-1`}
                         aria-label="Add exclusion pattern">
                     <PlusIcon className="size-6"/>
@@ -101,24 +57,11 @@ export type ExclusionPatternProps = {
 }
 
 export const ExclusionPatternItem = ({
-                                         className,
                                          exclusion,
                                          onChange,
                                          onDelete,
                                          enableSerif,
-                                     }: GenericProps<ExclusionPatternProps>) => {
-
-    const {
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-    } = useSortable({id: exclusion.id});
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-    };
+                                     }: ExclusionPatternProps) => {
 
     const onGroupInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
@@ -126,19 +69,21 @@ export const ExclusionPatternItem = ({
     }
 
     return (
-        <div ref={setNodeRef} style={style} id={exclusion.id}>
-            <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
-                <button className={`bg-accent-caution p-1 h-8`} {...listeners} aria-label="Drag exclusion pattern">
-                    <EllipsisVerticalIcon className="size-4"/>
-                </button>
-                <AutowidthInput value={exclusion.match}
-                                onChange={onGroupInput}
-                                className={`bg-accent-caution/20 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
-                                type="text"
-                                minWidth={15}/>
-                <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
-                        aria-label="Delete exclusion pattern"><XIcon className="size-4"/></button>
-            </Row>
-        </div>
+        <SortableRow id={exclusion.id}>
+            {({handleProps}) => (
+                <Row className="rounded-sm overflow-clip w-min h-8 items-center">
+                    <button className={`bg-accent-caution p-1 h-8`} {...handleProps} aria-label="Drag exclusion pattern">
+                        <EllipsisVerticalIcon className="size-4"/>
+                    </button>
+                    <AutowidthInput value={exclusion.match}
+                                    onChange={onGroupInput}
+                                    className={`bg-accent-caution/20 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
+                                    type="text"
+                                    minWidth={15}/>
+                    <button onClick={onDelete} className="bg-accent-danger/60 p-1 h-8"
+                            aria-label="Delete exclusion pattern"><XIcon className="size-4"/></button>
+                </Row>
+            )}
+        </SortableRow>
     );
 }

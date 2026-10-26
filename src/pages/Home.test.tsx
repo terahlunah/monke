@@ -27,6 +27,30 @@ describe("Home", () => {
         expect(window.history.length).toBe(entries)
     })
 
+    it("adds and removes patterns in a rule", async () => {
+        const user = userEvent.setup()
+        renderAt("/")
+        await screen.findByText(/possible branches/)
+
+        const before = screen.getAllByRole("button", {name: "Delete pattern"}).length
+        await user.click(screen.getAllByRole("button", {name: "Add pattern"})[0])
+        expect(screen.getAllByRole("button", {name: "Delete pattern"})).toHaveLength(before + 1)
+
+        await user.click(screen.getAllByRole("button", {name: "Delete pattern"})[0])
+        expect(screen.getAllByRole("button", {name: "Delete pattern"})).toHaveLength(before)
+    })
+
+    it("gives a cloned rule its own ids", async () => {
+        const user = userEvent.setup()
+        renderAt("/")
+        await screen.findByText(/possible branches/)
+
+        await user.click(screen.getAllByRole("button", {name: "Duplicate rule"})[0])
+
+        const ids = [...document.querySelectorAll("[id]")].map(e => e.id)
+        expect(new Set(ids).size).toBe(ids.length)
+    })
+
     it("generates words when clicking Generate", async () => {
         const user = userEvent.setup()
         renderAt("/")
