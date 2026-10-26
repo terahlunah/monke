@@ -26,8 +26,9 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
             <Row className="gap-4 flex-wrap">
                 <SortableList items={rule.rewrites} onMove={(from, to) => dispatch({type: "moveRewrite", ruleId, from, to})}
                               direction="horizontal">
-                    {rule.rewrites.map(r =>
+                    {rule.rewrites.map((r, index) =>
                         <RewritePatternItem key={r.id}
+                                            label={`Rewrite ${index + 1} of rule ${rule.name}`}
                                             rewrite={r}
                                             onChange={patch => dispatch({type: "editRewrite", ruleId, id: r.id, patch})}
                                             onDelete={() => dispatch({type: "removeRewrite", ruleId, id: r.id})}
@@ -47,12 +48,14 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
 
 
 type RewritePatternProps = {
+    label: string
     rewrite: RewritePattern
     onChange: (patch: Partial<RewritePattern>) => void
     onDelete?: () => void
     enableSerif?: boolean
 }
 export const RewritePatternItem = ({
+                                       label,
                                        rewrite,
                                        onChange,
                                        onDelete,
@@ -76,6 +79,7 @@ export const RewritePatternItem = ({
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
                     <AutowidthInput value={rewrite.match}
+                                    aria-label={`${label}, match`}
                                     onChange={onMatchInput}
                                     className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"
@@ -84,6 +88,7 @@ export const RewritePatternItem = ({
                         <ChevronsRightIcon className="size-4"/>
                     </span>
                     <AutowidthInput value={rewrite.replace}
+                                    aria-label={`${label}, replacement`}
                                     onChange={onReplaceInput}
                                     className={`bg-accent-warning/40 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"

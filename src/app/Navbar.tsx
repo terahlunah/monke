@@ -54,7 +54,7 @@ export const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>
             </Row>
 
             <div className="py-4 mr-2 relative">
-                <MenuButton className="">
+                <MenuButton className="" aria-label="Menu">
                     <MenuIcon className="size-6"/>
                 </MenuButton>
                 <MenuItems

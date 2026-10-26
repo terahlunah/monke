@@ -22,8 +22,9 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
         <Row className="gap-4 flex-wrap">
             <SortableList items={rule.patterns} onMove={(from, to) => dispatch({type: "movePattern", ruleId, from, to})}
                           direction="horizontal">
-                {rule.patterns.map(p =>
+                {rule.patterns.map((p, index) =>
                     <RulePatternItem key={p.id}
+                                     label={`${rule.terminalOnly ? "Terminal" : "Pattern"} ${index + 1} of rule ${rule.name}`}
                                      pattern={p}
                                      onChange={patch => dispatch({type: "editPattern", ruleId, id: p.id, patch})}
                                      terminalOnly={rule.terminalOnly}
@@ -43,6 +44,8 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
 
 
 type RulePatternProps = {
+    // Accessible name that locates the item, e.g. "Pattern 2 of rule Vowel".
+    label: string
     pattern: RulePattern
     onChange: (patch: Partial<RulePattern>) => void
     terminalOnly: boolean
@@ -58,6 +61,7 @@ function isNumber(value?: string | number): boolean {
 }
 
 export const RulePatternItem = ({
+                                    label,
                                     pattern,
                                     onChange,
                                     terminalOnly,
@@ -102,12 +106,14 @@ export const RulePatternItem = ({
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
                     <AutowidthInput value={pattern.pattern}
+                                    aria-label={label}
                                     onChange={onGroupInput}
                                     className={`${terminalOnly ? "bg-primary/40" : "bg-secondary/40"} px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"
                                     minWidth={15}/>
                     {enableWeight ? (
                         <AutowidthInput value={weightValue}
+                                        aria-label={`Weight of ${label.toLowerCase()}`}
                                         onInput={onWeightInput}
                                         onBlur={onWeightBlur}
                                         className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}

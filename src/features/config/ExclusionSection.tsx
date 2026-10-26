@@ -26,8 +26,9 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
             <Row className="gap-4 flex-wrap">
                 <SortableList items={rule.exclusions} onMove={(from, to) => dispatch({type: "moveExclusion", ruleId, from, to})}
                               direction="horizontal">
-                    {rule.exclusions.map(e =>
+                    {rule.exclusions.map((e, index) =>
                         <ExclusionPatternItem key={e.id}
+                                              label={`Exclusion ${index + 1} of rule ${rule.name}`}
                                               exclusion={e}
                                               onChange={patch => dispatch({type: "editExclusion", ruleId, id: e.id, patch})}
                                               onDelete={() => dispatch({type: "removeExclusion", ruleId, id: e.id})}
@@ -47,6 +48,7 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
 
 
 export type ExclusionPatternProps = {
+    label: string
     exclusion: ExclusionPattern
     onChange: (patch: Partial<ExclusionPattern>) => void
     onDelete?: () => void
@@ -54,6 +56,7 @@ export type ExclusionPatternProps = {
 }
 
 export const ExclusionPatternItem = ({
+                                         label,
                                          exclusion,
                                          onChange,
                                          onDelete,
@@ -73,6 +76,7 @@ export const ExclusionPatternItem = ({
                         <EllipsisVerticalIcon className="size-4"/>
                     </button>
                     <AutowidthInput value={exclusion.match}
+                                    aria-label={label}
                                     onChange={onGroupInput}
                                     className={`bg-accent-caution/20 px-1 outline-0 text-center h-8 ${enableSerif ? "font-serif" : ""}`}
                                     type="text"

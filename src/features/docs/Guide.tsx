@@ -1,7 +1,7 @@
 import {Col} from "@/components/Col.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, XIcon} from "lucide-react";
 import {Row} from "@/components/Row.tsx";
-import AutowidthInput from "react-autowidth-input";
+import {ReactNode} from "react";
 import {SwitchLabel} from "@/components/SwitchLabel.tsx";
 
 export const Guide = () => {
@@ -65,7 +65,7 @@ export const Guide = () => {
 
             <p>An expression is made up of different kind of terms:</p>
 
-            <Col className="list-disc list-inside gap-4 mt-4">
+            <ul className="flex flex-col list-disc list-inside gap-4 mt-4">
                 <li>
                     <b>Reference</b>
                     <Col className="gap-2 my-2">
@@ -169,7 +169,7 @@ export const Guide = () => {
                             number. It means "the letter 'a' repeated exactly 2 times"</p>
                     </Col>
                 </li>
-            </Col>
+            </ul>
 
             <Row className="items-baseline justify-between gap-4 mt-4 grow">
                 <h1 className="font-bold text-xl">Rewrite</h1>
@@ -237,10 +237,11 @@ export const Guide = () => {
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <p>Probability weight can be enabled using the toggle on the top right.</p>
-            <SwitchLabel checked={true} onChange={() => {
+            {/* Static illustration of the real switch: inert keeps it out of the tab order and accessibility tree. */}
+            <div inert className="w-min whitespace-nowrap"><SwitchLabel checked={true} onChange={() => {
             }}
                          label="Enable probability weights"
-                         enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
+                         enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/></div>
             <p>When enabled, each rule pattern will display a editable weight next to the expression.</p>
             <Row className="gap-4">
                 <GuideTerminal value="a" weight="1"/>
@@ -270,82 +271,57 @@ export const Guide = () => {
     )
 }
 
-const GuideTerminal = ({value, weight}: { value: string, weight?: string }) => {
-    return (
-        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
-            <button className={`bg-primary p-1 h-8`}>
-                <EllipsisVerticalIcon className="size-4"/>
-            </button>
-            <AutowidthInput value={value}
-                            className={`bg-primary/40 px-1 outline-0 text-center h-8`}
-                            type="text"
-                            minWidth={15}/>
-            {weight ?
-                <AutowidthInput value={weight}
-                                className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}
-                                type="text"
-                                minWidth={10}/> : null
-            }
-            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
-            </button>
-        </Row>
-    )
-}
+// The examples below mirror the real editor items but are static illustrations: they are exposed as a single
+// image with a text alternative, so they don't add dead buttons and inputs to the tab order.
+const Chip = ({label, children}: { label: string, children: ReactNode }) => (
+    <div role="img" aria-label={label} className="flex flex-row rounded-sm overflow-clip w-min h-8 items-center">
+        {children}
+    </div>
+)
 
-const GuidePattern = ({value, weight}: { value: string, weight?: string }) => {
-    return (
-        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
-            <button className={`bg-secondary p-1 h-8`}>
-                <EllipsisVerticalIcon className="size-4"/>
-            </button>
-            <AutowidthInput value={value}
-                            className={`bg-secondary/40 px-1 outline-0 text-center h-8`}
-                            type="text"
-                            minWidth={15}/>
-            {weight ?
-                <AutowidthInput value={weight}
-                                className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}
-                                type="text"
-                                minWidth={10}/> : null
-            }
-            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/></button>
-        </Row>
-    )
-}
+const ChipIcon = ({className, children}: { className: string, children: ReactNode }) => (
+    <span className={`${className} p-1 h-8 flex items-center`}>{children}</span>
+)
 
-const GuideRewrite = ({match, replace}: { match: string, replace: string }) => {
-    return (
-        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
-            <button className={`bg-accent-warning p-1 h-8`}>
-                <EllipsisVerticalIcon className="size-4"/>
-            </button>
-            <AutowidthInput value={match}
-                            className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}
-                            type="text"
-                            minWidth={15}/>
-            <button className="bg-accent-warning p-1 h-8"><ChevronsRightIcon className="size-4"/></button>
-            <AutowidthInput value={replace}
-                            className={`bg-accent-warning/40 px-1 outline-0 text-center h-8`}
-                            type="text"
-                            minWidth={15}/>
-            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
-            </button>
-        </Row>
-    )
-}
+const ChipText = ({className, minWidth, children}: { className: string, minWidth: number, children: string }) => (
+    <span className={`${className} px-1 h-8 flex items-center justify-center whitespace-pre`}
+          style={{minWidth: minWidth + 8}}>{children}</span>
+)
 
-const GuideExclusion = ({match}: { match: string }) => {
-    return (
-        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
-            <button className={`bg-accent-caution p-1 h-8`}>
-                <EllipsisVerticalIcon className="size-4"/>
-            </button>
-            <AutowidthInput value={match}
-                            className={`bg-accent-caution/40 px-1 outline-0 text-center h-8`}
-                            type="text"
-                            minWidth={15}/>
-            <button className="bg-accent-danger/60 p-1 h-8"><XIcon className="size-4"/>
-            </button>
-        </Row>
-    )
-}
+const withWeight = (weight?: string) => weight ? `, weight ${weight}` : ""
+
+const GuideTerminal = ({value, weight}: { value: string, weight?: string }) => (
+    <Chip label={`Terminal ${value}${withWeight(weight)}`}>
+        <ChipIcon className="bg-primary"><EllipsisVerticalIcon className="size-4"/></ChipIcon>
+        <ChipText className="bg-primary/40" minWidth={15}>{value}</ChipText>
+        {weight ? <ChipText className="bg-accent-warning/40" minWidth={10}>{weight}</ChipText> : null}
+        <ChipIcon className="bg-accent-danger/60"><XIcon className="size-4"/></ChipIcon>
+    </Chip>
+)
+
+const GuidePattern = ({value, weight}: { value: string, weight?: string }) => (
+    <Chip label={`Pattern ${value}${withWeight(weight)}`}>
+        <ChipIcon className="bg-secondary"><EllipsisVerticalIcon className="size-4"/></ChipIcon>
+        <ChipText className="bg-secondary/40" minWidth={15}>{value}</ChipText>
+        {weight ? <ChipText className="bg-accent-warning/40" minWidth={10}>{weight}</ChipText> : null}
+        <ChipIcon className="bg-accent-danger/60"><XIcon className="size-4"/></ChipIcon>
+    </Chip>
+)
+
+const GuideRewrite = ({match, replace}: { match: string, replace: string }) => (
+    <Chip label={`Rewrite ${match} to ${replace}`}>
+        <ChipIcon className="bg-accent-warning"><EllipsisVerticalIcon className="size-4"/></ChipIcon>
+        <ChipText className="bg-accent-warning/40" minWidth={15}>{match}</ChipText>
+        <ChipIcon className="bg-accent-warning"><ChevronsRightIcon className="size-4"/></ChipIcon>
+        <ChipText className="bg-accent-warning/40" minWidth={15}>{replace}</ChipText>
+        <ChipIcon className="bg-accent-danger/60"><XIcon className="size-4"/></ChipIcon>
+    </Chip>
+)
+
+const GuideExclusion = ({match}: { match: string }) => (
+    <Chip label={`Exclusion ${match}`}>
+        <ChipIcon className="bg-accent-caution"><EllipsisVerticalIcon className="size-4"/></ChipIcon>
+        <ChipText className="bg-accent-caution/40" minWidth={15}>{match}</ChipText>
+        <ChipIcon className="bg-accent-danger/60"><XIcon className="size-4"/></ChipIcon>
+    </Chip>
+)

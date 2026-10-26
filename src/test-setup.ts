@@ -22,3 +22,6 @@ globalThis.ResizeObserver ??= class {
     unobserve() {}
     disconnect() {}
 }
+
+// axe probes canvas for icon-font detection; jsdom doesn't implement it and logs a noisy "not implemented" error.
+HTMLCanvasElement.prototype.getContext = (() => null) as typeof HTMLCanvasElement.prototype.getContext
