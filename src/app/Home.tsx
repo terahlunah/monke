@@ -1,5 +1,6 @@
 import {useEffect, useMemo, useRef, useState} from "react";
-import {Bounce, ToastContainer} from "react-toastify";
+import {Bounce, toast, ToastContainer} from "react-toastify";
+import {exampleToConfig} from "@/features/docs/guideExamples.ts";
 import {Linear} from "@/components/Linear.tsx";
 
 import {configToGrammar, GrammarError} from "@/engine/buildGrammar.ts";
@@ -91,7 +92,11 @@ export const Home = () => {
                                 </Linear>
                             </GrammarErrorContext> : null
                     }
-                    {tab === "guide" ? <Guide/> : null}
+                    {tab === "guide" ? <Guide onTryExample={example => {
+                        dispatch({type: "load", config: exampleToConfig(example, config.enableSerif)})
+                        selectTab("generator")
+                        toast(`Loaded "${example.title}". Press Back to restore your previous grammar.`)
+                    }}/> : null}
                     {tab === "faq" ? <Faq/> : null}
                 </main>
             </div>

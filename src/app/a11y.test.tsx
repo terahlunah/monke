@@ -35,7 +35,7 @@ describe("accessibility (axe)", () => {
         const user = userEvent.setup()
         const {container} = await renderApp()
         await user.click(screen.getAllByRole("button", {name: "Guide"})[0])
-        await screen.findByText(/Monke uses a powerful/)
+        await screen.findByText(/builds words from rules you write/)
         await check(container)
     })
 

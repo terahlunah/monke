@@ -107,6 +107,20 @@ describe("Home", () => {
         expect(output.textContent!.split(" ")).toHaveLength(50)
     })
 
+    it("loads a guide example into the editor with Try it", async () => {
+        const user = userEvent.setup()
+        renderAt("/")
+        await screen.findByText(/possible branches/)
+
+        await user.click(screen.getAllByRole("button", {name: "Guide"})[0])
+        await user.click(screen.getByRole("button", {name: "Try it: Word-final restrictions"}))
+
+        expect(screen.getByRole("main", {name: "Generator"})).toHaveFocus()
+        expect(screen.getByDisplayValue("Final")).toBeInTheDocument()
+        expect(screen.queryByDisplayValue("Consonant")).not.toBeInTheDocument()
+        expect(screen.getByText(/possible branches/)).toBeInTheDocument()
+    })
+
     it("restores a config from the URL path", async () => {
         const user = userEvent.setup()
         renderAt(`/${customLink}`)
