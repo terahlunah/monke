@@ -338,7 +338,12 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             <div className="border-t border-white/20"/>
 
-            <Row className="gap-2 items-center">
+            {/* Everything that decides the drawn words sits on one row: how many, which seed, and a new seed. */}
+            <Row className="gap-2 items-center flex-wrap">
+                <label htmlFor="word-count" className="shrink-0">Count</label>
+                <input id="word-count" aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
+                       inputMode="numeric"
+                       className="bg-primary/40 rounded-sm text-center h-10 outline-0 w-16 shrink-0 mr-2"/>
                 <label htmlFor="seed" className="shrink-0">Seed</label>
                 <input id="seed" value={config.seed}
                        onChange={e => dispatch({type: "setSeed", seed: e.target.value})}
@@ -359,8 +364,6 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
             </Row>
 
             <Row className="gap-4 flex-wrap">
-                <input aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
-                       className="bg-primary/40 rounded-sm text-center h-10 outline-0 w-24"/>
                 {/* aria-disabled rather than disabled keeps it focusable, so keyboard and screen reader users can reach the reason. */}
                 <button onClick={onListAll} className="grow bg-primary rounded-sm p-2 aria-disabled:opacity-50"
                         aria-disabled={listAllBlocker !== null || listing}
