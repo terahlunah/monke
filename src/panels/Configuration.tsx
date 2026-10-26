@@ -9,7 +9,7 @@ import {SmartMouseSensor, SmartTouchSensor} from "../components/SmartSensor.ts";
 import {Config} from "../pages/Home.tsx";
 import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../logic/defaults.ts";
 import {Listbox, Transition} from "@headlessui/react";
-import {ChangeEvent, Fragment} from "react";
+import {FormEvent, Fragment} from "react";
 import {CheckIcon, ChevronUpDownIcon} from "@heroicons/react/24/outline";
 import {Rule} from "../models/ui.ts";
 
@@ -103,12 +103,12 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
         }
     };
 
-    const onSelectRoot = (root: string) => {
+    const onSelectRoot = (root: string | null) => {
         setRules(root, config.rules)
     }
 
-    const onSetLanguage = (e: ChangeEvent<HTMLInputElement>) => {
-        const lang = e.target.value;
+    const onSetLanguage = (e: FormEvent<HTMLInputElement>) => {
+        const lang = e.currentTarget.value;
         setConfig({...config, language: lang})
     }
 
@@ -117,13 +117,13 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
         <Col className="bg-background md:w-2/3 p-6 gap-2 md:overflow-auto md:no-scrollbar">
 
             <Row className="gap-4">
-                <button className="bg-accent-danger rounded p-2 w-1/3"
+                <button className="bg-accent-danger rounded-sm p-2 w-1/3"
                         onClick={() => setConfig({...config, language: "", root: null, rules: []})}>
                     <Row className="items-center justify-center gap-2">
                         <span>Clear</span>
                     </Row>
                 </button>
-                <button className="bg-accent-danger rounded p-2 w-1/3"
+                <button className="bg-accent-danger rounded-sm p-2 w-1/3"
                         onClick={() => setConfig({
                             ...config,
                             language: "toki pona",
@@ -135,7 +135,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                         <span>toki pona example</span>
                     </Row>
                 </button>
-                <button className="bg-accent-danger rounded p-2 w-1/3"
+                <button className="bg-accent-danger rounded-sm p-2 w-1/3"
                         onClick={() => setConfig({
                             ...config,
                             language: "toki pona",
@@ -153,7 +153,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
 
             <Row className="gap-3 items-center">
                 <h1>Language</h1>
-                <div className="rounded overflow-clip">
+                <div className="rounded-sm overflow-clip">
                     <input value={config.language} onInput={onSetLanguage}
                            className={`bg-surface text-left h-8 outline-0 pl-2 w-72`}/>
                 </div>
@@ -165,7 +165,7 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                     <Listbox value={config.root} onChange={onSelectRoot}>
                         <div className="relative">
                             <Listbox.Button
-                                className="min-h-8 relative w-full cursor-default rounded bg-surface py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
+                                className="min-h-8 relative w-full cursor-default rounded-sm bg-surface py-2 pl-3 pr-10 text-left shadow-md focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-orange-300 sm:text-sm">
                                 <span className="block truncate">{config.root}</span>
                                 <span
                                     className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
@@ -234,10 +234,10 @@ export const Configuration = ({config, setRules, setConfig}: ConfigurationProps)
                     </DndContext>
 
                     <Row className="gap-4">
-                        <button onClick={onGroupAdd} className="grow bg-primary rounded p-1">
+                        <button onClick={onGroupAdd} className="grow bg-primary rounded-sm p-1">
                             Add Terminal Rule
                         </button>
-                        <button onClick={onRuleAdd} className="grow bg-secondary rounded p-1">
+                        <button onClick={onRuleAdd} className="grow bg-secondary rounded-sm p-1">
                             Add Rule
                         </button>
                     </Row>

@@ -51,7 +51,7 @@ export const Faq = () => {
 
 const FaqItem = ({title, children}: GenericProps<{ title: string }>) => {
     return (
-        <Col className="max-w-1/2 gap-4">
+        <Col className="gap-4">
             <h1 className="text-3xl">{title}</h1>
             <p className="text-lg">{children}</p>
         </Col>

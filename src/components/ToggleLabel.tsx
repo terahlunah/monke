@@ -22,7 +22,7 @@ export const ToggleLabel = ({
     return (
         <>
             <button onClick={() => onChange(!checked)}
-                    className={`${className} ${checked ? enabledColor : disabledColor} p-1 rounded min-w-8`}
+                    className={`${className} ${checked ? enabledColor : disabledColor} p-1 rounded-sm min-w-8`}
                     aria-label={label}>{label}</button>
         </>
 

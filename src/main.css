@@ -1,34 +1,61 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
+@theme {
+    --font-sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-serif: "Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
 
-@layer utilities {
+    --color-on-surface: #ffffff;
+    --color-surface: #2c2b2b;
+    --color-background: #1f1f1f;
+    --color-primary: #1c8f8f;
+    --color-secondary: #3b4c9d;
+    --color-accent-warning: #b78426;
+    --color-accent-caution: #b76028;
+    --color-accent-danger: #c45555;
+}
 
-    .debug {
-        @apply border-2 border-red-500
+@layer base {
+    /* Tailwind 3 defaults, which the layout was designed against: v4 uses currentColor for borders and a default cursor on buttons. */
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
     }
 
-    .debug2 {
-        @apply border-2 border-blue-500
+    button:not(:disabled),
+    [role="button"]:not(:disabled) {
+        cursor: pointer;
     }
+}
 
-    .debug3 {
-        @apply border-2 border-green-500
-    }
+@utility debug {
+    @apply border-2 border-red-500;
+}
 
-    /* Hide scrollbar for Chrome, Safari, and Opera */
-    .no-scrollbar::-webkit-scrollbar {
+@utility debug2 {
+    @apply border-2 border-blue-500;
+}
+
+@utility debug3 {
+    @apply border-2 border-green-500;
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+@utility no-scrollbar {
+    &::-webkit-scrollbar {
         display: none;
     }
 
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
 
-    /* Hide scrollbar for IE, Edge, and Firefox */
-    .no-scrollbar {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-    }
-
+/* react-toastify 11 dropped the container padding and widened toasts; keep the v10 geometry. */
+.Toastify__toast-container {
+    --toastify-toast-width: 312px;
+    padding: 4px;
 }

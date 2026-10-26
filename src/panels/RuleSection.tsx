@@ -1,5 +1,5 @@
 import {GenericProps} from "../components/GenericProps.tsx";
-import {ChangeEvent, useEffect, useState} from "react";
+import {FormEvent, useState} from "react";
 import {arrayMove, horizontalListSortingStrategy, SortableContext, useSortable} from "@dnd-kit/sortable";
 import {CSS} from "@dnd-kit/utilities";
 import {Row} from "../components/Row.tsx";
@@ -80,7 +80,7 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ge
                 </SortableContext>
             </DndContext>
             <button onClick={onRuleAdd}
-                    className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded p-1`}
+                    className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded-sm p-1`}
                     aria-label="Add pattern">
                 <PlusIcon className="h-6"/>
             </button>
@@ -128,17 +128,20 @@ export const RulePatternItem = ({
         transition,
     };
 
-    useEffect(() => {
+    // Resync the text field when the pattern changes, during render rather than in an effect to avoid a cascading render.
+    const [syncedPattern, setSyncedPattern] = useState(pattern)
+    if (syncedPattern !== pattern) {
+        setSyncedPattern(pattern)
         setWeightValue(pattern.weight.toString())
-    }, [pattern]);
+    }
 
-    const onGroupInput = (e: ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value
+    const onGroupInput = (e: FormEvent<HTMLInputElement>) => {
+        const v = e.currentTarget.value
         onChange({...pattern, pattern: v})
     }
 
-    const onWeightInput = (e: ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value
+    const onWeightInput = (e: FormEvent<HTMLInputElement>) => {
+        const v = e.currentTarget.value
         setWeightValue(v)
     }
 
@@ -152,7 +155,7 @@ export const RulePatternItem = ({
 
     return (
         <div ref={setNodeRef} style={style} key={pattern.id} id={pattern.id}>
-            <Row className={`${className} rounded overflow-clip w-min h-8 items-center`}>
+            <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`${terminalOnly ? "bg-primary" : "bg-secondary"} p-1 h-8`} {...listeners}
                         aria-label="Drag pattern">
                     <EllipsisVerticalIcon className="h-4"/>

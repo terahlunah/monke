@@ -10,10 +10,10 @@ import {tokiPonaRoot, tokiPonaRules} from "../logic/defaults.ts";
 import {FaGithub} from "react-icons/fa";
 import {configToGrammar} from "../logic/parser.ts";
 import {Rule} from "../models/ui.ts";
-import {useParams} from "react-router-dom";
+import {useParams} from "react-router";
 import {encodeConfig, decodeConfig} from "../logic/sharing.ts"
 import {Faq} from "../panels/Faq.tsx";
-import {Menu} from "@headlessui/react";
+import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
 import {Bars3Icon} from "@heroicons/react/24/outline";
 import {GenericProps} from "../components/GenericProps.tsx";
 
@@ -149,7 +149,7 @@ type NavbarProps = {
 }
 
 const DesktopNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
-    const tabStyle = (t: string): string => t === tab ? "bg-primary/40 text-xl rounded p-1 px-2" : "text-white text-xl p-1 px-2"
+    const tabStyle = (t: string): string => t === tab ? "bg-primary/40 text-xl rounded-sm p-1 px-2" : "text-white text-xl p-1 px-2"
 
     return (
         <Row className={`${className} gap-4 items-center justify-between mx-2`}>
@@ -189,32 +189,32 @@ const MobileNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
             </Row>
 
             <div className="py-4 mr-2 relative">
-                <Menu.Button className="">
+                <MenuButton className="">
                     <Bars3Icon className="h-6"/>
-                </Menu.Button>
-                <Menu.Items
-                    className="z-20 absolute right-0 top-12 flex flex-col shadow bg-background rounded overflow-hidden divide-y divide-white/20">
+                </MenuButton>
+                <MenuItems
+                    className="z-20 absolute right-0 top-12 flex flex-col shadow-sm bg-background rounded-sm overflow-hidden divide-y divide-white/20">
                     <Col className="gap-4 p-4">
-                        <Menu.Item>
+                        <MenuItem>
                             <button className={`${tabStyle("generator")}`} onClick={() => setTab("generator")}>Generator
                             </button>
-                        </Menu.Item>
-                        <Menu.Item>
+                        </MenuItem>
+                        <MenuItem>
                             <button className={`${tabStyle("guide")}`} onClick={() => setTab("guide")}>Guide</button>
-                        </Menu.Item>
-                        <Menu.Item>
+                        </MenuItem>
+                        <MenuItem>
                             <button className={`${tabStyle("faq")}`} onClick={() => setTab("faq")}>FAQ</button>
-                        </Menu.Item>
+                        </MenuItem>
                     </Col>
                     <Col className="gap-4 p-4">
-                        <Menu.Item>
+                        <MenuItem>
                             <a className="text-left" href="https://github.com/terahlunah/monke" target="_blank"
                                rel="noreferrer noopener">
                                 Github
                             </a>
-                        </Menu.Item>
+                        </MenuItem>
                     </Col>
-                </Menu.Items>
+                </MenuItems>
             </div>
         </Menu>
     )

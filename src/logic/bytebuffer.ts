@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-expect-error base64-compressor ships no types
 import {decodeBinary, encodeBinary} from 'base64-compressor'
 
 export class ByteBuffer {
@@ -161,10 +161,10 @@ export class ByteBuffer {
         }
 
         // Calculate new size: Either double the current size or make sure it's at least as large as requiredCapacity
-        let newSize = Math.max(this.buffer.byteLength * 2, requiredCapacity);
+        const newSize = Math.max(this.buffer.byteLength * 2, requiredCapacity);
 
         // Allocate new buffer and copy existing data
-        let newBuffer = new ArrayBuffer(newSize);
+        const newBuffer = new ArrayBuffer(newSize);
         new Uint8Array(newBuffer).set(new Uint8Array(this.buffer));
 
         // Update internal references
@@ -179,7 +179,7 @@ export class ByteBuffer {
         // If the actual size is less than the buffer's byte length, then we need to shrink the buffer
         if (actualSize < this.buffer.byteLength) {
             // Create a new ArrayBuffer that is just large enough to fit the data
-            let newBuffer = new ArrayBuffer(actualSize);
+            const newBuffer = new ArrayBuffer(actualSize);
 
             // Copy the data from the old buffer to the new buffer
             new Uint8Array(newBuffer).set(new Uint8Array(this.buffer, 0, actualSize));

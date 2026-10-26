@@ -2,10 +2,9 @@ import {Col} from "../components/Col.tsx";
 import {SwitchLabel} from "../components/SwitchLabel.tsx";
 import {Row} from "../components/Row.tsx";
 import {ArrowDownTrayIcon, ArrowUpTrayIcon, ClipboardDocumentListIcon, LinkIcon} from "@heroicons/react/24/outline";
-import {ChangeEvent, useMemo, useState} from "react";
+import {FormEvent, useMemo, useState} from "react";
 import {countCombinations, detectCycle, generate} from "../logic/wordgen.ts";
 import {Config} from "../pages/Home.tsx";
-import clipboard from "clipboardy";
 import {toast} from "react-toastify";
 import {Grammar} from "../models/grammar.ts";
 import {saveAs} from 'file-saver';
@@ -66,11 +65,11 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
             if (grammar) {
                 const cycles = detectCycle(grammar) ?? []
 
-                let combinations = 0;
+                let combinations: number
 
                 try {
                     combinations = cycles.length != 0 ? 0 : countCombinations(grammar)
-                } catch (e) {
+                } catch {
                     combinations = 0
                 }
 
@@ -90,8 +89,8 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
         );
     }
 
-    const onWordCountInput = (e: ChangeEvent<HTMLInputElement>) => {
-        const v = e.target.value
+    const onWordCountInput = (e: FormEvent<HTMLInputElement>) => {
+        const v = e.currentTarget.value
         setWordCount(v)
     }
 
@@ -124,7 +123,7 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
     }
 
     const onCopy = async () => {
-        await clipboard.write(text)
+        await navigator.clipboard.writeText(text)
         toast("Words copied to clipboard!")
     }
 
@@ -140,7 +139,7 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
     }
 
     const onCopyLink = async () => {
-        await clipboard.write(window.location.href)
+        await navigator.clipboard.writeText(window.location.href)
         toast("Link copied to clipboard!")
     }
 
@@ -164,19 +163,19 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
             <div className="border-t border-white/20"/>
 
             <Row className="gap-4">
-                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onCopyLink} aria-label="Share link">
+                <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onCopyLink} aria-label="Share link">
                     <Row className="items-center justify-center gap-2">
                         <h1>Share link</h1>
                         <LinkIcon className="h-5"/>
                     </Row>
                 </button>
-                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onExport} aria-label="Export config">
+                <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onExport} aria-label="Export config">
                     <Row className="items-center justify-center gap-2">
                         <h1>Export Config</h1>
                         <ArrowUpTrayIcon className="h-5"/>
                     </Row>
                 </button>
-                <button className="grow bg-secondary rounded p-2 w-1/3" onClick={onImport} aria-label="Import config">
+                <button className="grow bg-secondary rounded-sm p-2 w-1/3" onClick={onImport} aria-label="Import config">
                     <Row className="items-center justify-center gap-2">
                         <h1>Import Config</h1>
                         <ArrowDownTrayIcon className="h-5"/>
@@ -205,7 +204,7 @@ export const Generator = ({config, grammar, error, setEnableWeights, setEnableSe
                     <input value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
                            className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
                 </Row>
-                <button className="grow bg-primary rounded p-2" onClick={onCopy} aria-label="Copy words">
+                <button className="grow bg-primary rounded-sm p-2" onClick={onCopy} aria-label="Copy words">
                     <Row className="items-center justify-center gap-2">
                         <h1>Copy</h1>
                         <ClipboardDocumentListIcon className="h-5"/>

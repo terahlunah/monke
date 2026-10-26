@@ -84,7 +84,7 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif,}: GenericProp
                 </DndContext>
 
                 <button onClick={onExclusionPatternAdd}
-                        className={`bg-accent-caution  mr-4 rounded p-1`}
+                        className={`bg-accent-caution  mr-4 rounded-sm p-1`}
                         aria-label="Add exclusion pattern">
                     <PlusIcon className="h-6"/>
                 </button>
@@ -128,7 +128,7 @@ export const ExclusionPatternItem = ({
 
     return (
         <div ref={setNodeRef} style={style} key={exclusion.id} id={exclusion.id}>
-            <Row className={`${className} rounded overflow-clip w-min h-8 items-center`}>
+            <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`bg-accent-caution p-1 h-8`} {...listeners} aria-label="Drag exclusion pattern">
                     <EllipsisVerticalIcon className="h-4"/>
                 </button>

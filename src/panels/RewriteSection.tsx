@@ -84,7 +84,7 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif,}: GenericProps<
                 </DndContext>
 
                 <button onClick={onRewritePatternAdd}
-                        className={`bg-accent-warning  mr-4 rounded p-1`}
+                        className={`bg-accent-warning  mr-4 rounded-sm p-1`}
                         aria-label="Add rewrite pattern">
                     <PlusIcon className="h-6"/>
                 </button>
@@ -132,7 +132,7 @@ export const RewritePatternItem = ({
 
     return (
         <div ref={setNodeRef} style={style} key={rewrite.id} id={rewrite.id}>
-            <Row className={`${className} rounded overflow-clip w-min h-8 items-center`}>
+            <Row className={`${className} rounded-sm overflow-clip w-min h-8 items-center`}>
                 <button className={`bg-accent-warning p-1 h-8`} {...listeners} aria-label="Drag rewrite pattern">
                     <EllipsisVerticalIcon className="h-4"/>
                 </button>

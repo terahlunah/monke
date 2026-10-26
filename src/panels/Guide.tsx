@@ -24,7 +24,7 @@ export const Guide = () => {
             <p>Terminal rules are used to define the "terminals" of the grammar, which are usually the
                 "letters"/"symbols" of your language.</p>
             <p>The name is used to reference this Terminal Rule in other Rules</p>
-            <span className=" rounded bg-primary/40 py-2 px-4 w-min">Vowel</span>
+            <span className=" rounded-sm bg-primary/40 py-2 px-4 w-min">Vowel</span>
             <p>The terminals defined in a Terminal Rule will be picked at random when a rule is
                 referenced.</p>
             <Row className="gap-4">
@@ -46,7 +46,7 @@ export const Guide = () => {
 
             <p>Rules are more general and powerful than Terminal Rules. A Rule also has a name which can be
                 referenced by other rules.</p>
-            <span className=" rounded bg-secondary/40 py-2 px-4 w-min">Vowel</span>
+            <span className=" rounded-sm bg-secondary/40 py-2 px-4 w-min">Vowel</span>
             <p>Patterns can be added to a Rule, they will be chosen at random when this rule is
                 generated like for Terminal Rules. Patterns define what is generated be a rule.</p>
             <Row className="gap-4">
@@ -177,7 +177,7 @@ export const Guide = () => {
             </Row>
             <p>Rewrites are expression than can be used to transform the output of a rule. They can be enabled
                 separately on each rule by clicking on the Rewrite button</p>
-            <span className="p-1 rounded min-w-8 bg-accent-warning w-min">Rw</span>
+            <span className="p-1 rounded-sm min-w-8 bg-accent-warning w-min">Rw</span>
             <p>Once enabled, rewrites can be added to the rule. A rewrite consist of 2 part, a "match" and a
                 "replacement".</p>
             <Row className="gap-4">
@@ -223,7 +223,7 @@ export const Guide = () => {
             <p>Exclusions are expression than can be used to cancel the output of a rule an disallow certain
                 combinations of terminals. They can be enabled
                 separately on each rule by clicking on the Exclusion button</p>
-            <span className="p-1 rounded min-w-8 bg-accent-caution w-min">Ex</span>
+            <span className="p-1 rounded-sm min-w-8 bg-accent-caution w-min">Ex</span>
             <p>Once enabled, exclusions can be added to the rule. An exclusion contains a "match" expression.</p>
             <Row className="gap-4">
                 <GuideExclusion match="'a'"/>
@@ -272,7 +272,7 @@ export const Guide = () => {
 
 const GuideTerminal = ({value, weight}: { value: string, weight?: string }) => {
     return (
-        <Row className={`rounded overflow-clip w-min h-8 items-center`}>
+        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-primary p-1 h-8`}>
                 <EllipsisVerticalIcon className="h-4"/>
             </button>
@@ -294,7 +294,7 @@ const GuideTerminal = ({value, weight}: { value: string, weight?: string }) => {
 
 const GuidePattern = ({value, weight}: { value: string, weight?: string }) => {
     return (
-        <Row className={`rounded overflow-clip w-min h-8 items-center`}>
+        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-secondary p-1 h-8`}>
                 <EllipsisVerticalIcon className="h-4"/>
             </button>
@@ -315,7 +315,7 @@ const GuidePattern = ({value, weight}: { value: string, weight?: string }) => {
 
 const GuideRewrite = ({match, replace}: { match: string, replace: string }) => {
     return (
-        <Row className={`rounded overflow-clip w-min h-8 items-center`}>
+        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-accent-warning p-1 h-8`}>
                 <EllipsisVerticalIcon className="h-4"/>
             </button>
@@ -336,7 +336,7 @@ const GuideRewrite = ({match, replace}: { match: string, replace: string }) => {
 
 const GuideExclusion = ({match}: { match: string }) => {
     return (
-        <Row className={`rounded overflow-clip w-min h-8 items-center`}>
+        <Row className={`rounded-sm overflow-clip w-min h-8 items-center`}>
             <button className={`bg-accent-caution p-1 h-8`}>
                 <EllipsisVerticalIcon className="h-4"/>
             </button>
