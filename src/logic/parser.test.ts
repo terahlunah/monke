@@ -167,6 +167,18 @@ describe("configToGrammar", () => {
         ]))).toThrow(/'R'/)
     })
 
+    it("rejects a non-numeric match index, naming the rule", () => {
+        expect(() => configToGrammar(makeConfig("R", [
+            makeRule("R", ["'a'"], {showRewrites: true, rewrites: [{id: "w", match: "'a'", replace: "#x#"}]}),
+        ]))).toThrow(/Invalid match index.*'R'/)
+    })
+
+    it("rejects a match index beyond a fixed-shape pattern, naming the rule", () => {
+        expect(() => configToGrammar(makeConfig("R", [
+            makeRule("R", ["'a'"], {showRewrites: true, rewrites: [{id: "w", match: "'a'.'b'", replace: "#2#"}]}),
+        ]))).toThrow(/Match #2# is out of range \(rule : 'R'\)/)
+    })
+
     it("rejects references to unknown rules, naming the missing and the containing rule", () => {
         expect(() => configToGrammar(makeConfig("R", [makeRule("R", ["Missing"])])))
             .toThrow("Unknown rule 'Missing' (rule : 'R')")

@@ -1,82 +1,72 @@
-import findDirectedCycle from "find-cycle/directed"
-import {Expr, Grammar, Rule} from "../models/grammar.ts";
+import {Expr, getRuleEdges, Grammar, Rule} from "../models/grammar.ts";
 
-const matchSeq = (g: Grammar, items: Expr[], s: string): number[] | null => {
-    if (items.length === 0) return [0];
+// Matchers are generators so a sequence can backtrack into the alternatives of an
+// earlier item. Each yielded array holds one length per sub-part of the expression.
+// Sub-matches may be empty (optionals); callers decide whether an empty overall match counts.
+function* matchSeq(g: Grammar, items: Expr[], s: string): Generator<number[]> {
+    if (items.length === 0) {
+        yield []
+        return
+    }
 
-    for (let i = 1; i <= s.length; i++) {
-        const sub = s.substring(0, i);
-        const exprMatch = matchExpr(g, items[0], sub);
-        if (exprMatch !== null) {
-            // A nested match reports one length per sub-part; the item as a whole
-            // consumes their sum and counts as a single back-reference.
-            const consumed = exprMatch.reduce((a, b) => a + b, 0);
-            const restMatch = matchSeq(g, items.slice(1), s.substring(consumed));
-            if (restMatch !== null) return [consumed, ...restMatch];
+    for (const first of matchExpr(g, items[0], s)) {
+        // A nested match reports one length per sub-part; the item as a whole
+        // consumes their sum and counts as a single back-reference.
+        const consumed = first.reduce((a, b) => a + b, 0)
+        for (const rest of matchSeq(g, items.slice(1), s.substring(consumed))) {
+            yield [consumed, ...rest]
         }
     }
+}
 
-    return null;
-};
-
-const matchChoice = (g: Grammar, choices: Expr[], s: string): number[] | null => {
-    for (const e of choices) {
-        const match = matchExpr(g, e, s);
-        if (match !== null) return match;
-    }
-    return null;
-};
-
-const matchQuantifier = (g: Grammar, expr: Expr, min: number, max: number, s: string): number[] | null => {
+function* matchQuantifier(g: Grammar, expr: Expr, min: number, max: number, s: string): Generator<number[]> {
     for (let i = min; i <= max; ++i) {
-        const match = matchSeq(g, Array(i).fill(expr), s)
-        if (match !== null) return match;
+        yield* matchSeq(g, Array(i).fill(expr), s)
     }
-    return null
-};
+}
 
-const matchExpr = (g: Grammar, e: Expr, s: string): number[] | null => {
+function* matchExpr(g: Grammar, e: Expr, s: string): Generator<number[]> {
     switch (e.tag) {
         case 'Atom':
-            return s.startsWith(e.value) ? [e.value.length] : null
+            if (s.startsWith(e.value)) yield [e.value.length]
+            return
         case 'Ref': {
-            const rule = g.rules.find(r => r.name === e.rule);
+            const rule = g.ruleMap.get(e.rule)
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
-            return matchExpr(g, rule.expr, s)
+            yield* matchExpr(g, rule.expr, s)
+            return
         }
-        case 'Match': {
+        case 'Match':
             throw new Error(`Encountered ambiguous match expression #${e.index}#`)
-        }
         case "Seq":
-            return matchSeq(g, e.items, s)
+            yield* matchSeq(g, e.items, s)
+            return
         case "Choice":
-            return matchChoice(g, e.items.map(c => c.expr), s)
+            for (const c of e.items) yield* matchExpr(g, c.expr, s)
+            return
         case "Quantifier":
-            return matchQuantifier(g, e.expr, e.min, e.max, s)
-
+            yield* matchQuantifier(g, e.expr, e.min, e.max, s)
     }
-};
+}
 
+// First match anchored at the start of `s` that consumes at least one character.
+const matchNonEmpty = (g: Grammar, e: Expr, s: string): number[] | null => {
+    for (const m of matchExpr(g, e, s)) {
+        if (m.some(l => l > 0)) return m
+    }
+    return null
+}
 
 const checkRuleExclusions = (g: Grammar, r: Rule, gen: string) => {
-
-    if (r.exclusions.length == 0) {
-        return false;
-    }
-
     for (const e of r.exclusions) {
         for (let i = 0; i < gen.length; i++) {
-            for (let j = i + 1; j <= gen.length; j++) {
-                const s = gen.slice(i, j);
-
-                if (matchExpr(g, e, s) !== null) {
-                    return true;
-                }
+            if (matchNonEmpty(g, e, gen.slice(i)) !== null) {
+                return true
             }
         }
     }
 
-    return false;
+    return false
 };
 
 const randomPick = <T>(array: T[]): T | null => {
@@ -113,14 +103,15 @@ const generateExpr = (g: Grammar, e: Expr, matches?: string[]): string => {
         case 'Atom':
             return e.value;
         case 'Ref': {
-            const rule = g.rules.find(r => r.name === e.rule);
+            const rule = g.ruleMap.get(e.rule);
             if (!rule) throw new Error(`Rule ${e.rule} not found`);
             return generateRule(g, rule);
         }
         case 'Match': {
             if (matches === undefined)
                 throw new Error(`Encountered ambiguous match expression #${e.index}#`);
-            return matches[e.index];
+            // Indices the parser can't check statically (variable-shape patterns) fall back to empty.
+            return matches[e.index] ?? "";
         }
         case "Seq":
             return e.items.map(t => generateExpr(g, t, matches)).join('')
@@ -162,27 +153,30 @@ const generateRule = (g: Grammar, r: Rule): string => {
 };
 
 const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
-    let result = gen.slice()
+    let result = gen
 
     for (const [match, replace] of rule.rewrites) {
-
-        for (let i = 0; i < result.length; i++) {
+        let i = 0
+        while (i < result.length) {
             const s = result.slice(i);
-            const exprMatch = matchExpr(g, match, s);
-            if (exprMatch !== null) {
-                let matchEnd = 0;
-                const matches = exprMatch.map(l => {
-                    const newMatchEnd = matchEnd + l;
-                    const match = s.slice(matchEnd, newMatchEnd);
-                    matchEnd = newMatchEnd;
-                    return match;
-                });
-                const head = result.slice(0, i);
-                const tail = result.slice(i + matchEnd);
-                const gen = generateExpr(g, replace, matches);
-
-                result = head + gen + tail;
+            const exprMatch = matchNonEmpty(g, match, s);
+            if (exprMatch === null) {
+                i++
+                continue
             }
+
+            let matchEnd = 0;
+            const matches = exprMatch.map(l => {
+                const newMatchEnd = matchEnd + l;
+                const part = s.slice(matchEnd, newMatchEnd);
+                matchEnd = newMatchEnd;
+                return part;
+            });
+            const replacement = generateExpr(g, replace, matches);
+
+            result = result.slice(0, i) + replacement + result.slice(i + matchEnd);
+            // Resume after the inserted text so replacements are never rewritten again.
+            i += replacement.length
         }
     }
 
@@ -190,13 +184,13 @@ const applyRuleRewrites = (g: Grammar, rule: Rule, gen: string): string => {
 };
 
 export const generate = (g: Grammar): string => {
-    const rootRule = g.rules.find(r => r.name === g.root);
+    const rootRule = g.ruleMap.get(g.root);
     if (!rootRule) throw new Error(`Root rule ${g.root} not found`);
     return generateRule(g, rootRule);
 };
 
 export const countCombinations = (g: Grammar): number => {
-    const rootRule = g.rules.find(r => r.name === g.root);
+    const rootRule = g.ruleMap.get(g.root);
     if (!rootRule) throw new Error(`Root rule ${g.root} not found`);
     return countCombinationsRule(g, rootRule)
 }
@@ -210,8 +204,8 @@ const countCombinationsExpr = (g: Grammar, e: Expr): number => {
         case "Atom":
             return 1;
         case "Ref": {
-            const rule = g.rules.find(r => r.name === e.rule);
-            if (!rule) throw new Error(`Rule ${rule} not found`);
+            const rule = g.ruleMap.get(e.rule);
+            if (!rule) throw new Error(`Rule ${e.rule} not found`);
             return countCombinationsRule(g, rule);
         }
         case "Match":
@@ -230,39 +224,32 @@ const countCombinationsExpr = (g: Grammar, e: Expr): number => {
 
             return count;
         }
-
-
     }
 }
 
-// detect cycles
+// Depth-first search from the root; returns the first cycle found as a path that
+// starts and ends on the same rule, or null.
+export const detectCycle = (g: Grammar): string[] | null => {
+    const done = new Set<string>()
+    const path: string[] = []
 
-const getExprEdges = (e: Expr): string[] => {
-    switch (e.tag) {
-        case "Atom":
-            return [];
-        case "Ref":
-            return [e.rule];
-        case "Match":
-            return [];
-        case "Seq":
-            return e.items.flatMap(getExprEdges);
-        case "Choice":
-            return e.items.map(o => o.expr).flatMap(getExprEdges);
-        case "Quantifier":
-            return getExprEdges(e.expr);
+    const visit = (name: string): string[] | null => {
+        const at = path.indexOf(name)
+        if (at !== -1) return [...path.slice(at), name]
+        if (done.has(name)) return null
 
+        const rule = g.ruleMap.get(name)
+        if (!rule) return null
+
+        path.push(name)
+        for (const next of getRuleEdges(rule)) {
+            const cycle = visit(next)
+            if (cycle) return cycle
+        }
+        path.pop()
+        done.add(name)
+        return null
     }
-}
 
-export const getRuleEdges = (r: Rule): string[] => {
-    return getExprEdges(r.expr)
-}
-
-export const detectCycle = (g: Grammar): string[] | null | undefined => {
-
-    const edges: { [key: string]: string[] } = g.rules.reduce((acc, r) => ({...acc, [r.name]: getRuleEdges(r)}), {})
-    const getConnectedNodes = (node: string): string[] => edges[node]
-
-    return findDirectedCycle([g.root], getConnectedNodes)
+    return visit(g.root)
 }

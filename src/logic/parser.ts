@@ -1,7 +1,7 @@
 import {Config} from "../pages/Home.tsx";
-import {Rule as ConfigRule} from "../models/ui.tsx";
+import {Rule as ConfigRule} from "../models/ui.ts";
 import {
-    Expr, Grammar,
+    Expr, findInvalidMatchIndex, getRuleEdges, Grammar,
     makeAtom, makeGrammar,
     makeMatch,
     makeRange,
@@ -11,7 +11,6 @@ import {
     makeWeightedChoice, Rule,
     WeightedExpr
 } from "../models/grammar.ts";
-import {getRuleEdges} from "./wordgen.ts";
 import {RulePattern} from "../models/ui.ts";
 
 export class Parser {
@@ -114,7 +113,11 @@ export class Parser {
             this.error("Expected number sign to end match");
         }
 
-        return makeMatch(parseInt(indexString));
+        if (!/^\d+$/.test(indexString.trim())) {
+            this.error(`Invalid match index '#${indexString}#'`);
+        }
+
+        return makeMatch(parseInt(indexString, 10));
     }
 
     private isRefCharacter(char: string | null, lead: boolean | null = null): boolean {
@@ -390,7 +393,15 @@ const configRuleToGrammarRule = (rule: ConfigRule): Rule => {
         const ruleExpr = rulePatternsToExpr(rule.name, rule.patterns)
 
         const exclusions = rule.showExclusions ? rule.exclusions.map(p => parse(rule.name, p.match)) : []
-        const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => [parse(rule.name, p.match), parse(rule.name, p.replace)]) : []
+        const rewrites: [Expr, Expr][] = rule.showRewrites ? rule.rewrites.map(p => {
+            const match = parse(rule.name, p.match)
+            const replace = parse(rule.name, p.replace)
+            const invalid = findInvalidMatchIndex(match, replace)
+            if (invalid !== null) {
+                throw new Error(`Match #${invalid}# is out of range (rule : '${rule.name}')`)
+            }
+            return [match, replace]
+        }) : []
         return makeRule(rule.name, ruleExpr, exclusions, rewrites)
     }
 

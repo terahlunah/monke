@@ -158,6 +158,46 @@ describe("generate", () => {
         expect(generate(g)).toBe("cabx")
     })
 
+    it("terminates when a rewrite pattern can match empty", () => {
+        const g = makeGrammar("R", [makeRule("R", ["'bab'"], {
+            showRewrites: true,
+            rewrites: [{id: "w", match: "('a')", replace: "'x'"}],
+        })])
+        expect(generate(g)).toBe("bxb")
+    })
+
+    it("does not rewrite its own replacement output", () => {
+        const g = makeGrammar("R", [makeRule("R", ["'aa'"], {
+            showRewrites: true,
+            rewrites: [{id: "w", match: "'a'", replace: "'aa'"}],
+        })])
+        expect(generate(g)).toBe("aaaa")
+    })
+
+    it("allows optional items to match empty inside a sequence", () => {
+        const g = makeGrammar("R", [makeRule("R", ["'tb'"], {
+            showRewrites: true,
+            rewrites: [{id: "w", match: "'t'.('a').'b'", replace: "'X'"}],
+        })])
+        expect(generate(g)).toBe("X")
+    })
+
+    it("backtracks into earlier choices of a sequence", () => {
+        const g = makeGrammar("R", [makeRule("R", ["'abc'"], {
+            showRewrites: true,
+            rewrites: [{id: "w", match: "['a' / 'ab'].'c'", replace: "'X'"}],
+        })])
+        expect(generate(g)).toBe("X")
+    })
+
+    it("emits nothing for a back-reference a variable-shape pattern did not produce", () => {
+        const g = makeGrammar("R", [makeRule("R", ["'ab'"], {
+            showRewrites: true,
+            rewrites: [{id: "w", match: "'a'{1:2}", replace: "#0#.#5#.'-'"}],
+        })])
+        expect(generate(g)).toBe("a-b")
+    })
+
     it("generates from the default Toki Pona grammar", () => {
         const g = makeGrammar(tokiPonaRoot, tokiPonaRules)
         const words = sample(g, 200)
