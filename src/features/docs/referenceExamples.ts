@@ -177,14 +177,13 @@ export const recipes: Recipe[] = [
     },
     {
         id: "awkwords",
-        title: "Awkwords-style CV(CV)(n), no ti",
-        summary: "C and V become terminal rules. Filtering out the syllable ti becomes an exclusion on a two-letter Syllable rule.",
+        title: "Awkwords [VV]t[VV]^aa^ii^uu",
+        summary: "V becomes a terminal rule. The filtered [VV] becomes a Pair rule whose exclusions reject aa, ii and uu. Pair always makes two letters, so containing a banned pair means being equal to it.",
         root: "Word",
         rules: [
-            {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "n"]},
             {name: "V", terminal: true, items: ["a", "i", "u"]},
-            {name: "Syllable", items: ["C.V"], exclusions: ["'ti'"]},
-            {name: "Word", items: ["Syllable.(Syllable).('n')"]},
+            {name: "Pair", items: ["V.V"], exclusions: ["'aa'", "'ii'", "'uu'"]},
+            {name: "Word", items: ["V.V.'t'.Pair"]},
         ],
     },
 ]

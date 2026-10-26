@@ -302,8 +302,9 @@ export const Reference = () => {
                 </Section>
 
                 <Section id="reference-awkwords">
-                    <p>If you know Awkwords, most ideas carry over. The main differences: Monke has no single-letter limit
-                        on names, needs dots between parts, and requires quotes around all literal text.</p>
+                    <p>If you know Awkwords, most ideas carry over. Awkwords subpatterns become rules and the main pattern
+                        becomes the root rule. The main differences: Monke names are not limited to one capital letter,
+                        parts are joined with dots, and all literal text is quoted.</p>
                     <table className="w-full text-left border-collapse">
                         <caption className="sr-only">Awkwords syntax and its Monke equivalent</caption>
                         <thead>
@@ -323,17 +324,23 @@ export const Reference = () => {
                     </table>
 
                     <Sub>Filters versus exclusions</Sub>
-                    <p>An Awkwords <Code>^</Code> filter discards a result that is exactly equal to the filtered text. A
-                        Monke exclusion rejects an output that <b>contains</b> a match. To get the exact behaviour, put the
-                        filtered part in its own rule whose output always has the length of the banned text. A
-                        <Code>Syllable</Code> rule that always makes two letters, with the exclusion <Code>{"'ti'"}</Code>,
-                        rejects exactly the syllable ti. Unlike an exclusion on the whole word, it doesn't reject a ti formed
-                        across two syllables.</p>
-                    <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "awkwords")!} summary={recipes.find(r => r.id === "awkwords")!.summary}/>
+                    <p>An Awkwords filter, as in <Code>{"[VV]^aa"}</Code>, applies only to the fragment written just before
+                        the <Code>^</Code>: a bracket, a subpattern letter or a run of letters. If that fragment generates
+                        exactly the filter text, the whole word is dropped, so you may get fewer words than you asked for. A
+                        Monke exclusion belongs to a rule: when the rule's output <b>contains</b> a match, that rule is
+                        generated again. When the filtered fragment is always generated, the words you get follow the same
+                        odds as the words Awkwords keeps. Inside an alternative or an optional they don't: Awkwords' dropped
+                        words make that alternative rarer, while a Monke retry keeps its odds.</p>
+                    <p>To translate a filter, put the filtered fragment in its own rule and add the filter text as an
+                        exclusion of that rule. Containing and being equal are the same when no other output of the rule can
+                        contain the banned text, for example when every output has the same length. In this example from the
+                        Awkwords help, <Code>{"[VV]t[VV]^aa^ii^uu"}</Code>, only the second pair of vowels may not repeat a
+                        vowel.</p>
+                    <ExampleCard hrefs={hrefs} example={awkwordsExample} summary={awkwordsExample.summary}/>
 
                     <Sub>Only in Monke</Sub>
-                    <p>Repetition with <Code>{"{min:max}"}</Code>, rewrites with back-references, per-rule exclusions,
-                        optional probabilities and weighted rule patterns.</p>
+                    <p>Repetition with <Code>{"{min:max}"}</Code>, rewrites with back-references, exclusions that match
+                        patterns instead of fixed text, optional probabilities, decimal weights and weighted rule patterns.</p>
                 </Section>
             </div>
         </ScrollRegion>
@@ -363,14 +370,16 @@ const CodeBlock = ({children}: { children: string }) => (
 
 const Arrow = () => <><span aria-hidden="true">→</span><span className="sr-only">becomes</span></>
 
+const awkwordsExample = recipes.find(r => r.id === "awkwords")!
+
 const awkwordsRows: [ReactNode, ReactNode][] = [
-    [<>Category <Code>V</Code> with <Code>a/i/u</Code></>, <>Terminal rule <Code>V</Code> with terminals <Code>a</Code>, <Code>i</Code>, <Code>u</Code>. Any name works, not only capital letters.</>],
-    [<>Pattern <Code>CV</Code></>, <><Code>C.V</Code></>],
-    [<>Lowercase letters, literal</>, <>Quoted text: <Code>{"'n'"}</Code>. A bare word is always a rule name.</>],
-    [<>Quoted literal <Code>"..."</Code></>, <>Single quotes <Code>{"'...'"}</Code>, with <Code>{"\\'"}</Code> for a quote inside.</>],
-    [<>Alternatives <Code>a/b</Code></>, <><Code>{"'a' / 'b'"}</Code></>],
+    [<>Subpattern <Code>V</Code> with <Code>a/i/u</Code></>, <>Terminal rule <Code>V</Code> with terminals <Code>a</Code>, <Code>i</Code>, <Code>u</Code>. A subpattern with brackets, letters or filters becomes a rule with patterns instead. Any name works, not only capital letters.</>],
+    [<>Pattern <Code>CV</Code></>, <>Root rule with the pattern <Code>C.V</Code></>],
+    [<>Text such as <Code>ka</Code>; spaces are ignored</>, <>Quoted text: <Code>{"'ka'"}</Code>. A bare word is always a rule name.</>],
+    [<>Escaped text <Code>{'"..."'}</Code>, with <Code>{'""'}</Code> for a double quote</>, <>Quoted text <Code>{"'...'"}</Code>, with <Code>{"\\'"}</Code> for a single quote and <Code>{"\\\\"}</Code> for a backslash.</>],
+    [<>Alternatives <Code>ka/ta</Code></>, <><Code>{"'ka' / 'ta'"}</Code>. An empty alternative, as in <Code>{"[a/]"}</Code>, is <Code>{"''"}</Code>.</>],
     [<>Brackets <Code>[...]</Code></>, <>Group <Code>{"[...]"}</Code></>],
-    [<>Optional <Code>(...)</Code></>, <>Optional <Code>{"(...)"}</Code>; a choice inside needs a group: <Code>{"(['a' / 'b'])"}</Code></>],
-    [<>Weight <Code>*n</Code> on an alternative</>, <>Weight <Code>*N</Code>, used only when weights are enabled.</>],
-    [<>Filter <Code>^</Code></>, <>Exclusion on the rule (see below).</>],
+    [<>Optional <Code>(...)</Code>, present half of the time</>, <>Optional <Code>{"(...)"}</Code>, also half of the time. A choice inside needs a group: <Code>{"(['a' / 'b'])"}</Code></>],
+    [<>Weight <Code>*n</Code>, a whole number from 1 to 128, anywhere in its alternative</>, <>Weight <Code>*N</Code> at the end of the alternative, used only when weights are enabled.</>],
+    [<>Filter <Code>^text</Code> on the fragment before it</>, <>Exclusion on a rule that holds the fragment (see below).</>],
 ]

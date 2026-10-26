@@ -72,7 +72,9 @@ describe("reference grammars", () => {
         for (const w of words("no-repeats")) expect(w).not.toMatch(/([ptkm])[aeiou]\1/)
     })
 
-    it("the Awkwords translation never produces the syllable ti", () => {
-        for (const w of words("awkwords")) expect(w).not.toMatch(/^(..)?ti/)
+    it("the Awkwords translation filters only the second vowel pair", () => {
+        const ws = words("awkwords")
+        for (const w of ws) expect(w).toMatch(/^[aiu]{2}t([aiu])(?!\1)[aiu]$/)
+        expect(ws.some(w => w[0] === w[1])).toBe(true)
     })
 })
