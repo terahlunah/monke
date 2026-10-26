@@ -53,12 +53,13 @@ export class Parser {
                     escaping = false
                     this.advancePosition(false)
                 } else {
-                    escaping = false
+                    escaping = true
                     this.advancePosition(false)
                 }
             } else {
                 // Part of the atom; append the character and advance
                 atomValue += char;
+                escaping = false
                 this.advancePosition(false);
             }
         }
@@ -364,7 +365,7 @@ export const configToGrammar = (config: Config): Grammar | null => {
 
         for (const e of edges) {
             if (!rulesNames.includes(e)) {
-                throw new Error(`Unknown rule '${e}'`)
+                throw new Error(`Unknown rule '${e}' (rule : '${rule.name}')`)
             }
         }
     }

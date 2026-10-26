@@ -8,8 +8,11 @@ const matchSeq = (g: Grammar, items: Expr[], s: string): number[] | null => {
         const sub = s.substring(0, i);
         const exprMatch = matchExpr(g, items[0], sub);
         if (exprMatch !== null) {
-            const restMatch = matchSeq(g, items.slice(1), s.substring(exprMatch[0]));
-            if (restMatch !== null) return [...exprMatch, ...restMatch];
+            // A nested match reports one length per sub-part; the item as a whole
+            // consumes their sum and counts as a single back-reference.
+            const consumed = exprMatch.reduce((a, b) => a + b, 0);
+            const restMatch = matchSeq(g, items.slice(1), s.substring(consumed));
+            if (restMatch !== null) return [consumed, ...restMatch];
         }
     }
 
