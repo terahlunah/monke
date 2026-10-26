@@ -119,4 +119,15 @@ describe("Home", () => {
         const output = await screen.findByText(/^[a-z]+( [a-z]+)*$/, {selector: "p"})
         for (const w of output.textContent!.split(" ")) expect(["a", "i", "ta", "ti"]).toContain(w)
     })
+
+    it("lists every word with Generate all and announces the count", async () => {
+        const user = userEvent.setup()
+        renderAt(`/${customLink}`)
+        expect(await screen.findByText("Grammar has 6 possible branches")).toBeInTheDocument()
+
+        await user.click(screen.getByRole("button", {name: "Generate all"}))
+
+        expect(await screen.findByText("a i ta ti", {selector: "p"})).toBeInTheDocument()
+        expect(screen.getByText("Listed 4 words")).toBeInTheDocument()
+    })
 })

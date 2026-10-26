@@ -88,9 +88,9 @@ const generateRule = (g: Grammar, r: Rule, rng: Rng): string => {
     throw new Error("Exclusion rules are too restrictive")
 };
 
-const MAX_REWRITE_PASSES = 32
+export const MAX_REWRITE_PASSES = 32
 // A growing rewrite like 'a' → 'aa' doubles the output each pass, so the pass cap alone would not stop it in time.
-const MAX_REWRITE_LENGTH = 10_000
+export const MAX_REWRITE_LENGTH = 10_000
 
 // With repeatRewrites, whole ordered passes run until one changes nothing, so a rewrite can act on text another
 // rewrite produced. The caps turn rewrites that keep changing the word (ping-pong, growth) into an error.

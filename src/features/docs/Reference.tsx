@@ -8,6 +8,7 @@ import {
     exclusionDemos,
     firstGrammar,
     itemText,
+    listAllDemo,
     recipes,
     rewriteDemos,
     syntaxRows
@@ -313,6 +314,21 @@ export const Reference = () => {
                         <li><b>Repeat rewrites until nothing changes</b> runs each rule's rewrite list until it stops
                             changing the output, instead of once (see Rewrites). It is saved in share links.</li>
                         <li><b>Enable serifs</b> switches to a serif font, which makes some IPA characters easier to read.</li>
+                    </ul>
+
+                    <Sub>Generate all</Sub>
+                    <p><b>Generate all</b> lists every distinct word the start rule can make, sorted, instead of random
+                        draws: useful to export a full syllable inventory. Rewrites and exclusions apply exactly as when
+                        generating, and weights only matter where they are zero. It stops after 10,000 words and says
+                        the list is truncated. It is unavailable when the grammar has a cycle (the list would be
+                        endless) or more than 1,000,000 branches; the reason is shown under the buttons.</p>
+                    <p>For example, with terminals <Code>C</Code> = <Code>{listAllDemo.example.rules[0].items.join(", ")}</Code>,{" "}
+                        <Code>V</Code> = <Code>{listAllDemo.example.rules[1].items.join(", ")}</Code> and the root{" "}
+                        <Code>{listAllDemo.example.rules[2].items[0]}</Code>, with the rewrite{" "}
+                        <Code>{listAllDemo.example.rules[2].rewrites![0].join(" → ")}</Code> and the exclusion{" "}
+                        <Code>{listAllDemo.example.rules[2].exclusions![0]}</Code>, Generate all lists:</p>
+                    <ul className="list-disc pl-6">
+                        {listAllDemo.words.map(w => <li key={w}><Code>{w}</Code></li>)}
                     </ul>
 
                     <Sub>Share links</Sub>

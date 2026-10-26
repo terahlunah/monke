@@ -234,3 +234,18 @@ export const awkwordsImportDemo = {
     patterns: ["a", "ab"],
     exclusion: "^.'a'.$",
 }
+
+// Generate all on a small grammar: the exclusion drops "ti" and the rewrite turns "kin" into "kim".
+export const listAllDemo = {
+    example: {
+        id: "list-all",
+        title: "Generate all",
+        root: "Word",
+        rules: [
+            {name: "C", terminal: true, items: ["k", "t"]},
+            {name: "V", terminal: true, items: ["a", "i"]},
+            {name: "Word", items: ["C.V.('n')"], rewrites: [["'kin'", "'kim'"]], exclusions: ["'ti'"]},
+        ],
+    } satisfies ReferenceExample,
+    words: ["ka", "kan", "ki", "kim", "ta", "tan"],
+}

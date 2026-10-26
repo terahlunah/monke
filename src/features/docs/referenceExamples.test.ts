@@ -5,7 +5,8 @@ import {matchesExclusion} from "@/engine/match.ts"
 import {parsePattern} from "@/engine/pattern.ts"
 import {mulberry32} from "@/engine/test-helpers.ts"
 import {importAwkwords} from "@/engine/awkwords.ts"
-import {awkwordsImportDemo, exampleToConfig,ExampleRule, exclusionDemos, firstGrammar, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
+import {enumerate} from "@/engine/enumerate.ts"
+import {awkwordsImportDemo, exampleToConfig,ExampleRule, exclusionDemos, firstGrammar, listAllDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
 const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
@@ -103,5 +104,11 @@ describe("Awkwords import demo", () => {
         const grammar = configToGrammar(config)!
         const rng = mulberry32(3)
         expect(new Set(Array.from({length: 50}, () => generate(grammar, rng)))).toEqual(new Set(["ab"]))
+    })
+})
+
+describe("Generate all demo", () => {
+    it("lists exactly the documented words", () => {
+        expect(enumerate(grammarOf(listAllDemo.example))).toEqual({words: listAllDemo.words, truncated: false})
     })
 })

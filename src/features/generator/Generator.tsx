@@ -14,8 +14,19 @@ import {setAlwaysShowReorder, useAlwaysShowReorder} from "@/components/reorderPr
 import {GRAMMAR_ERROR_ID} from "@/features/config/grammarError.ts";
 import {AwkwordsImport} from "./AwkwordsImport.tsx";
 import {AwkwordsImport as AwkwordsResult, AwkwordsWarning} from "@/engine/awkwords.ts";
+import {listAll} from "./listAll.ts";
 
 const MAX_WORD_COUNT = 10000
+// Above this many branches, listing would spend its whole work budget and still show only a sliver of the words.
+const LIST_ALL_MAX_BRANCHES = 1_000_000
+const LIST_ALL_HINT_ID = "list-all-hint"
+
+const formatCount = (n: number) => n.toLocaleString("en-US")
+
+const summarizeList = (count: number, truncated: boolean): string =>
+    truncated ?
+        `Listed first ${formatCount(count)} words (truncated)` :
+        `Listed ${formatCount(count)} ${count === 1 ? "word" : "words"}`
 
 const summarize = (words: string[], filterDuplicates: boolean): string => {
     const noun = words.length === 1 ? "word" : "words"
@@ -151,6 +162,31 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
         }
     }
 
+    const [listing, setListing] = useState(false)
+
+    // Why "Generate all" is unavailable, or null when it can run.
+    const listAllBlocker = !grammar || error ? "Generate all needs a valid grammar" :
+        cycle ? "Generate all is unavailable: the grammar has a cycle" :
+            combinations > LIST_ALL_MAX_BRANCHES ?
+                `Generate all is unavailable: more than ${formatCount(LIST_ALL_MAX_BRANCHES)} branches` :
+                null
+
+    const onListAll = async () => {
+        if (!grammar || listAllBlocker || listing) return
+        setGenerationError(null)
+        setListing(true)
+        try {
+            const {words, truncated} = await listAll(grammar)
+            setGeneratedWords(words)
+            setAnnouncement(({run}) => ({text: summarizeList(words.length, truncated), run: run + 1}))
+        } catch (e) {
+            setGeneratedWords([])
+            setGenerationError((e as Error).message)
+        } finally {
+            setListing(false)
+        }
+    }
+
     const onCopy = async () => {
         await navigator.clipboard.writeText(text)
         toast("Words copied to clipboard!")
@@ -259,7 +295,7 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
 
             <div className="border-t border-white/20"/>
 
-            <Row className="gap-4">
+            <Row className="gap-4 flex-wrap">
                 <Row className="items-center justify-start grow">
                     <button onClick={onGenerate} className="rounded-l bg-primary p-2 grow w-2/3"
                             aria-label="Generate">Generate
@@ -267,6 +303,12 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                     <input aria-label="Word count" value={wordCount} onInput={onWordCountInput} onBlur={onWordCountBlur}
                            className="bg-primary/40 rounded-r text-center h-10 outline-0 grow w-1/3"/>
                 </Row>
+                {/* aria-disabled rather than disabled keeps it focusable, so keyboard and screen reader users can reach the reason. */}
+                <button onClick={onListAll} className="grow bg-primary rounded-sm p-2 aria-disabled:opacity-50"
+                        aria-disabled={listAllBlocker !== null || listing}
+                        aria-describedby={listAllBlocker ? LIST_ALL_HINT_ID : undefined}>
+                    Generate all
+                </button>
                 <button className="grow bg-primary rounded-sm p-2" onClick={onCopy} aria-label="Copy words">
                     <Row className="items-center justify-center gap-2">
                         <span>Copy</span>
@@ -274,6 +316,11 @@ export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) =>
                     </Row>
                 </button>
             </Row>
+
+            {listAllBlocker ?
+                <p id={LIST_ALL_HINT_ID} className="text-center italic text-gray-300">{listAllBlocker}</p> :
+                null
+            }
 
             {
                 filterDuplicates && generatedWords.length != 0 ?
