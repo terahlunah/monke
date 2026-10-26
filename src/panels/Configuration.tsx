@@ -36,7 +36,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
                 exclusions: source.exclusions.map(p => ({...p, id: crypto.randomUUID()})),
             }
 
-            setRules(config.root, config.rules.toSpliced(index + 1, 0, rule))
+            setRules(config.root, [...config.rules.slice(0, index + 1), rule, ...config.rules.slice(index + 1)])
         }
     }
 

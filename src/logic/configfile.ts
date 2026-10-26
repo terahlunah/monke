@@ -18,7 +18,11 @@ const bool = (o: Obj, key: string, where: string): boolean => {
     return typeof v === "boolean" ? v : fail(`${where}.${key} must be true or false`)
 }
 
-const list = (o: Obj, key: string, where: string): Obj[] => {
+// Files exported by older versions lack fields added later; a missing key takes the default, a wrong-typed one still fails.
+const optional = <T>(o: Obj, key: string, fallback: T, read: (o: Obj, key: string, where: string) => T, where: string): T =>
+    o[key] === undefined ? fallback : read(o, key, where)
+
+const list =(o: Obj, key: string, where: string): Obj[] => {
     const v = o[key]
     if (!Array.isArray(v)) return fail(`${where}.${key} must be a list`)
     return v.map((item, i) => isObj(item) ? item : fail(`${where}.${key}[${i}] must be an object`))
@@ -56,15 +60,15 @@ export const parseConfigFile = (text: string): Config => {
             terminalOnly: bool(r, "terminalOnly", where),
             showRewrites: bool(r, "showRewrites", where),
             showExclusions: bool(r, "showExclusions", where),
-            collapsed: bool(r, "collapsed", where),
+            collapsed: optional(r, "collapsed", false, bool, where),
         }
     })
 
     return {
-        language: str(data, "language", "config"),
+        language: optional(data, "language", "", str, "config"),
         root: root as string | null,
         rules,
-        enableWeights: bool(data, "enableWeights", "config"),
-        enableSerif: bool(data, "enableSerif", "config"),
+        enableWeights: optional(data, "enableWeights", false, bool, "config"),
+        enableSerif: optional(data, "enableSerif", false, bool, "config"),
     }
 }

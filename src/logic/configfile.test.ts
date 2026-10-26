@@ -18,6 +18,21 @@ describe("parseConfigFile", () => {
         expect(parseConfigFile(JSON.stringify({...valid, root: null})).root).toBeNull()
     })
 
+    it("defaults fields missing from older exports", () => {
+        const old = {
+            ...valid,
+            language: undefined,
+            enableSerif: undefined,
+            enableWeights: undefined,
+            rules: valid.rules.map(r => ({...r, collapsed: undefined})),
+        }
+        const parsed = parseConfigFile(JSON.stringify(old))
+        expect(parsed.language).toBe("")
+        expect(parsed.enableSerif).toBe(false)
+        expect(parsed.enableWeights).toBe(false)
+        expect(parsed.rules[0].collapsed).toBe(false)
+    })
+
     it("drops unknown keys", () => {
         const parsed = parseConfigFile(JSON.stringify({...valid, extra: 1}))
         expect(parsed).not.toHaveProperty("extra")
@@ -27,7 +42,7 @@ describe("parseConfigFile", () => {
         ["malformed JSON", "{nope"],
         ["a non-object", "[1]"],
         ["a null document", "null"],
-        ["a missing field", JSON.stringify({...valid, language: undefined})],
+        ["a missing field", JSON.stringify({...valid, rules: [{...valid.rules[0], name: undefined}]})],
         ["a wrong-typed root", JSON.stringify({...valid, root: 3})],
         ["rules that are not a list", JSON.stringify({...valid, rules: {}})],
         ["a rule that is not an object", JSON.stringify({...valid, rules: [1]})],

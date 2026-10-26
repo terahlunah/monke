@@ -126,7 +126,8 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
         link.href = url
         link.download = `${name}.monke`
         link.click()
-        URL.revokeObjectURL(url)
+        // Revoking synchronously can cancel the download in some browsers.
+        setTimeout(() => URL.revokeObjectURL(url), 0)
     }
 
     const onImport = () => {

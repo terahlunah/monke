@@ -20,12 +20,46 @@ describe("Home", () => {
         expect(screen.getByDisplayValue("Consonant")).toBeInTheDocument()
     })
 
-    it("mirrors the config into the URL without adding history entries", async () => {
-        const entries = window.history.length
-        renderAt("/")
-        await waitFor(() => expect(window.location.pathname).not.toBe("/"))
-        expect(window.history.length).toBe(entries)
+    describe("history", () => {
+        const settled = async () => {
+            await screen.findByText(/possible branches/)
+            await waitFor(() => expect(window.location.pathname).not.toBe("/"))
+        }
+        const pause = () => new Promise(r => setTimeout(r, 600))
+
+        it("pushes one entry per burst of edits", async () => {
+            const user = userEvent.setup()
+            renderAt("/")
+            await settled()
+            const entries = window.history.length
+
+            await user.type(screen.getByLabelText("Language"), "abc")
+            await waitFor(() => expect(window.history.length).toBe(entries + 1))
+            await pause()
+            expect(window.history.length).toBe(entries + 1)
+        })
+
+        it("restores the previous config on Back and the next on Forward without pushing", async () => {
+            const user = userEvent.setup()
+            renderAt("/")
+            await settled()
+            const entries = window.history.length
+
+            await user.type(screen.getByLabelText("Language"), "X")
+            await waitFor(() => expect(window.history.length).toBe(entries + 1))
+
+            window.history.back()
+            await waitFor(() => expect(screen.getByLabelText("Language")).toHaveValue("toki pona"))
+            await pause()
+            expect(window.history.length).toBe(entries + 1)
+
+            window.history.forward()
+            await waitFor(() => expect(screen.getByLabelText("Language")).toHaveValue("toki ponaX"))
+            await pause()
+            expect(window.history.length).toBe(entries + 1)
+        })
     })
+
 
     it("labels its main inputs", async () => {
         renderAt("/")

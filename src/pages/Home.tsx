@@ -2,7 +2,7 @@ import {Linear} from "../components/Linear.tsx";
 import {Guide} from "../panels/Guide.tsx";
 import {Configuration} from "../panels/Configuration.tsx";
 import {Generator} from "../panels/Generator.tsx";
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 import {Col} from "../components/Col.tsx";
 import {Row} from "../components/Row.tsx";
@@ -56,27 +56,65 @@ export const Home = () => {
             .finally(() => setSynced(true))
     }, [urlConfig])
 
+    // Cancels the debounced URL write of the latest edit; popstate uses it so a stale edit can't push over a restored entry.
+    const cancelPendingWrite = useRef<() => void>(() => {})
+    // Set when the next config change comes from history, so mirroring it into the URL must not push an entry.
+    const restoring = useRef(false)
+    // The first write only normalizes the initial URL; it must not create an extra entry to go back to.
+    const firstWrite = useRef(true)
+
+    useEffect(() => {
+        let latest = 0
+        const onPopState = () => {
+            cancelPendingWrite.current()
+            const path = window.location.pathname.slice(1)
+            const id = ++latest
+            const restore = (c: Config) => {
+                if (id !== latest) return
+                restoring.current = true
+                setConfig(c)
+            }
+            if (!path) return restore(defaultConfig)
+            decodeConfig(path).then(restore).catch(console.error)
+        }
+        window.addEventListener("popstate", onPopState)
+        return () => window.removeEventListener("popstate", onPopState)
+    }, [])
+
     useEffect(() => {
         document.title = `Monke - ${config.language}`;
     }, [config]);
 
     useEffect(() => {
         if (!synced) return
+        if (restoring.current) {
+            restoring.current = false
+            return
+        }
 
         let cancelled = false
-        // Encoding is async and the config changes on every keystroke: debounce and drop stale results.
+        // Encoding is async and the config changes on every keystroke: debounce so a burst of edits is one undo step, and drop stale results.
         const timer = setTimeout(() => {
             encodeConfig(config)
                 .then(data => {
-                    if (!cancelled) window.history.replaceState(null, "", `/${data}`)
+                    if (cancelled) return
+                    const path = `/${data}`
+                    if (firstWrite.current) {
+                        firstWrite.current = false
+                        window.history.replaceState(null, "", path)
+                    } else if (path !== window.location.pathname) {
+                        window.history.pushState(null, "", path)
+                    }
                 })
                 .catch(console.error)
         }, 300)
 
-        return () => {
+        const cancel = () => {
             cancelled = true
             clearTimeout(timer)
         }
+        cancelPendingWrite.current = cancel
+        return cancel
     }, [config, synced])
 
     const updateConfig = (patch: Partial<Config>) => {
@@ -119,7 +157,7 @@ export const Home = () => {
                 <DesktopNavbar className="hidden md:flex" tab={tab} setTab={setTab}/>
                 <MobileNavbar className="md:hidden" tab={tab} setTab={setTab}/>
                 {
-                    tab === "generator" ?
+                    tab === "generator" && synced ?
                         <Linear className="md:overflow-auto grow">
                             <Configuration config={config}
                                            setRules={setRules}
@@ -165,7 +203,7 @@ const DesktopNavbar = ({tab, setTab, className}: GenericProps<NavbarProps>) => {
             <Row className=" gap-4 p-2 items-center w-1/3 justify-end">
                 <h2 className="text-lg text-on-surface/80">Made by Terah</h2>
                 <div className="border-l border-white/20 h-8"/>
-                <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener">
+                <a href="https://github.com/terahlunah/monke" target="_blank" rel="noreferrer noopener" aria-label="GitHub">
                     <GithubIcon className="size-8"/>
                 </a>
             </Row>
