@@ -2,90 +2,21 @@ import {Col} from "../components/Col.tsx";
 import {RuleInstance} from "./RuleInstance.tsx";
 import {Row} from "../components/Row.tsx";
 import {SortableList} from "../components/SortableList.tsx";
-import {removeAt, updateAt} from "../engine/list.ts";
 import {Config} from "../engine/config.ts";
-import {tokiPonaRoot, tokiPonaRules, tokiPonaWeightedRules} from "../engine/defaults.ts";
+import {ConfigAction} from "../engine/configReducer.ts";
 import {Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions} from "@headlessui/react";
-import {FormEvent} from "react";
+import {Dispatch, FormEvent} from "react";
 import {CheckIcon, ChevronsUpDownIcon} from "lucide-react";
-import {Rule} from "../engine/config.ts";
 
 type ConfigurationProps = {
     config: Config
-    setRules: (root: string | null, rules: Rule[]) => void
-    updateConfig: (patch: Partial<Config>) => void
+    dispatch: Dispatch<ConfigAction>
 }
 
-export const Configuration = ({config, setRules, updateConfig}: ConfigurationProps) => {
-
-    const onRuleChangeIndex = (index: number) => {
-        return (group: Rule) => {
-            setRules(config.root, updateAt(config.rules, index, group))
-        }
-    }
-
-    const onRuleCloneIndex = (index: number) => {
-        return () => {
-            const source = config.rules[index]
-            const rule: Rule = {
-                ...source,
-                id: crypto.randomUUID(),
-                name: `${source.name} clone`,
-                patterns: source.patterns.map(p => ({...p, id: crypto.randomUUID()})),
-                rewrites: source.rewrites.map(p => ({...p, id: crypto.randomUUID()})),
-                exclusions: source.exclusions.map(p => ({...p, id: crypto.randomUUID()})),
-            }
-
-            setRules(config.root, [...config.rules.slice(0, index + 1), rule, ...config.rules.slice(index + 1)])
-        }
-    }
-
-    const onRuleDeleteIndex = (index: number) => {
-        return () => {
-
-            const deletedRule = config.rules[index].name
-
-            const root = deletedRule == config.root ? null : config.root
-
-            setRules(root, removeAt(config.rules, index))
-        }
-    }
-
-    const onRuleAdd = () => {
-        setRules(config.root, [...config.rules, {
-            id: crypto.randomUUID(),
-            name: "",
-            patterns: [],
-            rewrites: [],
-            exclusions: [],
-            terminalOnly: false,
-            showRewrites: false,
-            showExclusions: false,
-            collapsed: false,
-        }])
-    }
-
-    const onGroupAdd = () => {
-        setRules(config.root, [...config.rules, {
-            id: crypto.randomUUID(),
-            name: "",
-            patterns: [],
-            rewrites: [],
-            exclusions: [],
-            terminalOnly: true,
-            showRewrites: false,
-            showExclusions: false,
-            collapsed: false,
-        }])
-    }
-
-    const onSelectRoot = (root: string | null) => {
-        setRules(root, config.rules)
-    }
+export const Configuration = ({config, dispatch}: ConfigurationProps) => {
 
     const onSetLanguage = (e: FormEvent<HTMLInputElement>) => {
-        const lang = e.currentTarget.value;
-        updateConfig({language: lang})
+        dispatch({type: "setLanguage", language: e.currentTarget.value})
     }
 
     return (
@@ -94,29 +25,19 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
 
             <Row className="gap-4">
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
-                        onClick={() => updateConfig({language: "", root: null, rules: []})}>
+                        onClick={() => dispatch({type: "clear"})}>
                     <Row className="items-center justify-center gap-2">
                         <span>Clear</span>
                     </Row>
                 </button>
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
-                        onClick={() => updateConfig({
-                            language: "toki pona",
-                            root: tokiPonaRoot,
-                            rules: tokiPonaRules,
-                            enableWeights: false
-                        })}>
+                        onClick={() => dispatch({type: "loadExample", weighted: false})}>
                     <Row className="items-center justify-center gap-2">
                         <span>toki pona example</span>
                     </Row>
                 </button>
                 <button className="bg-accent-danger rounded-sm p-2 w-1/3"
-                        onClick={() => updateConfig({
-                            language: "toki pona",
-                            root: tokiPonaRoot,
-                            rules: tokiPonaWeightedRules,
-                            enableWeights: true
-                        })}>
+                        onClick={() => dispatch({type: "loadExample", weighted: true})}>
                     <Row className="items-center justify-center gap-2">
                         <span>Weighted toki pona example</span>
                     </Row>
@@ -133,7 +54,7 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
                 </div>
             </Row>
 
-            <Listbox value={config.root} onChange={onSelectRoot}>
+            <Listbox value={config.root} onChange={root => dispatch({type: "setRoot", root})}>
                 <Row className="gap-4 items-center">
                     <ListboxLabel>Start rule</ListboxLabel>
                     <div className="w-72 z-10">
@@ -184,24 +105,22 @@ export const Configuration = ({config, setRules, updateConfig}: ConfigurationPro
             <Col>
                 <Col className="gap-4">
 
-                    <SortableList items={config.rules} onChange={rules => setRules(config.root, rules)}
+                    <SortableList items={config.rules} onMove={(from, to) => dispatch({type: "moveRule", from, to})}
                                   direction="vertical">
-                        {config.rules.map((r, index) =>
+                        {config.rules.map(r =>
                             <RuleInstance rule={r}
-                                          onRuleChange={onRuleChangeIndex(index)}
-                                          onDelete={onRuleDeleteIndex(index)}
+                                          dispatch={dispatch}
                                           enableWeights={config.enableWeights}
                                           enableSerif={config.enableSerif}
                                           key={r.id}
-                                          onClone={onRuleCloneIndex(index)}
                             />)}
                     </SortableList>
 
                     <Row className="gap-4">
-                        <button onClick={onGroupAdd} className="grow bg-primary rounded-sm p-1">
+                        <button onClick={() => dispatch({type: "addRule", terminalOnly: true})} className="grow bg-primary rounded-sm p-1">
                             Add Terminal Rule
                         </button>
-                        <button onClick={onRuleAdd} className="grow bg-secondary rounded-sm p-1">
+                        <button onClick={() => dispatch({type: "addRule", terminalOnly: false})} className="grow bg-secondary rounded-sm p-1">
                             Add Rule
                         </button>
                     </Row>

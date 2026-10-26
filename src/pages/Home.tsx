@@ -2,14 +2,15 @@ import {Linear} from "../components/Linear.tsx";
 import {Guide} from "../panels/Guide.tsx";
 import {Configuration} from "../panels/Configuration.tsx";
 import {Generator} from "../panels/Generator.tsx";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useReducer, useRef, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 import {Col} from "../components/Col.tsx";
 import {Row} from "../components/Row.tsx";
 import {defaultConfig, emptyConfig} from "../engine/defaults.ts";
 import {GithubIcon} from "../components/GithubIcon.tsx";
 import {configToGrammar} from "../engine/buildGrammar.ts";
-import {Config, Rule} from "../engine/config.ts";
+import {Config} from "../engine/config.ts";
+import {configReducer} from "../engine/configReducer.ts";
 import {encodeConfig, decodeConfig} from "../engine/sharing.ts"
 import {Faq} from "../panels/Faq.tsx";
 import {Menu, MenuButton, MenuItem, MenuItems} from "@headlessui/react";
@@ -23,7 +24,7 @@ export const Home = () => {
 
     const [tab, setTab] = useState<"generator" | "guide" | "faq">("generator")
 
-    const [config, setConfig] = useState<Config>(urlConfig ? emptyConfig : defaultConfig)
+    const [config, dispatch] = useReducer(configReducer, urlConfig ? emptyConfig : defaultConfig)
     // Holds back URL writes until a link in the path has been decoded, so it isn't overwritten by the empty config.
     const [synced, setSynced] = useState(!urlConfig)
 
@@ -31,10 +32,10 @@ export const Home = () => {
         if (!urlConfig) return
 
         decodeConfig(urlConfig)
-            .then(setConfig)
+            .then(config => dispatch({type: "load", config}))
             .catch(e => {
                 console.error(e)
-                setConfig(defaultConfig)
+                dispatch({type: "load", config: defaultConfig})
             })
             .finally(() => setSynced(true))
     }, [urlConfig])
@@ -55,7 +56,7 @@ export const Home = () => {
             const restore = (c: Config) => {
                 if (id !== latest) return
                 restoring.current = true
-                setConfig(c)
+                dispatch({type: "load", config: c})
             }
             if (!path) return restore(defaultConfig)
             decodeConfig(path).then(restore).catch(console.error)
@@ -100,14 +101,6 @@ export const Home = () => {
         return cancel
     }, [config, synced])
 
-    const updateConfig = (patch: Partial<Config>) => {
-        setConfig(c => ({...c, ...patch}))
-    }
-
-    const setRules = (root: string | null, rules: Rule[]) => {
-        updateConfig({root, rules})
-    }
-
     const [grammar, error] = useMemo(() => {
             let grammar = null
             let error = null
@@ -143,12 +136,11 @@ export const Home = () => {
                     tab === "generator" && synced ?
                         <Linear className="md:overflow-auto grow">
                             <Configuration config={config}
-                                           setRules={setRules}
-                                           updateConfig={updateConfig}/>
+                                           dispatch={dispatch}/>
                             <Generator config={config}
                                        grammar={grammar}
                                        error={error}
-                                       updateConfig={updateConfig}/>
+                                       dispatch={dispatch}/>
                         </Linear> : null
                 }
                 {tab === "guide" ? <Guide/> : null}

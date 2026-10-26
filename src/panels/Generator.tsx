@@ -2,10 +2,11 @@ import {Col} from "../components/Col.tsx";
 import {SwitchLabel} from "../components/SwitchLabel.tsx";
 import {Row} from "../components/Row.tsx";
 import {ClipboardListIcon, DownloadIcon, LinkIcon, UploadIcon} from "lucide-react";
-import {ChangeEvent, FormEvent, useMemo, useRef, useState} from "react";
+import {ChangeEvent, Dispatch, FormEvent, useMemo, useRef, useState} from "react";
 import {generate} from "../engine/generate.ts";
 import {countCombinations, detectCycle} from "../engine/analysis.ts";
 import {Config} from "../engine/config.ts";
+import {ConfigAction} from "../engine/configReducer.ts";
 import {toast} from "react-toastify";
 import {Grammar} from "../engine/grammar.ts";
 import {parseConfigFile} from "../engine/configfile.ts";
@@ -23,10 +24,10 @@ type GeneratorProps = {
     config: Config
     grammar: Grammar | null
     error: string | null
-    updateConfig: (patch: Partial<Config>) => void
+    dispatch: Dispatch<ConfigAction>
 }
 
-export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps) => {
+export const Generator = ({config, grammar, error, dispatch}: GeneratorProps) => {
 
     const [generatedWords, setGeneratedWords] = useState<string[]>([])
     const [wordCount, setWordCount] = useState("50")
@@ -44,7 +45,7 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
         if (!file) return
 
         try {
-            updateConfig(parseConfigFile(await file.text()))
+            dispatch({type: "load", config: parseConfigFile(await file.text())})
             toast("Config imported")
         } catch (err) {
             toast.error(err instanceof Error ? err.message : "Failed to import config")
@@ -144,10 +145,10 @@ export const Generator = ({config, grammar, error, updateConfig}: GeneratorProps
         <Col
             className="grow bg-background md:w-1/2 p-6 gap-4 md:overflow-auto md:no-scrollbar md:border-l-8 border-l-surface">
 
-            <SwitchLabel checked={config.enableWeights} onChange={enableWeights => updateConfig({enableWeights})}
+            <SwitchLabel checked={config.enableWeights} onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
                          label="Enable probability weights"
                          enabledColor="bg-accent-warning" disabledColor="bg-accent-warning/30"/>
-            <SwitchLabel checked={config.enableSerif} onChange={enableSerif => updateConfig({enableSerif})}
+            <SwitchLabel checked={config.enableSerif} onChange={enabled => dispatch({type: "setEnableSerif", enabled})}
                          label="Enable serifs (For IPA characters readability)"
                          enabledColor="bg-primary" disabledColor="bg-primary/30"/>
             <SwitchLabel checked={filterDuplicates} onChange={setFilterDuplicates}

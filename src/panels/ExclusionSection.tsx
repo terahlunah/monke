@@ -1,25 +1,21 @@
-import {ChangeEvent} from "react";
+import {ChangeEvent, Dispatch} from "react";
 import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {ExclusionPattern, Rule} from "../engine/config.ts";
+import {ConfigAction} from "../engine/configReducer.ts";
 import {SortableList, SortableRow} from "../components/SortableList.tsx";
-import {removeAt, updateAt} from "../engine/list.ts";
 
 
 export type ExclusionSectionProps = {
     rule: Rule
-    onRuleChange: (rule: Rule) => void
+    dispatch: Dispatch<ConfigAction>
     enableSerif?: boolean
 }
 
-export const ExclusionSection = ({rule, onRuleChange, enableSerif}: ExclusionSectionProps) => {
+export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSectionProps) => {
 
-    const setExclusions = (exclusions: ExclusionPattern[]) => onRuleChange({...rule, exclusions})
-
-    const onAdd = () => {
-        setExclusions([...rule.exclusions, {id: crypto.randomUUID(), match: ""}])
-    }
+    const ruleId = rule.id
 
     return (
         <>
@@ -28,17 +24,18 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif}: ExclusionSec
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <Row className="gap-4 flex-wrap">
-                <SortableList items={rule.exclusions} onChange={setExclusions} direction="horizontal">
-                    {rule.exclusions.map((e, index) =>
+                <SortableList items={rule.exclusions} onMove={(from, to) => dispatch({type: "moveExclusion", ruleId, from, to})}
+                              direction="horizontal">
+                    {rule.exclusions.map(e =>
                         <ExclusionPatternItem key={e.id}
                                               exclusion={e}
-                                              onChange={exclusion => setExclusions(updateAt(rule.exclusions, index, exclusion))}
-                                              onDelete={() => setExclusions(removeAt(rule.exclusions, index))}
+                                              onChange={patch => dispatch({type: "editExclusion", ruleId, id: e.id, patch})}
+                                              onDelete={() => dispatch({type: "removeExclusion", ruleId, id: e.id})}
                                               enableSerif={enableSerif}/>
                     )}
                 </SortableList>
 
-                <button onClick={onAdd}
+                <button onClick={() => dispatch({type: "addExclusion", ruleId})}
                         className={`bg-accent-caution  mr-4 rounded-sm p-1`}
                         aria-label="Add exclusion pattern">
                     <PlusIcon className="size-6"/>
@@ -51,7 +48,7 @@ export const ExclusionSection = ({rule, onRuleChange, enableSerif}: ExclusionSec
 
 export type ExclusionPatternProps = {
     exclusion: ExclusionPattern
-    onChange: (value: ExclusionPattern) => void
+    onChange: (patch: Partial<ExclusionPattern>) => void
     onDelete?: () => void
     enableSerif?: boolean
 }
@@ -65,7 +62,7 @@ export const ExclusionPatternItem = ({
 
     const onGroupInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
-        onChange({...exclusion, match: v})
+        onChange({match: v})
     }
 
     return (

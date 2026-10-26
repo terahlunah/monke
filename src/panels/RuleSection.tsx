@@ -1,41 +1,38 @@
-import {FormEvent, useState} from "react";
+import {Dispatch, FormEvent, useState} from "react";
 import {Row} from "../components/Row.tsx";
 import {EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {Rule, RulePattern} from "../engine/config.ts";
+import {ConfigAction} from "../engine/configReducer.ts";
 import {SortableList, SortableRow} from "../components/SortableList.tsx";
-import {removeAt, updateAt} from "../engine/list.ts";
 
 
 export type RuleSectionProps = {
     rule: Rule
-    onRuleChange: (rule: Rule) => void
+    dispatch: Dispatch<ConfigAction>
     enableSerif?: boolean
     enableWeights?: boolean
 }
 
-export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: RuleSectionProps) => {
+export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSectionProps) => {
 
-    const setPatterns = (patterns: RulePattern[]) => onRuleChange({...rule, patterns})
-
-    const onAdd = () => {
-        setPatterns([...rule.patterns, {id: crypto.randomUUID(), pattern: "", weight: 1.0}])
-    }
+    const ruleId = rule.id
 
     return (
         <Row className="gap-4 flex-wrap">
-            <SortableList items={rule.patterns} onChange={setPatterns} direction="horizontal">
-                {rule.patterns.map((p, index) =>
+            <SortableList items={rule.patterns} onMove={(from, to) => dispatch({type: "movePattern", ruleId, from, to})}
+                          direction="horizontal">
+                {rule.patterns.map(p =>
                     <RulePatternItem key={p.id}
                                      pattern={p}
-                                     onChange={pattern => setPatterns(updateAt(rule.patterns, index, pattern))}
+                                     onChange={patch => dispatch({type: "editPattern", ruleId, id: p.id, patch})}
                                      terminalOnly={rule.terminalOnly}
-                                     onDelete={() => setPatterns(removeAt(rule.patterns, index))}
+                                     onDelete={() => dispatch({type: "removePattern", ruleId, id: p.id})}
                                      enableWeight={enableWeights}
                                      enableSerif={enableSerif}/>
                 )}
             </SortableList>
-            <button onClick={onAdd}
+            <button onClick={() => dispatch({type: "addPattern", ruleId})}
                     className={`${rule.terminalOnly ? "bg-primary" : "bg-secondary"}  mr-4 rounded-sm p-1`}
                     aria-label="Add pattern">
                 <PlusIcon className="size-6"/>
@@ -47,7 +44,7 @@ export const RuleSection = ({rule, onRuleChange, enableSerif, enableWeights}: Ru
 
 type RulePatternProps = {
     pattern: RulePattern
-    onChange: (value: RulePattern) => void
+    onChange: (patch: Partial<RulePattern>) => void
     terminalOnly: boolean
     onDelete?: () => void
     enableWeight?: boolean
@@ -80,7 +77,7 @@ export const RulePatternItem = ({
 
     const onGroupInput = (e: FormEvent<HTMLInputElement>) => {
         const v = e.currentTarget.value
-        onChange({...pattern, pattern: v})
+        onChange({pattern: v})
     }
 
     const onWeightInput = (e: FormEvent<HTMLInputElement>) => {
@@ -90,7 +87,7 @@ export const RulePatternItem = ({
 
     const onWeightBlur = () => {
         if (isNumber(weightValue)) {
-            onChange({...pattern, weight: +weightValue})
+            onChange({weight: +weightValue})
         } else {
             setWeightValue('1')
         }

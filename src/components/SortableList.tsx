@@ -1,7 +1,6 @@
 import {ReactNode} from "react";
 import {closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors} from "@dnd-kit/core";
 import {
-    arrayMove,
     horizontalListSortingStrategy,
     SortableContext,
     useSortable,
@@ -11,12 +10,12 @@ import {CSS} from "@dnd-kit/utilities";
 
 type SortableListProps<T extends { id: string }> = {
     items: T[]
-    onChange: (items: T[]) => void
+    onMove: (from: number, to: number) => void
     direction: "horizontal" | "vertical"
     children: ReactNode
 }
 
-export const SortableList = <T extends { id: string }>({items, onChange, direction, children}: SortableListProps<T>) => {
+export const SortableList = <T extends { id: string }>({items, onMove, direction, children}: SortableListProps<T>) => {
     // Touch drags wait for a long press so scrolling a list on a phone doesn't pick items up.
     const sensors = useSensors(
         useSensor(MouseSensor),
@@ -30,7 +29,7 @@ export const SortableList = <T extends { id: string }>({items, onChange, directi
         const to = items.findIndex(it => it.id === over.id)
         if (from === -1 || to === -1) return
 
-        onChange(arrayMove(items, from, to))
+        onMove(from, to)
     }
 
     return (

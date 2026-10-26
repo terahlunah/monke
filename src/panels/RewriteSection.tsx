@@ -1,25 +1,21 @@
-import {ChangeEvent} from "react";
+import {ChangeEvent, Dispatch} from "react";
 import {Row} from "../components/Row.tsx";
 import {ChevronsRightIcon, EllipsisVerticalIcon, PlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
 import {RewritePattern, Rule} from "../engine/config.ts";
+import {ConfigAction} from "../engine/configReducer.ts";
 import {SortableList, SortableRow} from "../components/SortableList.tsx";
-import {removeAt, updateAt} from "../engine/list.ts";
 
 
 export type RewriteSectionProps = {
     rule: Rule
-    onRuleChange: (rule: Rule) => void
+    dispatch: Dispatch<ConfigAction>
     enableSerif?: boolean
 }
 
-export const RewriteSection = ({rule, onRuleChange, enableSerif}: RewriteSectionProps) => {
+export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProps) => {
 
-    const setRewrites = (rewrites: RewritePattern[]) => onRuleChange({...rule, rewrites})
-
-    const onAdd = () => {
-        setRewrites([...rule.rewrites, {id: crypto.randomUUID(), match: "", replace: ""}])
-    }
+    const ruleId = rule.id
 
     return (
         <>
@@ -28,17 +24,18 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif}: RewriteSection
                 <div className="h-0.5 bg-white/10 grow"/>
             </Row>
             <Row className="gap-4 flex-wrap">
-                <SortableList items={rule.rewrites} onChange={setRewrites} direction="horizontal">
-                    {rule.rewrites.map((r, index) =>
+                <SortableList items={rule.rewrites} onMove={(from, to) => dispatch({type: "moveRewrite", ruleId, from, to})}
+                              direction="horizontal">
+                    {rule.rewrites.map(r =>
                         <RewritePatternItem key={r.id}
                                             rewrite={r}
-                                            onChange={rewrite => setRewrites(updateAt(rule.rewrites, index, rewrite))}
-                                            onDelete={() => setRewrites(removeAt(rule.rewrites, index))}
+                                            onChange={patch => dispatch({type: "editRewrite", ruleId, id: r.id, patch})}
+                                            onDelete={() => dispatch({type: "removeRewrite", ruleId, id: r.id})}
                                             enableSerif={enableSerif}/>
                     )}
                 </SortableList>
 
-                <button onClick={onAdd}
+                <button onClick={() => dispatch({type: "addRewrite", ruleId})}
                         className={`bg-accent-warning  mr-4 rounded-sm p-1`}
                         aria-label="Add rewrite pattern">
                     <PlusIcon className="size-6"/>
@@ -51,7 +48,7 @@ export const RewriteSection = ({rule, onRuleChange, enableSerif}: RewriteSection
 
 type RewritePatternProps = {
     rewrite: RewritePattern
-    onChange: (rewrite: RewritePattern) => void
+    onChange: (patch: Partial<RewritePattern>) => void
     onDelete?: () => void
     enableSerif?: boolean
 }
@@ -64,11 +61,11 @@ export const RewritePatternItem = ({
 
     const onMatchInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
-        onChange({...rewrite, match: v})
+        onChange({match: v})
     }
     const onReplaceInput = (e: ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value
-        onChange({...rewrite, replace: v})
+        onChange({replace: v})
     }
 
     return (
