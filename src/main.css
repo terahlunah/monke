@@ -40,13 +40,6 @@
     --color-feature-line: #3d4a26;
     --color-danger: #4a2626;
     --color-danger-text: #f2b8b8;
-
-    /* Legacy palette still used by the reference examples until they are restyled. */
-    --color-secondary: #3b4c9d;
-    --color-accent-warning: #966c1f;
-    --color-accent-caution: #b35e27;
-    --color-accent-danger: #be5252;
-    --color-accent-danger-text: #d27c7c;
 }
 
 @layer base {

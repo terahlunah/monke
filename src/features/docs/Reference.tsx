@@ -68,11 +68,13 @@ export const Reference = () => {
 
                 <Section id="reference-quick-start">
                     <ol className="list-decimal pl-6 flex flex-col gap-2">
-                        <li>On the Generator page, press <b>toki pona example</b> to load a small working grammar.</li>
+                        <li>On the Generator page, open <b>Examples</b> in the bar above the rules and choose <b>toki pona example</b> to
+                            load a small working grammar.</li>
                         <li>The words appear by themselves: 50 of them. Press <b>New words</b> for a fresh set, or change the
                             word count for more or fewer.</li>
-                        <li>Find the rule named <b>Vowel</b> and add a terminal such as <Code>y</Code>.
-                            The new vowel shows up in the words.</li>
+                        <li>Find the rule named <b>Vowel</b> and add a terminal such as <Code>y</Code> with <b>+ Terminal</b>. To add
+                            several at once, type them separated by spaces in <b>Add several</b> and press Enter. The new
+                            vowels show up in the words.</li>
                         <li>Made a mistake? Use your browser's <b>Back</b> button to undo the last edit.</li>
                     </ol>
                     <p>Or open the small grammar in the next section with its <b>Try it</b> link.</p>
@@ -84,16 +86,16 @@ export const Reference = () => {
                         letters, digits or <Code>_</Code>, so <Code>V</Code>, <Code>Syllable</Code> and <Code>coda_2</Code> all
                         work. Names are case-sensitive and must be unique.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li><b>Terminal rules</b> (<b>Add Terminal Rule</b>) hold plain text, usually the sounds of your
+                        <li><b>Terminal rules</b> (<b>+ Terminal rule</b>, named in blue) hold plain text, usually the sounds of your
                             language. Each terminal is used as written, without quotes: <Code>a</Code>, <Code>ch</Code>
                             and <Code>好</Code> are all fine.</li>
-                        <li><b>Rules</b> (<b>Add Rule</b>) hold patterns that combine other rules and text. A rule needs
-                            at least one pattern. Only rules can have rewrites and exclusions.</li>
+                        <li><b>Pattern rules</b> (<b>+ Pattern rule</b>, named in violet) hold patterns that combine other rules and text. A rule needs
+                            at least one pattern. Only pattern rules can have rewrites and exclusions.</li>
                     </ul>
                     <p>Whenever a rule is used, Monke picks one of its terminals or patterns at random.</p>
 
                     <Sub>The start rule</Sub>
-                    <p>Choose the <b>Start rule</b> above the rules. Every word is generated from it, and it uses other rules by
+                    <p>Choose the <b>Start rule</b> in the bar above the rules; the rule's header then says <b>start rule</b>. Every word is generated from it, and it uses other rules by
                         name. Rules the start rule never reaches don't affect the words, but they are still checked for errors.</p>
 
                     <Sub>Patterns</Sub>
@@ -176,9 +178,9 @@ export const Reference = () => {
                 </Section>
 
                 <Section id="reference-weights">
-                    <p>Weights are ignored until you turn on <b>Enable probability weights</b> in the generator panel. Until
+                    <p>Weights are ignored until you turn on <b>Weights</b> in the bar above the rules. Until
                         then every alternative is equally likely and every optional is present half of the time.</p>
-                    <p>Once enabled, each terminal and pattern gets a weight field next to it. Weights are relative: a weight of
+                    <p>Once enabled, each terminal and pattern row gets a weight field. Weights are relative: a weight of
                         2 is picked twice as often as a weight of 1. A weight of 0 is never picked, which is handy for
                         switching a pattern off temporarily.</p>
                     <p>Inside a pattern, put <Code>*N</Code> after an alternative. Alternatives without one weigh 1, so these
@@ -192,7 +194,7 @@ export const Reference = () => {
                 </Section>
 
                 <Section id="reference-rewrites">
-                    <p>Rewrites change a rule's output after it is generated, like sound changes. Turn on <b>Rw</b> in a rule's
+                    <p>Rewrites change a rule's output after it is generated, like sound changes. Turn on <b>Rewrites</b> in a pattern rule's
                         header to show and enable its rewrites; turned off, they are kept but ignored.</p>
                     <p>A rewrite has a match and a replacement, both written in pattern syntax.</p>
 
@@ -248,7 +250,7 @@ export const Reference = () => {
                 </Section>
 
                 <Section id="reference-exclusions">
-                    <p>Exclusions reject outputs you don't want. Turn on <b>Ex</b> in a rule's header to show and enable them;
+                    <p>Exclusions reject outputs you don't want. Turn on <b>Exclusions</b> in a pattern rule's header to show and enable them;
                         turned off, they are kept but ignored.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>An output is rejected if an exclusion matches <b>anywhere inside it</b>, not only if the whole
@@ -310,13 +312,16 @@ export const Reference = () => {
                 <Section id="reference-output">
                     <Sub>Generator options</Sub>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li>The <b>Word count</b> field sets how many words to make, from 1 to 10000.</li>
-                        <li><b>Filter Duplicates</b> hides repeated words and shows how many are unique.</li>
-                        <li><b>Output as list</b> shows one word per line instead of a paragraph. <b>Copy</b> copies the
-                            words in the current layout.</li>
-                        <li><b>Repeat rewrites until nothing changes</b> runs each rule's rewrite list until it stops
-                            changing the output, instead of once (see Rewrites). It is saved in share links.</li>
-                        <li><b>Enable serifs</b> switches to a serif font, which makes some IPA characters easier to read.</li>
+                        <li>The <b>Count</b> field sets how many words to make, from 1 to 10000.</li>
+                        <li><b>Paragraph</b> and <b>List</b> choose between running text and one word per line.
+                            <b> Copy</b> copies the words in the current layout.</li>
+                        <li><b>Repeat rewrites</b>, in the bar above the rules, runs each rule's rewrite list until it
+                            stops changing the output, instead of once (see Rewrites). It is saved in share links.</li>
+                        <li>The <b>View settings</b> menu (the gear next to <b>Words</b>) holds three options.
+                            <b> Filter duplicates</b> hides repeated words and shows how many are unique.
+                            <b> Serif font</b> switches the words and your patterns to a serif font, which makes some IPA
+                            characters easier to read. <b>Always show reorder buttons</b> is described under Reordering.
+                            The menu stays open while you toggle them; press Escape to close it.</li>
                     </ul>
 
                     <Sub>Seed and automatic updates</Sub>
@@ -360,33 +365,38 @@ export const Reference = () => {
                     <Sub>Share links</Sub>
                     <p>The whole configuration (rules, start rule, language name, weights, repeated rewrites, serif
                         settings and seed) is encoded in
-                        the page address and updated as you edit. <b>Share link</b> copies it. Anyone opening it gets your
+                        the page address and updated as you edit. <b>Share link</b> in the bar above the rules copies it. Anyone opening it gets your
                         grammar; nothing is stored on a server. Links made by older versions of Monke still open.</p>
 
                     <Sub>Files</Sub>
-                    <p><b>Export Config</b> downloads the configuration as a <Code>.monke</Code> file named after the
-                        language. <b>Import Config</b> loads one, including files exported by older versions. Importing
-                        replaces the current grammar.</p>
+                    <p><b>Export</b>, then <b>Monke file</b>, downloads the configuration as a <Code>.monke</Code> file named
+                        after the language. <b>Import</b>, then <b>Monke file</b>, loads one, including files exported by
+                        older versions. Importing replaces the current grammar. On small screens both are in one
+                        <b> Files</b> menu.</p>
+                    <p><b>Examples</b> loads the toki pona grammars or any recipe from this reference, and <b>New</b>
+                        starts an empty grammar. Both replace the current grammar.</p>
 
                     <Sub>Undo and redo</Sub>
                     <p>Every edit is a step in your browser history: <b>Back</b> undoes, <b>Forward</b> redoes. A burst of
-                        typing counts as one step. Loading an example, importing a file and clearing are steps too.</p>
+                        typing counts as one step. Loading an example, importing a file and choosing <b>New</b> are steps too.</p>
                 </Section>
 
                 <Section id="reference-reordering">
                     <p>Rules, terminals, patterns, rewrites and exclusions can be reordered. Order matters for rewrites; for
                         the rest it only changes how things look.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li><b>Drag</b> an item by its grip handle (on touch screens, press and hold first).</li>
+                        <li><b>Drag</b> an item by its grip handle, the three dots (on touch screens, press and hold first).</li>
                         <li><b>Keyboard drag:</b> focus the handle, press Space or Enter to pick the item up, move it with the
                             arrow keys, then press Space or Enter to drop it, or Escape to cancel.</li>
-                        <li><b>Move buttons:</b> rules always show up and down buttons. Terminals, patterns, rewrites and
-                            exclusions have left and right buttons that appear when the item has keyboard focus. Turn on
-                            <b> Always show reorder buttons</b> to keep them visible. This setting stays in your browser and
-                            is not part of share links.</li>
+                        <li><b>Move buttons:</b> rules always show up and down buttons (on small screens they are in the
+                            <b> More actions</b> menu at the end of the rule's header). Terminals, patterns and rewrites are
+                            rows with up and down buttons, and exclusions have left and right buttons; these appear when
+                            the item has keyboard focus. Turn on <b>Always show reorder buttons</b> in the
+                            <b> View settings</b> menu to keep them visible. This setting stays in your browser and is not
+                            part of share links.</li>
                     </ul>
-                    <p>Each rule header also has buttons to collapse the rule, duplicate it and delete it. On the Generator
-                        page, a <b>Skip to generator</b> link at the start jumps past the rules.</p>
+                    <p>Each rule header also has buttons to collapse the rule, duplicate it and delete it. A collapsed
+                        terminal rule lists its terminals in the header. On the Generator page, a <b>Skip to generator</b> link at the start jumps past the rules.</p>
                 </Section>
 
                 <Section id="reference-recipes">
@@ -433,7 +443,7 @@ export const Reference = () => {
                     <ExampleCard hrefs={hrefs} example={awkwordsExample} summary={awkwordsExample.summary}/>
 
                     <Sub>Importing Awkwords files</Sub>
-                    <p>On the Generator page, <b>Import Awkwords</b> converts an Awkwords pattern into a Monke grammar. Choose
+                    <p>On the Generator page, <b>Import</b>, then <b>Awkwords</b>, converts an Awkwords pattern into a Monke grammar. Choose
                         an <Code>.awkw</Code> file saved by Awkwords, or paste a pattern. To paste subpatterns as well, write
                         them one per line as a saved file does: <Code>V:a/i/u</Code>, then <Code>r:CV</Code> for the main
                         pattern. The import replaces the current grammar; the browser's Back button undoes it.</p>
@@ -443,7 +453,7 @@ export const Reference = () => {
                         <li>Brackets, optionals, escapes and weights are translated as in the table above. Weights are
                             enabled when the pattern uses any.</li>
                         <li>The number of words fills the word count; <b>filter duplicates</b> and <b>new line each</b> set
-                            Filter Duplicates and Output as list.</li>
+                            Filter duplicates and the List style.</li>
                         <li>Each filtered fragment becomes a rule named <Code>Filtered1</Code>, <Code>Filtered2</Code>, and
                             so on, holding just that fragment, with one exclusion per filter.</li>
                     </ul>
@@ -455,7 +465,7 @@ export const Reference = () => {
                         exclusion <Code>{"'a'"}</Code> would reject <Code>ab</Code> too. A filter made only of spaces rejects
                         an empty result; that case uses a helper rule ending in <Code>Marked</Code> that adds an invisible
                         marker, which a rewrite then removes.</p>
-                    <p>When something does not translate exactly, the import lists notes under the import buttons until you
+                    <p>When something does not translate exactly, the import lists notes in the output panel until you
                         dismiss them. The most common ones:</p>
                     <ul className="list-disc pl-6 flex flex-col gap-1">
                         <li><b>Probabilities may differ slightly</b>: the filtered fragment is inside an alternative or an

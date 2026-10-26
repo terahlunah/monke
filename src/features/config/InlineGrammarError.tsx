@@ -11,5 +11,5 @@ type InlineGrammarErrorProps = {
 export const InlineGrammarError = ({ruleId, itemIds}: InlineGrammarErrorProps) => {
     const error = useGrammarError()
     if (!error || error.ruleId !== ruleId || !itemIds.includes(error.itemId ?? null)) return null
-    return <p id={INLINE_GRAMMAR_ERROR_ID} className="text-sm text-accent-danger-text">{error.message}</p>
+    return <p id={INLINE_GRAMMAR_ERROR_ID} className="text-sm text-danger-text">{error.message}</p>
 }
