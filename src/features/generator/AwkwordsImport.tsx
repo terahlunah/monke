@@ -1,4 +1,4 @@
-import {ChangeEvent, FormEvent, useId, useRef, useState} from "react"
+import {ChangeEvent, FormEvent, useEffect, useId, useRef, useState} from "react"
 import {Description, Dialog, DialogPanel, DialogTitle} from "@headlessui/react"
 import {Row} from "@/components/Row.tsx"
 import {AwkwordsImport as ImportResult, importAwkwords} from "@/engine/awkwords.ts"
@@ -15,6 +15,13 @@ export const AwkwordsImport = ({open, onClose, onImported}: Props) => {
     const [error, setError] = useState<string | null>(null)
     const fileInput = useRef<HTMLInputElement>(null)
     const errorId = useId()
+    // The component loads lazily, so it can first render with open already true; Headless UI only hides the rest of the
+    // page (inert) when the dialog goes from closed to open, so the first open waits for a render with it closed.
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => {
+        const id = requestAnimationFrame(() => setMounted(true))
+        return () => cancelAnimationFrame(id)
+    }, [])
 
     const close = () => {
         onClose()
@@ -47,7 +54,7 @@ export const AwkwordsImport = ({open, onClose, onImported}: Props) => {
     }
 
     return <>
-        <Dialog open={open} onClose={close} className="relative z-50">
+        <Dialog open={open && mounted} onClose={close} className="relative z-50">
             <div className="fixed inset-0 bg-black/60" aria-hidden="true"/>
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <DialogPanel className="flex flex-col gap-4 w-full max-w-xl max-h-full overflow-auto rounded-sm bg-surface border border-line-strong shadow-lg p-6">

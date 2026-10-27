@@ -1,4 +1,4 @@
-import {useEffect, useMemo, useRef, useState} from "react";
+import {lazy, Suspense, useEffect, useMemo, useRef, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 
 import {configToGrammar, GrammarError} from "@/engine/buildGrammar.ts";
@@ -7,12 +7,18 @@ import {Configuration} from "@/features/config/Configuration.tsx";
 import {GrammarToolbar} from "@/features/config/GrammarToolbar.tsx";
 import {Generator} from "@/features/generator/Generator.tsx";
 import {useGeneratorView} from "@/features/generator/useGeneratorView.ts";
-import {Reference} from "@/features/docs/Reference.tsx";
-import {Faq} from "@/features/docs/Faq.tsx";
 import {Navbar} from "./Navbar.tsx";
 import {Tab, tabs} from "./tabs.ts";
 import {useUrlConfig} from "./useUrlConfig.ts";
 import {useMediaQuery} from "./useMediaQuery.ts";
+
+// The docs tabs are reading material most visits never open, so they load on demand (the static pages carry them
+// for crawlers and for reading without the app).
+const Reference = lazy(() => import("@/features/docs/Reference.tsx").then(m => ({default: m.Reference})))
+const Faq = lazy(() => import("@/features/docs/Faq.tsx").then(m => ({default: m.Faq})))
+
+// Holds the space while a docs chunk loads; focus has already moved to the labelled main landmark.
+const docsFallback = <div aria-busy="true" className="grow"/>
 
 export const Home = () => {
 
@@ -97,8 +103,8 @@ export const Home = () => {
                                 </div>
                             </GrammarErrorContext> : null
                     }
-                    {tab === "reference" ? <Reference/> : null}
-                    {tab === "faq" ? <Faq/> : null}
+                    {tab === "reference" ? <Suspense fallback={docsFallback}><Reference/></Suspense> : null}
+                    {tab === "faq" ? <Suspense fallback={docsFallback}><Faq/></Suspense> : null}
                 </main>
             </div>
         </>

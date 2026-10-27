@@ -1,12 +1,11 @@
-import {ChangeEvent, Dispatch, useRef, useState} from "react";
+import {ChangeEvent, Dispatch, lazy, Suspense, useRef, useState} from "react";
 import {Listbox, ListboxButton, ListboxLabel, ListboxOption, ListboxOptions} from "@headlessui/react";
 import {CheckIcon, ChevronDownIcon} from "lucide-react";
 import {toast} from "react-toastify";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {parseConfigFile} from "@/engine/configfile.ts";
-import {AwkwordsImport as AwkwordsResult} from "@/engine/awkwords.ts";
-import {AwkwordsImport} from "@/features/generator/AwkwordsImport.tsx";
+import type {AwkwordsImport as AwkwordsResult} from "@/engine/awkwords.ts";
 import {GeneratorView} from "@/features/generator/useGeneratorView.ts";
 import {exampleToConfig, firstGrammar, recipes} from "@/features/docs/referenceExamples.ts";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
@@ -40,11 +39,16 @@ const copyLink = async () => {
 }
 
 // Everything that acts on the whole grammar: its name, start rule, global flags, loading and sharing.
+// The importer and its parser are only needed once someone imports, so they load on first use.
+const AwkwordsImport = lazy(() => import("@/features/generator/AwkwordsImport.tsx").then(m => ({default: m.AwkwordsImport})))
+
 export const GrammarToolbar = ({config, dispatch, view}: GrammarToolbarProps) => {
     const desktop = useMediaQuery("(min-width: 768px)")
     const fileInput = useRef<HTMLInputElement>(null)
     const importButton = useRef<HTMLButtonElement>(null)
     const [awkwordsOpen, setAwkwordsOpen] = useState(false)
+    // Stays mounted after the first open so a cancelled draft is kept, as before.
+    const [awkwordsUsed, setAwkwordsUsed] = useState(false)
 
     const onFileSelected = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -84,7 +88,10 @@ export const GrammarToolbar = ({config, dispatch, view}: GrammarToolbarProps) =>
     )
     const importAwkwords = (
         <MenuItem>
-            <button type="button" className={menuItemClass} onClick={() => setAwkwordsOpen(true)}>
+            <button type="button" className={menuItemClass} onClick={() => {
+                setAwkwordsUsed(true)
+                setAwkwordsOpen(true)
+            }}>
                 {desktop ? "Awkwords…" : "Import Awkwords…"}
             </button>
         </MenuItem>
@@ -208,7 +215,10 @@ export const GrammarToolbar = ({config, dispatch, view}: GrammarToolbarProps) =>
 
             <input ref={fileInput} type="file" accept=".monke" className="hidden" onChange={onFileSelected}
                    aria-hidden="true" tabIndex={-1}/>
-            <AwkwordsImport open={awkwordsOpen} onClose={closeAwkwords} onImported={onAwkwordsImported}/>
+            {awkwordsUsed ?
+                <Suspense fallback={null}>
+                    <AwkwordsImport open={awkwordsOpen} onClose={closeAwkwords} onImported={onAwkwordsImported}/>
+                </Suspense> : null}
         </section>
     )
 }

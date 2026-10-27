@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {AwkwordsImport, AwkwordsWarning} from "@/engine/awkwords.ts";
+import type {AwkwordsImport, AwkwordsWarning} from "@/engine/awkwords.ts";
 
 export const MAX_WORD_COUNT = 10000
 
