@@ -5,6 +5,7 @@ import {buttonOutline, buttonPrimary, textInput} from "@/components/styles.ts";
 import {Dispatch, FormEvent, MouseEvent, useEffect, useMemo, useRef, useState} from "react";
 import {randomSeed} from "@/engine/seed.ts";
 import {drawAsync} from "./drawAsync.ts";
+import {draw} from "./draw.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
@@ -49,11 +50,15 @@ type GeneratorProps = {
 
 export const Generator = ({config, grammar, error, dispatch, view}: GeneratorProps) => {
 
-    const [generatedWords, setGeneratedWords] = useState<string[]>([])
     const {wordCount, setWordCount, outputStyle, filterDuplicates, setFilterDuplicates, importNotes, setImportNotes} = view
+    // The first words are drawn during the first render: a worker round trip would leave the output empty (and shift
+    // the layout when it fills) for the first paints. Later redraws go through the worker.
+    const [initial] = useState(() => grammar ? {...draw(grammar, config.seed, clampWordCount(wordCount)), grammar} : null)
+    const [generatedWords, setGeneratedWords] = useState<string[]>(initial?.words ?? [])
     const outputList = outputStyle === "list"
     // Redraw failures are shown but not put in an alert: they would interrupt on every keystroke.
-    const [generationError, setGenerationError] = useState<{ message: string, live: boolean } | null>(null)
+    const [generationError, setGenerationError] = useState<{ message: string, live: boolean } | null>(
+        initial?.error ? {message: initial.error, live: true} : null)
     // Announced politely after "New words" and "Generate all". The result is deliberately not read out: it can be thousands of words,
     // and screen reader users browse it as text or a list instead.
     const [announcement, setAnnouncement] = useState({text: "", run: 0})
@@ -110,7 +115,11 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
     // Identifies the latest scheduled redraw so results of superseded ones are dropped.
     const drawSeq = useRef(0)
     // The inputs the shown words were drawn from; any difference from the current ones means a redraw is pending.
-    const [drawnFor, setDrawnFor] = useState<{ grammar: Grammar, seed: string, count: number } | null>(null)
+    const [drawnFor, setDrawnFor] = useState<{ grammar: Grammar, seed: string, count: number } | null>(
+        initial ? {grammar: initial.grammar, seed: config.seed, count: clampWordCount(wordCount)} : null)
+    // What the output currently shows, if it is a draw of the current inputs (not a "Generate all" listing); lets the
+    // effect below skip a redraw that would reproduce the same words.
+    const shownDraw = useRef<{ grammar: Grammar, seed: string, count: number } | null>(drawnFor)
     const [listing, setListing] = useState(false)
     const [slow, setSlow] = useState(false)
     const drawing = grammar !== null && (drawnFor === null || drawnFor.grammar !== grammar ||
@@ -132,12 +141,15 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
         const immediate = last.seed !== config.seed || last.wordCount !== wordCount
         lastDrawInputs.current = {seed: config.seed, wordCount}
         const count = clampWordCount(wordCount)
+        const shown = shownDraw.current
+        if (shown && shown.grammar === grammar && shown.seed === config.seed && shown.count === count) return
         const timer = setTimeout(() => {
             drawAsync(grammar, config.seed, count).then(({words, error}) => {
                 if (id !== drawSeq.current) return
                 setGeneratedWords(words)
                 setGenerationError(error ? {message: error, live: true} : null)
                 setDrawnFor({grammar, seed: config.seed, count})
+                shownDraw.current = {grammar, seed: config.seed, count}
                 if (announceNext.current) {
                     announceNext.current = false
                     // A failed run is announced by its error alert instead.
@@ -180,9 +192,11 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
         try {
             const {words, truncated} = await listAll(grammar)
             setGeneratedWords(words)
+            shownDraw.current = null
             setAnnouncement(({run}) => ({text: summarizeList(words.length, truncated), run: run + 1}))
         } catch (e) {
             setGeneratedWords([])
+            shownDraw.current = null
             setGenerationError({message: (e as Error).message, live: false})
         } finally {
             setListing(false)

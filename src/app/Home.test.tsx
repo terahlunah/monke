@@ -20,6 +20,12 @@ describe("Home", () => {
         expect(screen.getByDisplayValue("Consonant")).toBeInTheDocument()
     })
 
+    it("shows words on the first render, before any timer or worker", () => {
+        renderAt("/")
+        expect(screen.getByRole("heading", {name: "Generated words"})).toBeInTheDocument()
+        expect(document.querySelector("#generator p.whitespace-pre-line")?.textContent?.trim()).not.toBe("")
+    })
+
     describe("history", () => {
         const settled = async () => {
             await screen.findByText(/possible branches/)
