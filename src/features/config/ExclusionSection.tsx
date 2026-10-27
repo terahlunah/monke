@@ -89,7 +89,7 @@ export const ExclusionPatternItem = ({
         <SortableRow id={exclusion.id} role="listitem" draggingClassName="relative z-30 shadow-lg">
             {({handleProps}) => (
                 <div className="group/chip flex h-9 md:h-[30px] items-center rounded-md border border-line-strong bg-background pl-1 pr-0.5 focus-within:border-exclusion-line">
-                    <button type="button" className={`${small} w-4 text-handle touch-none`} {...handleProps}
+                    <button type="button" className={`${small} w-6 text-handle touch-none`} {...handleProps}
                             aria-label={`Drag ${lowerFirst(label)}`}>
                         <EllipsisVerticalIcon className="size-3.5" aria-hidden="true"/>
                     </button>

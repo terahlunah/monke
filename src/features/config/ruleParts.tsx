@@ -4,7 +4,7 @@ import {buttonAdd} from "@/components/styles.ts";
 
 // Drag handle. `handleProps` makes it the dnd-kit activator, which also gives it the keyboard drag behaviour.
 export const GripButton = ({label, handleProps}: { label: string, handleProps: object }) => (
-    <button type="button" className="flex h-9 md:h-[30px] w-[18px] md:w-6 touch-none items-center justify-center rounded-md text-handle hover:bg-white/5"
+    <button type="button" className="flex h-9 md:h-[30px] w-6 touch-none items-center justify-center rounded-md text-handle hover:bg-white/5"
             aria-label={label} {...handleProps}>
         <EllipsisVerticalIcon className="size-5" aria-hidden="true"/>
     </button>
