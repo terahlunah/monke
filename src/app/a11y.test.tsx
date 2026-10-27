@@ -103,7 +103,7 @@ describe("accessibility (axe)", () => {
         await check(document.body, {landmarks: false})
     })
 
-    it("features panel with values, weights and an error", async () => {
+    it("features panel with values, weights and a warning", async () => {
         const user = userEvent.setup()
         const {container} = await renderApp()
         await user.click(screen.getByRole("button", {name: "Weights"}))
@@ -114,7 +114,7 @@ describe("accessibility (axe)", () => {
         await user.click(screen.getByRole("button", {name: "Feature values of terminal 2 of rule Vowel"}))
         await user.click(await screen.findByRole("checkbox", {name: "front"}))
         await user.keyboard("{Escape}")
-        await screen.findAllByText(/no enclosing rule chooses harmony/)
+        await screen.findAllByText(/Feature .harmony. is not chosen when rule .Vowel./)
         await check(container)
     })
 

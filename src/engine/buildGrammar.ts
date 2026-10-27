@@ -1,5 +1,5 @@
 import {Config, Rule as ConfigRule, RulePattern} from "./config.ts";
-import {checkFeatures, checkFilters, FeatureProblem, RULE_CHOOSES_ITEM} from "./features.ts";
+import {checkFeatures, checkFilters, FeatureProblem, FeatureWarning, RULE_CHOOSES_ITEM} from "./features.ts";
 import {containsBoundary, Expr, findInvalidBackReference, findInvalidMatchIndex, getRuleEdges, Grammar, GrammarFeature, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule, Tags, WeightedExpr} from "./grammar.ts";
 import {parsePattern} from "./pattern.ts";
 import {closest} from "./suggest.ts";
@@ -30,7 +30,8 @@ const featureDeclarations = (config: Config): { features: GrammarFeature[], valu
     const valueNames: ValueNames = new Map()
     const seenFeatures = new Set<string>()
     const seenValues = new Set<string>()
-    for (const f of config.features) {
+    const declared = usableFeatures(config)
+    for (const f of declared) {
         if (!NAME.test(f.name)) throw new GrammarError(`Invalid feature name : '${f.name}'`, f.id)
         if (seenFeatures.has(f.name)) throw new GrammarError(`Duplicate feature name '${f.name}'`, f.id)
         seenFeatures.add(f.name)
@@ -43,9 +44,30 @@ const featureDeclarations = (config: Config): { features: GrammarFeature[], valu
             valueNames.set(v.id, [f.name, v.name])
         }
     }
-    const features = config.features.map(f => ({name: f.name, values: f.values.map(v => ({name: v.name, weight: v.weight}))}))
+    const features = declared.map(f => ({name: f.name, values: f.values.map(v => ({name: v.name, weight: v.weight}))}))
     return {features, valueNames, featureNames}
 }
+
+const unnamed = (name: string) => name.trim() === ""
+
+// Declarations without a name yet (being typed) are left out, so they never block generation: an unnamed value is
+// dropped (items carrying it count as not carrying it), and an unnamed feature, or one whose values are all unnamed,
+// is dropped with every choice and value of it, as if not declared.
+const usableFeatures = (config: Config): Config["features"] =>
+    config.features.flatMap(f => {
+        if (unnamed(f.name)) return []
+        const values = f.values.filter(v => !unnamed(v.name))
+        return values.length === 0 && f.values.length > 0 ? [] : [{...f, values}]
+    })
+
+// Non-blocking hints for the declarations `usableFeatures` leaves out, located on the feature (and value).
+export const unnamedFeatureWarnings = (features: Config["features"]): FeatureWarning[] =>
+    features.flatMap((f, n): FeatureWarning[] => {
+        if (unnamed(f.name)) return [{message: `Feature ${n + 1} has no name yet; it is ignored`, ownerId: f.id}]
+        return f.values.flatMap((v, k) => unnamed(v.name)
+            ? [{message: `Value ${k + 1} of feature '${f.name}' has no name yet; it is ignored`, ownerId: f.id, itemId: v.id}]
+            : [])
+    })
 
 const toTags = (ids: string[] | undefined, valueNames: ValueNames): Tags | undefined => {
     const tags = new Map<string, Set<string>>()

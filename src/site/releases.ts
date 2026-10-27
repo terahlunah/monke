@@ -21,7 +21,7 @@ export const releases: Release[] = [
             {
                 title: "New",
                 items: [
-                    "Phonological features: declare features like `harmony: front | back`, tag terminals, patterns or whole rules, and let a rule choose a value for everything inside it. Vowel harmony and consistent branching without duplicating rules. Filter references with `Vowel<front>` or `Vowel<!back>`.",
+                    "Phonological features: declare features like `harmony: front | back`, tag terminals, patterns or whole rules, and let a rule choose a value for everything inside it. Vowel harmony and consistent branching without duplicating rules. Filter references with `Vowel<front>` or `Vowel<!back>`. Unnamed features and unchosen values give warnings instead of stopping generation.",
                     "Import from Awkwords: open an .awkw file or paste a pattern. Subpatterns become rules, filters become exact exclusions, and anything that can't be translated exactly is listed for review.",
                     "Words update as you edit. Output is driven by a seed you can set and share, so a link always shows the same words; New words picks a fresh seed.",
                     "Generate all lists every distinct word a grammar can make (up to 10,000), with rewrites and exclusions applied.",

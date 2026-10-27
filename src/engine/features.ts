@@ -88,35 +88,46 @@ export const deadEndMessage = (r: Rule, scope: Scope, filters: Filter[]): string
 export const outOfScopeMessage = (r: Rule, scope: Scope): string =>
     `Rule '${r.name}' cannot be used when ${describeScope(scope)}: its values exclude it`
 
-// Values carried for a feature that nothing chooses (and no filter at that spot selects on) would make the
-// output ignore them silently, so they are an error.
-const unchosen = (tags: Tags, covered: (feature: string) => boolean): string | undefined =>
-    [...tags.keys()].find(f => !covered(f))
+// Features carried by an item that nothing chooses (and no filter at that spot selects on): the values are inert
+// there, every row stays in play.
+const unchosen = (tags: Tags, covered: (feature: string) => boolean): string[] =>
+    [...tags.keys()].filter(f => !covered(f))
+
+const unchosenMessage = (feature: string, r: Rule, parent: string | undefined): string =>
+    `Feature '${feature}' is not chosen when rule '${r.name}' is used ${parent ? `in '${parent}'` : "as the start rule"}; its values are all kept`
 
 const STATE_LIMIT = 100_000
 
-// Walks every rule reachable from the root under every combination of chosen values, and reports the first
-// tagged item whose feature is not chosen and the first place where scope and filters leave nothing to produce.
-export const checkFeatures = (g: Grammar) => {
+// Walks every rule reachable from the root under every combination of chosen values. Throws at the first place
+// where scope and filters leave nothing to produce; returns a warning for each tagged item reached where its
+// feature is not chosen (deduped).
+export const checkFeatures = (g: Grammar): FeatureWarning[] => {
     const root = g.ruleMap.get(g.root)
-    if (!root || g.features.length === 0) return
+    if (!root || g.features.length === 0) return []
     const seen = new Set<string>()
+    const warnings = new Map<string, FeatureWarning>()
+    const warn = (w: FeatureWarning) => {
+        const key = `${w.message}|${w.ownerId}|${w.itemId}`
+        if (!warnings.has(key)) warnings.set(key, w)
+    }
     const keyOf = (s: Iterable<unknown>) => [...s].map(String).sort().join(",")
     const featuresOf = (filters: Filter[]) => filters.map(f => g.valueFeature.get(f.value) ?? "")
 
-    type Site = { ownerId?: string, itemId?: string }
+    // `parent`: name of the rule whose pattern references this one.
+    type Site = { ownerId?: string, itemId?: string, parent?: string }
 
     // `covered`: features a filter selects on at this spot, the reference's own and, for a rule entered as a row,
     // those of the reference to its parent. A filter makes carrying the values meaningful without a choice.
     const visitRule = (r: Rule, scope: Scope, filters: Filter[], covered: Set<string>, site: Site) => {
-        const key = `${r.name}|${keyOf(scope)}|${describeFilters(filters)}|${keyOf(covered)}`
+        const key = `${r.name}|${keyOf(scope)}|${describeFilters(filters)}|${keyOf(covered)}|${site.parent ?? ""}`
         if (seen.has(key) || seen.size > STATE_LIMIT) return
         seen.add(key)
 
         const cover = new Set([...covered, ...featuresOf(filters)])
         if (r.tags) {
-            const missing = unchosen(r.tags, f => scope.has(f) || cover.has(f))
-            if (missing) throw new FeatureProblem(`Rule '${r.name}' carries ${missing} values, but no enclosing rule chooses ${missing}`, r.id, RULE_VALUES_ITEM)
+            for (const f of unchosen(r.tags, f => scope.has(f) || cover.has(f))) {
+                warn({message: unchosenMessage(f, r, site.parent), ownerId: r.id, itemId: RULE_VALUES_ITEM})
+            }
             if (conflictsWith(r.tags, scope)) throw new FeatureProblem(outOfScopeMessage(r, scope), site.ownerId, site.itemId)
         }
 
@@ -127,9 +138,10 @@ export const checkFeatures = (g: Grammar) => {
                 throw new FeatureProblem(deadEndMessage(r, inner, filters), filters.length ? site.ownerId : r.id, filters.length ? site.itemId : undefined)
             }
             for (const row of rows) {
-                const missing = row.tags && unchosen(row.tags, f => inner.has(f) || own.has(f))
-                if (missing) throw new FeatureProblem(`This item carries ${missing} values, but no enclosing rule chooses ${missing}`, r.id, row.id)
-                const rowSite = {ownerId: r.id, itemId: row.id}
+                for (const f of row.tags ? unchosen(row.tags, f => inner.has(f) || own.has(f)) : []) {
+                    warn({message: unchosenMessage(f, r, site.parent), ownerId: r.id, itemId: row.id})
+                }
+                const rowSite = {ownerId: r.id, itemId: row.id, parent: r.name}
                 if (row.expr.tag === "Ref") {
                     const target = g.ruleMap.get(row.expr.rule)
                     if (target) visitRule(target, inner, row.expr.filters ?? [], own, rowSite)
@@ -137,7 +149,7 @@ export const checkFeatures = (g: Grammar) => {
                     walk(row.expr, inner, rowSite)
                 }
             }
-            for (const [, replace] of r.rewrites) walk(replace, inner, {ownerId: r.id})
+            for (const [, replace] of r.rewrites) walk(replace, inner, {ownerId: r.id, parent: r.name})
         }
     }
 
@@ -166,6 +178,7 @@ export const checkFeatures = (g: Grammar) => {
     }
 
     visitRule(root, emptyScope, [], new Set(), {ownerId: root.id})
+    return [...warnings.values()]
 }
 
 // Every filter in a pattern names a declared value, and the filters alone keep at least one alternative.
@@ -228,7 +241,8 @@ const exprRefs = (e: Expr): string[] => {
     }
 }
 
-// Non-blocking hints: a declared feature nothing uses, and a choice nothing below the rule reacts to.
+// Non-blocking hints: a declared feature nothing uses, a choice nothing below the rule reacts to, and values
+// carried where their feature is not chosen.
 export const featureWarnings = (g: Grammar, featureIds: Map<string, string> = new Map()): FeatureWarning[] => {
     const warnings: FeatureWarning[] = []
     const allExprs = g.rules.flatMap(r => [r.expr, ...r.exclusions, ...r.rewrites.flat()])
@@ -258,6 +272,11 @@ export const featureWarnings = (g: Grammar, featureIds: Map<string, string> = ne
         for (const f of r.chooses) {
             if (!below.has(f)) warnings.push({message: `Rule '${r.name}' chooses ${f}, but nothing it produces carries ${f} values`, ownerId: r.id, itemId: RULE_CHOOSES_ITEM})
         }
+    }
+    try {
+        warnings.push(...checkFeatures(g))
+    } catch {
+        // A dead end is reported as an error by configToGrammar; a grammar built there never has one.
     }
     return warnings
 }

@@ -1,5 +1,9 @@
 import {describe, expect, it} from "vitest"
-import {configToGrammar, GrammarError} from "./buildGrammar.ts"
+import {configToGrammar, GrammarError, unnamedFeatureWarnings} from "./buildGrammar.ts"
+import {enumerate} from "./enumerate.ts"
+import {generate} from "./generate.ts"
+import {countCombinations} from "./analysis.ts"
+import {seededRng} from "./seed.ts"
 import {featureWarnings, RULE_CHOOSES_ITEM, RULE_VALUES_ITEM} from "./features.ts"
 import {Config, Feature} from "./config.ts"
 import {consonants, harmony, harmonyConfig, makeConfig, makeFeature, makeRule, rounding, tagRows, vowels} from "./test-helpers.ts"
@@ -41,37 +45,83 @@ describe("feature declarations", () => {
     })
 })
 
-describe("implicit choices", () => {
-    it("rejects a tagged item reached where nothing chooses its feature, on that item", () => {
-        const e = errorOf(harmonyConfig("[C.V]{2}", {}))
-        expect(e.message).toMatch(/carries harmony values, but no enclosing rule chooses harmony/)
-        expect([e.ruleId, e.itemId]).toEqual(["V", "V1"])
+describe("unnamed declarations", () => {
+    const pending = (features: Feature[]) => makeConfig("W", [makeRule("W", ["V"], {chooses: ["h"]}), vowels], {features})
+    const unnamedValue: Feature = {id: "h", name: "h", values: [{id: "front", name: "front", weight: 1}, {id: "back", name: "", weight: 1}]}
+
+    it("ignores an unnamed feature, with its choices, and warns on it", () => {
+        const config = pending([{id: "h", name: "", values: [{id: "front", name: "front", weight: 1}]}])
+        const g = configToGrammar(config)!
+        expect(g.features).toEqual([])
+        expect(g.ruleMap.get("W")!.chooses).toEqual([])
+        expect(enumerate(g).words.sort()).toEqual(["a", "e", "i", "o", "u"])
+        expect(unnamedFeatureWarnings(config.features)).toEqual([{message: "Feature 1 has no name yet; it is ignored", ownerId: "h"}])
     })
 
-    it("rejects rule values reached where nothing chooses their feature, on the rule's values", () => {
+    it("ignores an unnamed value and warns on it", () => {
+        const config = pending([unnamedValue])
+        const g = configToGrammar(config)!
+        expect(g.features[0].values.map(v => v.name)).toEqual(["front"])
+        // Rows carrying the unnamed value count as untagged, so they stay in play whatever is chosen.
+        expect(enumerate(g).words.sort()).toEqual(["a", "e", "i", "o", "u"])
+        expect(unnamedFeatureWarnings(config.features)).toEqual([
+            {message: "Value 2 of feature 'h' has no name yet; it is ignored", ownerId: "h", itemId: "back"},
+        ])
+    })
+
+    it("ignores a feature whose values are all unnamed", () => {
+        const g = configToGrammar(pending([{id: "h", name: "h", values: [{id: "nv", name: "", weight: 1}]}]))!
+        expect(g.features).toEqual([])
+        expect(enumerate(g).words).toHaveLength(5)
+    })
+})
+
+describe("unchosen features", () => {
+    it("keeps every row of a tagged rule reached where nothing chooses its feature", () => {
+        const g = configToGrammar(harmonyConfig("C.V", {}))!
+        expect(enumerate(g).words).toHaveLength(15)
+        expect(countCombinations(g)).toBe(15)
+        const drawn = new Set(Array.from({length: 300}, (_, i) => generate(g, seededRng(String(i)))))
+        expect(drawn.size).toBe(15)
+    })
+
+    it("warns once on the tagged item, naming the rule, its user and the feature", () => {
+        const g = configToGrammar(harmonyConfig("[C.V]{2}", {}))!
+        expect(featureWarnings(g)).toEqual([
+            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V1"},
+            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V2"},
+            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V3"},
+            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V4"},
+        ])
+    })
+
+    it("warns on a rule's own values, keeping it in play", () => {
         const front = makeRule("F", ["e"], {terminalOnly: true, values: ["front"]})
-        const e = errorOf(harmonyConfig("C.F", {}, [front, consonants]))
-        expect([e.ruleId, e.itemId]).toEqual(["F", RULE_VALUES_ITEM])
+        const g = configToGrammar(harmonyConfig("C.F", {}, [front, consonants]))!
+        expect(featureWarnings(g)).toContainEqual(
+            {message: "Feature 'harmony' is not chosen when rule 'F' is used in 'Word'; its values are all kept", ownerId: "F", itemId: RULE_VALUES_ITEM})
+        expect(enumerate(g).words).toHaveLength(3)
     })
 
-    it("accepts the same item when an enclosing rule chooses, however deep", () => {
+    it("is quiet when an enclosing rule chooses, however deep", () => {
         const syllable = makeRule("S", ["C.V"])
-        expect(() => configToGrammar(harmonyConfig("S{2}", {chooses: ["harmony"]}, [syllable, vowels, consonants]))).not.toThrow()
+        expect(featureWarnings(configToGrammar(harmonyConfig("S{2}", {chooses: ["harmony"]}, [syllable, vowels, consonants]))!)).toEqual([])
     })
 
-    it("accepts a filter instead of a choice for the filtered rule's alternatives", () => {
-        expect(() => configToGrammar(harmonyConfig("C.V<!back>", {}))).not.toThrow()
-        expect(() => configToGrammar(harmonyConfig("C.V<front>", {}))).not.toThrow()
+    it("is quiet when a filter selects on the feature instead", () => {
+        expect(featureWarnings(configToGrammar(harmonyConfig("C.V<!back>", {}))!)).toEqual([])
+        expect(featureWarnings(configToGrammar(harmonyConfig("C.V<front>", {}))!)).toEqual([])
     })
 
-    it("still requires a choice below the filtered level", () => {
+    it("warns below the filtered level", () => {
         const syllable = makeRule("S", ["C.V"])
-        const e = errorOf(harmonyConfig("S<!back>", {}, [syllable, vowels, consonants]))
-        expect(e.itemId).toBe("V1")
+        const warnings = featureWarnings(configToGrammar(harmonyConfig("S<!back>", {}, [syllable, vowels, consonants]))!)
+        expect(warnings.map(w => w.itemId)).toContain("V1")
+        expect(warnings[0].message).toMatch(/rule 'V' is used in 'S'/)
     })
 
     it("ignores items that are never reached", () => {
-        expect(() => configToGrammar(harmonyConfig("C{2}", {}))).not.toThrow()
+        expect(featureWarnings(configToGrammar(harmonyConfig("C{2}", {}))!)).toEqual([])
     })
 })
 

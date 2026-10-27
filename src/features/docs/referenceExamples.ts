@@ -243,9 +243,14 @@ export const featureExamples = [harmonyExample, twoFeaturesExample, branchingExa
 
 export type FeatureErrorDemo = { pattern: string, chooses: boolean, message: string }
 
+// The Word pattern of harmonyExample without its choice of harmony, and the warning it gives.
+export const unchosenWarningDemo = {
+    pattern: "Consonant.Vowel",
+    message: "Feature 'harmony' is not chosen when rule 'Vowel' is used in 'Word'; its values are all kept",
+}
+
 // The Word pattern of harmonyExample, with or without its choice of harmony, and the error each gives.
 export const featureErrorDemos: FeatureErrorDemo[] = [
-    {pattern: "Consonant.Vowel", chooses: false, message: "This item carries harmony values, but no enclosing rule chooses harmony"},
     {pattern: "Consonant.Vowel<front>", chooses: true, message: "No alternative of rule 'Vowel' can be used when harmony is back through <front>"},
     {pattern: "Consonant.Vowel<frnt>", chooses: true, message: "Unknown feature value 'frnt' in the filter on 'Vowel'"},
 ]

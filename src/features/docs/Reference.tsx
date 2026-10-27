@@ -15,6 +15,7 @@ import {
     errorHintDemos,
     branchingExample,
     featureErrorDemos,
+    unchosenWarningDemo,
     filterExample,
     harmonyExample,
     twoFeaturesExample,
@@ -371,8 +372,9 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         <li>Rewrites and exclusions work as before on the rule&apos;s output. Rule names in a rewrite
                             replacement are generated with the rule&apos;s chosen values. When an exclusion rejects an
                             output, the rule chooses again.</li>
-                        <li>An item that carries values is an error if a rule uses it while no enclosing rule chooses
-                            that feature and no filter selects on it there, because its values would be ignored.</li>
+                        <li>Where no enclosing rule chooses a feature and no filter selects on it, its values have no
+                            effect: every alternative stays in play, as if neutral. This gives a warning, since it is
+                            usually a missing choice.</li>
                     </ul>
                     <ExampleCard hrefs={hrefs} example={harmonyExample} summary={harmonyExample.summary}/>
 
@@ -397,7 +399,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         <li>Filters work in patterns, rewrite matches and exclusions. In a rule that chooses, they apply
                             on top of the chosen value.</li>
                         <li>A filter only looks at the rule&apos;s own alternatives. Values carried deeper, in rules
-                            those alternatives use, still need a rule that chooses.</li>
+                            those alternatives use, still need a rule that chooses to have any effect.</li>
                     </ul>
                     <ExampleCard hrefs={hrefs} example={filterExample}/>
 
@@ -409,9 +411,11 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                             <li key={d.pattern}><Code>{d.pattern}</Code>{d.chooses ? "" : ", without choosing harmony"}: <b>{d.message}</b></li>
                         ))}
                     </ul>
-                    <p>Invalid or duplicate feature and value names are errors too. A feature that nothing uses, and a
-                        rule that chooses a feature nothing below it carries, are only warnings, listed under the word
-                        count.</p>
+                    <p>Invalid or duplicate feature and value names are errors too. A feature or value without a name
+                        yet is ignored until it gets one. That, a feature that nothing uses, a rule that chooses a
+                        feature nothing below it carries, and values carried where their feature is not chosen are only
+                        warnings, listed under the word count. For example, <Code>{unchosenWarningDemo.pattern}</Code>{" "}
+                        without choosing harmony gives: <b>{unchosenWarningDemo.message}</b></p>
                     <p>Generate all lists the words for every value each choice can take. The number of possible
                         branches counts each chosen value separately, so a word made only of neutral items is counted
                         once per value.</p>

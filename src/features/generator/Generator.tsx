@@ -8,6 +8,7 @@ import {drawAsync} from "./drawAsync.ts";
 import {draw} from "./draw.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
 import {featureWarnings} from "@/engine/features.ts";
+import {unnamedFeatureWarnings} from "@/engine/buildGrammar.ts";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {toast} from "react-toastify";
@@ -103,7 +104,10 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
 
     // Hints that never block generation, e.g. a feature nothing uses.
     const warnings = useMemo(
-        () => grammar ? featureWarnings(grammar, new Map(config.features.map(f => [f.name, f.id]))) : [],
+        () => [
+            ...unnamedFeatureWarnings(config.features),
+            ...grammar ? featureWarnings(grammar, new Map(config.features.map(f => [f.name, f.id]))) : [],
+        ],
         [grammar, config.features]
     )
 
@@ -249,7 +253,7 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
             }
             {warnings.length ? (
                 <ul aria-label="Grammar warnings" className="flex flex-col gap-0.5 text-sm text-muted">
-                    {warnings.map(w => <li key={w.message}>Warning: {w.message}</li>)}
+                    {warnings.map((w, i) => <li key={i}>Warning: {w.message}</li>)}
                 </ul>
             ) : null}
             {/* A count only: the list itself is one Tab away and would be long to hear on every edit. */}

@@ -7,7 +7,8 @@ import {mulberry32} from "@/engine/test-helpers.ts"
 import {importAwkwords} from "@/engine/awkwords.ts"
 import {enumerate} from "@/engine/enumerate.ts"
 import {seededRng} from "@/engine/seed.ts"
-import {awkwordsImportDemo, branchingExample, exampleToConfig, ExampleRule, featureErrorDemos, filterExample, harmonyExample, twoFeaturesExample, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
+import {featureWarnings} from "@/engine/features.ts"
+import {awkwordsImportDemo, branchingExample, exampleToConfig, ExampleRule, featureErrorDemos, unchosenWarningDemo, filterExample, harmonyExample, twoFeaturesExample, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
 const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
@@ -167,5 +168,10 @@ describe("phonological feature examples", () => {
     it.each(featureErrorDemos)("$pattern reports $message", ({pattern, chooses, message}) => {
         const rules = harmonyExample.rules.map(r => r.name === "Word" ? {...r, items: [pattern], chooses: chooses ? ["harmony"] : undefined} : r)
         expect(() => grammarOf({...harmonyExample, rules})).toThrow(message)
+    })
+
+    it("warns about values carried where nothing chooses them", () => {
+        const rules = harmonyExample.rules.map(r => r.name === "Word" ? {...r, items: [unchosenWarningDemo.pattern], chooses: undefined} : r)
+        expect(featureWarnings(grammarOf({...harmonyExample, rules})).map(w => w.message)).toContain(unchosenWarningDemo.message)
     })
 })
