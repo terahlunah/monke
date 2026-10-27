@@ -1,0 +1,6 @@
+# Everything may be crawled, AI crawlers included. Share links (a grammar in the path) are not blocked:
+# they canonicalize to the home page, which a blocked page couldn't signal.
+User-agent: *
+Allow: /
+
+Sitemap: https://monke.lunah.dev/sitemap.xml

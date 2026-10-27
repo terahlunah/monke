@@ -1,11 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&display=swap');
+/* Self-hosted variable fonts, upright only (the UI has no italics). Each family is split by unicode-range, so a
+   browser only downloads the scripts a page uses; font-display: swap keeps text visible while they load. */
+@import "@fontsource-variable/noto-sans/wght.css";
+@import "@fontsource-variable/noto-serif/wght.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 
 @import "tailwindcss";
 
 @theme {
-    --font-sans: "Noto Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    --font-serif: "Noto Serif", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --font-sans: "Noto Sans Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-serif: "Noto Serif Variable", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
     /* Neutrals. Every text/background pair below was checked for WCAG AA (4.5:1); see the notes beside the exceptions. */
     --color-background: #16161a;
@@ -63,6 +67,12 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-line);
+    }
+
+    /* The no-JavaScript fallback has no utility classes; its links must still look like links. */
+    noscript a {
+        color: var(--color-primary-text);
+        text-decoration: underline;
     }
 
     button:not(:disabled),

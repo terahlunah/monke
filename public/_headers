@@ -6,3 +6,16 @@
 
 /
   Cache-Control: public, max-age=0, must-revalidate
+
+/*/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.txt
+  Cache-Control: public, max-age=3600
+  Content-Type: text/plain; charset=utf-8
+
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+
+/site.webmanifest
+  Cache-Control: public, max-age=86400

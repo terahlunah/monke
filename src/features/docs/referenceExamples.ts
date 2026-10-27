@@ -268,3 +268,8 @@ export const errorHintDemos: ErrorHintDemo[] = [
     {pattern: "C.V 'n'", message: "Missing `.` between `V` and `'n'`? (rule : 'Word') at character 5"},
     {pattern: "C.[V / 'a'", message: "Expected ']' at the end of a group (rule : 'Word') at character 11"},
 ]
+
+export const awkwordsExample = recipes.find(r => r.id === "awkwords")!
+
+// Every example offering a Try it link, so their share URLs are encoded together once.
+export const allExamples = [firstGrammar, ...recipes]

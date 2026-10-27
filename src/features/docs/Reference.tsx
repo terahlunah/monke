@@ -3,10 +3,14 @@ import {ScrollRegion} from "@/components/ScrollRegion.tsx";
 import {scrollRegionTo} from "@/components/scroll.ts";
 import {ExampleCard} from "./ExampleCard.tsx";
 import {useExampleHrefs} from "./useExampleHrefs.ts";
+import {Code} from "./Code.tsx";
+import {awkwordsRows} from "./awkwordsRows.tsx";
 import {
+    allExamples,
+    awkwordsExample,
     awkwordsImportDemo,
-    exclusionDemos,
     firstGrammar,
+    exclusionDemos,
     itemText,
     errorHintDemos,
     listAllDemo,
@@ -16,8 +20,6 @@ import {
     syntaxRows
 } from "./referenceExamples.ts";
 
-// Every example offering a Try it link, so their share URLs are encoded together once.
-const allExamples = [firstGrammar, ...recipes]
 
 const sections = [
     {id: "reference-quick-start", title: "Quick start"},
@@ -38,9 +40,10 @@ type SectionId = typeof sections[number]["id"]
 // The URL path holds the shared config, so in-page links scroll and move focus themselves instead of changing the URL.
 const jumpTo = (e: MouseEvent<HTMLAnchorElement>, id: string) => {
     const target = document.getElementById(id)
-    if (!target) return
+    const region = target?.closest<HTMLElement>("[data-scroll-region]")
+    if (!target || !region) return
     e.preventDefault()
-    scrollRegionTo(target.closest<HTMLElement>("[data-scroll-region]")!, target)
+    scrollRegionTo(region, target)
     target.focus({preventScroll: true})
 }
 
@@ -48,6 +51,14 @@ export const Reference = () => {
     const hrefs = useExampleHrefs(allExamples)
     return (
         <ScrollRegion label="reference" className="flex flex-col bg-background grow p-4 md:p-8 gap-3 md:no-scrollbar pb-64 leading-relaxed">
+            <ReferenceContent hrefs={hrefs}/>
+        </ScrollRegion>
+    )
+}
+
+// The prerendered /reference/ page passes share URLs encoded at build time; the app encodes them on mount.
+export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => {
+    return (
             <div className="flex flex-col gap-3 max-w-3xl w-full mx-auto">
                 <p className="text-lg">
                     Monke builds words from rules you write. This reference starts with a five-minute tour and ends with a
@@ -488,7 +499,6 @@ export const Reference = () => {
                         patterns instead of fixed text, optional probabilities, decimal weights and weighted rule patterns.</p>
                 </Section>
             </div>
-        </ScrollRegion>
     )
 }
 
@@ -504,27 +514,8 @@ const Section = ({id, children}: { id: SectionId, children: ReactNode }) => (
 
 const Sub = ({children}: { children: ReactNode }) => <h3 className="font-bold text-lg mt-2">{children}</h3>
 
-const Code = ({children}: { children: string }) => (
-    // Short tokens like 'text' never break; only long ones may wrap anywhere, so narrow table cells can't overflow.
-    <code className={`font-mono rounded-sm bg-white/10 px-1.5 py-0.5 ${children.length <= 12 ? "whitespace-pre" : "[overflow-wrap:anywhere] whitespace-pre-wrap"}`}>{children}</code>
-)
-
 const CodeBlock = ({children}: { children: string }) => (
     <pre className="font-mono rounded-sm bg-white/10 px-3 py-2 whitespace-pre-wrap"><code>{children}</code></pre>
 )
 
 const Arrow = () => <><span aria-hidden="true">→</span><span className="sr-only">becomes</span></>
-
-const awkwordsExample = recipes.find(r => r.id === "awkwords")!
-
-const awkwordsRows: [ReactNode, ReactNode][] = [
-    [<>Subpattern <Code>V</Code> with <Code>a/i/u</Code></>, <>Terminal rule <Code>V</Code> with terminals <Code>a</Code>, <Code>i</Code>, <Code>u</Code>. A subpattern with brackets, letters or filters becomes a rule with patterns instead. Any name works, not only capital letters.</>],
-    [<>Pattern <Code>CV</Code></>, <>Root rule with the pattern <Code>C.V</Code></>],
-    [<>Text such as <Code>ka</Code>; spaces are ignored</>, <>Quoted text: <Code>{"'ka'"}</Code>. A bare word is always a rule name.</>],
-    [<>Escaped text <Code>{'"..."'}</Code>, with <Code>{'""'}</Code> for a double quote</>, <>Quoted text <Code>{"'...'"}</Code>, with <Code>{"\\'"}</Code> for a single quote and <Code>{"\\\\"}</Code> for a backslash.</>],
-    [<>Alternatives <Code>ka/ta</Code></>, <><Code>{"'ka' / 'ta'"}</Code>. An empty alternative, as in <Code>{"[a/]"}</Code>, is <Code>{"''"}</Code>.</>],
-    [<>Brackets <Code>[...]</Code></>, <>Group <Code>{"[...]"}</Code></>],
-    [<>Optional <Code>(...)</Code>, present half of the time</>, <>Optional <Code>{"(...)"}</Code>, also half of the time. A choice inside needs a group: <Code>{"(['a' / 'b'])"}</Code></>],
-    [<>Weight <Code>*n</Code>, a whole number from 1 to 128, anywhere in its alternative</>, <>Weight <Code>*N</Code> at the end of the alternative, used only when weights are enabled.</>],
-    [<>Filter <Code>^text</Code> on the fragment before it</>, <>Exclusion on a rule that holds the fragment (see below).</>],
-]

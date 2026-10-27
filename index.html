@@ -1,49 +1,122 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-E30C8XJMHD"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-
-        gtag('js', new Date());
-
-        gtag('config', 'G-E30C8XJMHD');
-    </script>
-    <!-- Cloudflare Web Analytics -->
-    <script defer src='https://static.cloudflareinsights.com/beacon.min.js'
-            data-cf-beacon='{"token": "48c822a97803490ca08d33ae208157b7"}'></script>
-    <!-- End Cloudflare Web Analytics -->
-
     <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- The URL path holds the whole grammar: same-origin navigations must not carry it in the Referer. -->
+    <meta name="referrer" content="strict-origin"/>
 
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <!-- page-meta: the prerender replaces this block on static pages. -->
+    <title>Monke – Free Conlang Word Generator (Awkwords alternative)</title>
+    <meta name="description"
+          content="Free, client-only random word generator for conlangs. Define phonology with weighted rules, optionals, rewrites and exclusions; share grammars by link. No account, nothing stored server-side."/>
+    <!-- Share links are the same page with a grammar in the path: they consolidate into the home page instead of being indexed apart. -->
+    <link rel="canonical" href="https://monke.lunah.dev/"/>
+    <meta property="og:url" content="https://monke.lunah.dev/"/>
+    <meta property="og:title" content="Monke – Free Conlang Word Generator"/>
+    <meta property="og:description"
+          content="A grammar-based word generator for conlangs. Write rules for your phonology and generate words in your browser; share grammars by link."/>
+    <!-- /page-meta -->
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="Monke"/>
+    <meta property="og:image" content="https://monke.lunah.dev/thumbnail.png"/>
+    <meta property="og:image:type" content="image/png"/>
+    <meta property="og:image:width" content="1024"/>
+    <meta property="og:image:height" content="1024"/>
+    <meta property="og:image:alt" content="The Monke logo"/>
+    <!-- The thumbnail is square, so the small card shows it uncropped. -->
+    <meta name="twitter:card" content="summary"/>
+    <meta name="theme-color" content="#1b1b20"/>
+
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
     <link rel="manifest" href="/site.webmanifest">
 
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Monke",
+            "url": "https://monke.lunah.dev/",
+            "description": "Free, grammar-based random word generator for constructed languages (conlangs). Runs entirely in the browser.",
+            "applicationCategory": "DesignApplication",
+            "operatingSystem": "Any (web browser)",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+            "author": {"@type": "Person", "name": "Terah", "url": "https://github.com/terahlunah"},
+            "image": "https://monke.lunah.dev/thumbnail.png",
+            "sameAs": ["https://github.com/terahlunah/monke"]
+        }
+    </script>
 
-    <meta property="og:title" content="Monke - A grammar based word generator"/>
-    <meta property="og:description"
-          content="A grammar based word generator. Generate random word to build a lexicon for your conlang based on an advanced rule based system."/>
-    <meta property="og:image" content="https://monke.lunah.dev/thumbnail.png"/>
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1024">
-    <meta property="og:image:height" content="1024">
+    <!-- Analytics. The URL path holds the whole grammar, so neither service may see it: GA gets a sanitized address
+         and no automatic page view, and the Cloudflare beacon (which can't be given another address) only loads on
+         the static pages. analyticsPageUrl is inlined by the build from src/site/pages.ts. -->
+    <script>
+        (function () {
+            var pageUrl = __ANALYTICS_PAGE_URL__;
+            var page = pageUrl(location.href);
+            var ref = document.referrer;
+            if (ref && ref.indexOf(location.origin + "/") === 0) ref = pageUrl(ref);
+            var params = {page_location: page, page_referrer: ref, page_title: "Monke"};
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Monke</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:wght@400;500&display=swap">
+            // gtag's enhanced measurement reports a page view with the raw address on every pushState and popstate,
+            // overriding page_location. The app writes the address through the methods saved here, before gtag can
+            // wrap them, and receives Back/Forward as "monke:popstate", which gtag doesn't listen to.
+            window.monkeHistory = {pushState: history.pushState, replaceState: history.replaceState};
+            addEventListener("popstate", function (e) {
+                e.stopImmediatePropagation();
+                dispatchEvent(new Event("monke:popstate"));
+            });
+
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function () {
+                dataLayer.push(arguments);
+            };
+            gtag("js", new Date());
+            // "set" applies to every later event, including automatic ones, on top of the config.
+            gtag("set", params);
+            gtag("config", "G-E30C8XJMHD", Object.assign({send_page_view: false}, params));
+            gtag("event", "page_view", params);
+            var ga = document.createElement("script");
+            ga.async = true;
+            ga.src = "https://www.googletagmanager.com/gtag/js?id=G-E30C8XJMHD";
+            document.head.appendChild(ga);
+
+            // The beacon reads the live address when it reports, and the app rewrites its address on every edit, so it
+            // only runs on the static pages, whose address never changes.
+            if (page !== location.origin + "/shared" && page !== location.origin + "/") {
+                var cf = document.createElement("script");
+                cf.defer = true;
+                cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
+                // spa: false, so edits (which rewrite the path) are never reported as navigations.
+                cf.setAttribute("data-cf-beacon", '{"token": "48c822a97803490ca08d33ae208157b7", "spa": false}');
+                document.head.appendChild(cf);
+            }
+        })();
+    </script>
 </head>
 <body>
 <div id="root"></div>
+<noscript>
+    <main style="max-width: 48rem; margin: 0 auto; padding: 2rem 1rem; line-height: 1.6">
+        <h1>Monke, a free conlang word generator</h1>
+        <p>Monke generates random words for constructed languages. You describe the sound patterns of your language with
+            rules (sounds, syllable patterns, weights, optional parts, rewrites and exclusions) and it produces as many
+            words as you need. It runs entirely in your browser: grammars live in the page address and in files you
+            export, never on a server.</p>
+        <p>The generator needs JavaScript. Without it, you can still read how it works:</p>
+        <ul>
+            <li><a href="/reference/">Reference</a>: pattern syntax, weights, rewrites, exclusions and recipes.</li>
+            <li><a href="/faq/">FAQ</a>: what Monke is and where your grammar is saved.</li>
+            <li><a href="/awkwords-alternative/">Coming from Awkwords</a>: importing Awkwords patterns and the syntax mapping.</li>
+            <li><a href="https://github.com/terahlunah/monke">Source code on GitHub</a>.</li>
+        </ul>
+    </main>
+</noscript>
 <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
