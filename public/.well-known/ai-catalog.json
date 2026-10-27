@@ -1,0 +1,9 @@
+{
+  "specVersion": "1.0",
+  "host": {
+    "displayName": "Monke",
+    "documentationUrl": "https://monke.lunah.dev/llms.txt",
+    "logoUrl": "https://monke.lunah.dev/android-chrome-512x512.png"
+  },
+  "entries": []
+}

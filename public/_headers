@@ -14,6 +14,10 @@
   Cache-Control: public, max-age=3600
   Content-Type: text/plain; charset=utf-8
 
+/.well-known/ai-catalog.json
+  Cache-Control: public, max-age=3600
+  Content-Type: application/json; charset=utf-8
+
 /sitemap.xml
   Cache-Control: public, max-age=3600
 

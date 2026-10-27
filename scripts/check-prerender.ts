@@ -32,6 +32,26 @@ if (notFound && !notFound.includes(notFoundPage.heading)) failures.push(`${notFo
 if (notFound && !notFound.includes('<meta name="robots" content="noindex"/>')) failures.push(`${notFoundPage.file}: noindex`)
 if (/rel="canonical"|<script type="module"/.test(notFound)) failures.push(`${notFoundPage.file}: should have no canonical or app bundle`)
 
+// The shape required by the ARD ai-catalog schema (specVersion "1.0", entries, host with displayName and only known
+// keys), which Lighthouse's agentic audit validates.
+const catalogFile = ".well-known/ai-catalog.json"
+const catalogText = await read(catalogFile)
+if (catalogText) {
+    try {
+        const catalog = JSON.parse(catalogText)
+        const hostKeys = ["displayName", "identifier", "documentationUrl", "logoUrl", "trustManifest"]
+        if (catalog.specVersion !== "1.0") failures.push(`${catalogFile}: specVersion must be "1.0"`)
+        if (!Array.isArray(catalog.entries)) failures.push(`${catalogFile}: entries must be an array`)
+        if (Object.keys(catalog).some(k => !["specVersion", "host", "entries"].includes(k))) failures.push(`${catalogFile}: unknown top-level key`)
+        if (catalog.host && (typeof catalog.host.displayName !== "string" || Object.keys(catalog.host).some(k => !hostKeys.includes(k)))) failures.push(`${catalogFile}: host`)
+        for (const url of [catalog.host?.documentationUrl, catalog.host?.logoUrl]) {
+            if (url && !(url.startsWith(`${siteOrigin}/`) && await read(url.slice(siteOrigin.length + 1)))) failures.push(`${catalogFile}: ${url} not in the build`)
+        }
+    } catch (e) {
+        failures.push(`${catalogFile}: ${e}`)
+    }
+}
+
 for (const file of ["robots.txt", "sitemap.xml", "llms.txt", "llms-full.txt", "site.webmanifest"]) await read(file)
 
 if (failures.length) {
