@@ -102,7 +102,8 @@
 }
 
 /* Landmarks and sections are focused from code (skip link, view change), not tabbed to, so they get no ring. */
-[tabindex="-1"]:focus-visible {
+/* Radios are excluded: Headless UI gives unselected radios tabindex -1, yet they can still take keyboard focus. */
+[tabindex="-1"]:not([role="radio"]):focus-visible {
     outline: none;
 }
 

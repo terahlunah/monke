@@ -285,7 +285,7 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
 
             <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
                 <RadioGroup value={outputStyle} onChange={view.setOutputStyle} aria-label="Output style"
-                            className="flex overflow-hidden rounded-md border border-line-strong">
+                            className="flex overflow-clip rounded-md border border-line-strong">
                     {(["paragraph", "list"] as const).map(style => (
                         <Radio key={style} value={style}
                                className="h-9 md:h-8 px-2.5 md:px-3 flex items-center cursor-pointer hover:bg-white/5 data-checked:bg-primary-soft data-checked:text-primary-text data-checked:font-semibold">
