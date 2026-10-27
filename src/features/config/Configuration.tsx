@@ -4,6 +4,7 @@ import {SortableList} from "@/components/SortableList.tsx";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {RuleInstance} from "./RuleInstance.tsx";
+import {FeaturesPanel} from "./FeaturesPanel.tsx";
 
 type ConfigurationProps = {
     config: Config
@@ -19,6 +20,8 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
                  className="flex flex-col p-4 md:p-6 gap-3 md:basis-[640px] md:grow-[999] md:min-w-0 md:overflow-auto md:no-scrollbar">
             <h2 id="config-heading" className="sr-only">Grammar configuration</h2>
 
+            <FeaturesPanel features={config.features} dispatch={dispatch} enableWeights={config.enableWeights}/>
+
             <SortableList items={config.rules} onMove={(from, to) => dispatch({type: "moveRule", from, to})}
                           direction="vertical"
                           describe={r => `rule ${r.name || "unnamed"}`}>
@@ -32,6 +35,7 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
                                       dispatch={dispatch}
                                       enableWeights={config.enableWeights}
                                       enableSerif={config.enableSerif}
+                                      features={config.features}
                                       key={r.id}
                         />)}
                 </div>

@@ -7,7 +7,10 @@ import {SortableRow} from "@/components/SortableList.tsx";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {Menu, MenuItem, MenuPanel, menuItemClass} from "@/components/menu.tsx";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
-import {Rule} from "@/engine/config.ts";
+import {Feature, Rule} from "@/engine/config.ts";
+import {RULE_CHOOSES_ITEM, RULE_VALUES_ITEM} from "@/engine/features.ts";
+import {Chooses, ValuesDisplay, ValuesPopover} from "./featureParts.tsx";
+import {valueNames} from "./featureNames.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
@@ -27,6 +30,7 @@ export type RuleInstanceProps = {
     dispatch: Dispatch<ConfigAction>
     enableWeights?: boolean
     enableSerif?: boolean
+    features?: Feature[]
 }
 
 const iconButton = "flex size-[30px] items-center justify-center rounded-md hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
@@ -40,10 +44,13 @@ export const RuleInstance = ({
                                  dispatch,
                                  enableWeights,
                                  enableSerif,
+                                 features = [],
                              }: RuleInstanceProps) => {
 
     const ruleId = rule.id
     const invalid = useInvalidProps(ruleId)
+    const invalidValues = useInvalidProps(ruleId, RULE_VALUES_ITEM)
+    const invalidChooses = useInvalidProps(ruleId, RULE_CHOOSES_ITEM)
     const desktop = useMediaQuery("(min-width: 768px)")
     const name = rule.name
 
@@ -113,6 +120,20 @@ export const RuleInstance = ({
         </Menu>
     )
 
+    // Only once features exist, so grammars without them keep a quiet header.
+    const featureControls = features.length ? (
+        <>
+            <span className="flex min-w-0 items-center gap-0.5">
+                <ValuesDisplay names={valueNames(features, rule.values)}/>
+                <ValuesPopover features={features} selected={rule.values} label={`rule ${name}`} invalid={invalidValues}
+                               onChange={values => dispatch({type: "setRuleValues", ruleId, values})}/>
+            </span>
+            <Chooses features={features} chooses={rule.chooses} ruleName={name} invalid={invalidChooses}
+                     onAdd={featureId => dispatch({type: "addRuleChoice", ruleId, featureId})}
+                     onRemove={featureId => dispatch({type: "removeRuleChoice", ruleId, featureId})}/>
+        </>
+    ) : null
+
     const inventory = rule.terminalOnly && rule.collapsed ?
         rule.patterns.map(p => p.pattern).filter(p => p !== "").join(" ") :
         ""
@@ -139,22 +160,25 @@ export const RuleInstance = ({
                         <span className="text-xs md:text-[13px] text-subtle">
                             {rule.terminalOnly ? "terminal" : "pattern"}<span className="max-md:hidden"> rule</span>{isRoot ? " · start" : ""}<span className="max-md:hidden">{isRoot ? " rule" : ""}</span>
                         </span>
+                        {desktop ? featureControls : null}
                         {inventory ?
                             <span className={`min-w-0 max-w-full truncate text-[13px] text-muted ${valueFont(enableSerif)}`}>{inventory}</span> :
                             null}
                         <div className="flex-1"/>
                         {actions}
-                        {/* On small screens the toggles drop to a line of their own under the name. */}
-                        {desktop || !toggles ? null : <div className="flex w-full items-center gap-2">{toggles}</div>}
+                        {/* On small screens the feature controls and toggles drop to a line of their own under the name. */}
+                        {desktop || !(toggles || featureControls) ? null : (
+                            <div className="flex w-full flex-wrap items-center gap-2">{featureControls}<div className="flex-1"/>{toggles}</div>
+                        )}
                     </div>
                     {/* A collapsed rule hides its items, so their errors show under the header instead. */}
                     <div className="px-3">
                         <InlineGrammarError ruleId={ruleId}
-                                            itemIds={[null, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
+                                            itemIds={[null, RULE_VALUES_ITEM, RULE_CHOOSES_ITEM, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
                     </div>
                     {rule.collapsed ? null : (
                         <div className="flex flex-col gap-1.5 px-2.5 pb-3 pt-1.5 md:px-3">
-                            <RuleSection rule={rule} dispatch={dispatch} enableSerif={enableSerif}
+                            <RuleSection rule={rule} dispatch={dispatch} enableSerif={enableSerif} features={features}
                                          enableWeights={enableWeights}/>
                             {rule.showRewrites && !rule.terminalOnly ? (
                                 <RewriteSection rule={rule} dispatch={dispatch} enableSerif={enableSerif}/>

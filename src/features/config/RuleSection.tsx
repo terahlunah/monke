@@ -1,7 +1,10 @@
 import {Dispatch, FormEvent, useState} from "react";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {lowerFirst} from "@/components/text.ts";
-import {Rule, RulePattern} from "@/engine/config.ts";
+import {Feature, Rule, RulePattern} from "@/engine/config.ts";
+import {useMediaQuery} from "@/app/useMediaQuery.ts";
+import {ValuesDisplay, ValuesPopover} from "./featureParts.tsx";
+import {valueNames} from "./featureNames.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
 import {textInput} from "@/components/styles.ts";
@@ -16,16 +19,19 @@ export type RuleSectionProps = {
     dispatch: Dispatch<ConfigAction>
     enableSerif?: boolean
     enableWeights?: boolean
+    features?: Feature[]
 }
 
-// handle | value | weight (only with weights on) | room for per-item extras | actions.
-// The extras cell is empty today and only exists on wide screens; the last column is as wide as the revealed move buttons need.
+// handle | value | weight (only with weights on) | feature values | actions.
+// The feature values cell only exists on wide screens; small ones put the edit button with the row actions and the
+// values on a line under the row. The last column is as wide
+// as the revealed move buttons need.
 const columns = {
     plain: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,1fr)_minmax(0,1.4fr)_auto]",
     weighted: "grid-cols-[18px_minmax(0,1fr)_56px_auto] md:grid-cols-[24px_minmax(0,1fr)_80px_minmax(0,1.4fr)_auto]",
 }
 
-export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSectionProps) => {
+export const RuleSection = ({rule, dispatch, enableSerif, enableWeights, features = []}: RuleSectionProps) => {
 
     const ruleId = rule.id
     const kind = rule.terminalOnly ? "terminal" : "pattern"
@@ -49,6 +55,8 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights}: RuleSe
                                          onChange={patch => dispatch({type: "editPattern", ruleId, id: p.id, patch})}
                                          onDelete={() => dispatch({type: "removePattern", ruleId, id: p.id})}
                                          enableWeight={enableWeights}
+                                         features={features}
+                                         onValues={values => dispatch({type: "setPatternValues", ruleId, id: p.id, values})}
                                          enableSerif={enableSerif}/>
                     )}
                 </div>
@@ -121,6 +129,8 @@ type RulePatternProps = {
     onDelete?: () => void
     enableWeight?: boolean
     enableSerif?: boolean
+    features?: Feature[]
+    onValues?: (ids: string[]) => void
 }
 
 function isNumber(value?: string | number): boolean {
@@ -140,7 +150,13 @@ export const RulePatternItem = ({
                                     onDelete,
                                     enableWeight,
                                     enableSerif,
+                                    features = [],
+                                    onValues,
                                 }: RulePatternProps) => {
+    const desktop = useMediaQuery("(min-width: 768px)")
+    const names = valueNames(features, pattern.values)
+    const popover = features.length && onValues ?
+        <ValuesPopover features={features} selected={pattern.values} label={lowerFirst(label)} onChange={onValues}/> : null
 
     const invalid = useInvalidProps(ruleId, pattern.id)
     const [weightValue, setWeightValue] = useState(pattern.weight.toString())
@@ -177,13 +193,15 @@ export const RulePatternItem = ({
                                inputMode="decimal"
                                className={`${rowInput} text-center text-muted`}/>
                     ) : null}
-                    <span className="hidden md:block" aria-hidden="true"/>
+                    {desktop ? <div className="flex min-w-0 items-center gap-0.5"><ValuesDisplay names={names}/>{popover}</div> : null}
                     <div className="flex items-center">
+                        {desktop ? null : popover}
                         <MoveButtons label={lowerFirst(label)} index={index} total={total} onMove={onMove} orientation="vertical" scope="row"
                                      buttonClassName="flex size-9 md:size-[30px] items-center justify-center rounded-md hover:bg-white/10 disabled:opacity-40 disabled:hover:bg-transparent"
                                      iconClassName="size-4"/>
                         <RowDeleteButton label={`Delete ${lowerFirst(label)}`} onClick={onDelete}/>
                     </div>
+                    {!desktop && names.length ? <ValuesDisplay names={names} className="col-span-full pl-6"/> : null}
                 </div>
             )}
         </SortableRow>

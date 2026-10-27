@@ -7,6 +7,7 @@ import {randomSeed} from "@/engine/seed.ts";
 import {drawAsync} from "./drawAsync.ts";
 import {draw} from "./draw.ts";
 import {countCombinations, detectCycle} from "@/engine/analysis.ts";
+import {featureWarnings} from "@/engine/features.ts";
 import {Config} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {toast} from "react-toastify";
@@ -98,6 +99,12 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
             }
         },
         [grammar]
+    )
+
+    // Hints that never block generation, e.g. a feature nothing uses.
+    const warnings = useMemo(
+        () => grammar ? featureWarnings(grammar, new Map(config.features.map(f => [f.name, f.id]))) : [],
+        [grammar, config.features]
     )
 
     const onWordCountInput = (e: FormEvent<HTMLInputElement>) => {
@@ -240,6 +247,13 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
                     <p className="text-sm text-muted">No grammar: choose a start rule</p> :
                     cycle ? <p className="text-sm text-muted">Grammar has at least one cycle: {cycle.join(" > ")}</p> : null
             }
+            {warnings.length ? (
+                <ul aria-label="Grammar warnings" className="flex flex-col gap-0.5 text-sm text-muted">
+                    {warnings.map(w => <li key={w.message}>Warning: {w.message}</li>)}
+                </ul>
+            ) : null}
+            {/* A count only: the list itself is one Tab away and would be long to hear on every edit. */}
+            <div aria-live="polite" className="sr-only">{warnings.length ? `${warnings.length} grammar ${warnings.length === 1 ? "warning" : "warnings"}` : ""}</div>
 
             {/* Everything that decides the drawn words sits on one row: how many, which seed, and a new seed. */}
             <div className="flex flex-wrap items-center gap-2 md:gap-2.5">
