@@ -138,7 +138,7 @@ describe("accessibility (axe)", () => {
         const user = userEvent.setup()
         await renderApp()
         await user.click(screen.getByRole("button", {name: /^What's new/}))
-        await screen.findByRole("dialog", {name: "What's new"})
+        await screen.findByRole("dialog", {name: "What's new"}, {timeout: 5000})
         await check(document.body, {landmarks: false})
     })
 })

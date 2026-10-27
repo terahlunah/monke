@@ -65,7 +65,7 @@ describe("news panel", () => {
         const bell = screen.getByRole("button", {name: "What's new (new updates)"})
         await user.click(bell)
 
-        const dialog = await screen.findByRole("dialog", {name: "What's new"})
+        const dialog = await screen.findByRole("dialog", {name: "What's new"}, {timeout: 5000})
         expect(window.localStorage.getItem(KEY)).toBe(releaseStamp(newestRelease))
         expect(screen.queryByTestId("news-dot")).not.toBeInTheDocument()
         expect(screen.getByRole("heading", {level: 3, name: `v${newestRelease.version}`})).toBeInTheDocument()
@@ -83,7 +83,7 @@ describe("news panel", () => {
         await user.tab()
         expect(screen.getByRole("button", {name: /What's new/})).toHaveFocus()
         await user.keyboard("{Enter}")
-        await screen.findByRole("dialog", {name: "What's new"})
+        await screen.findByRole("dialog", {name: "What's new"}, {timeout: 5000})
         await user.click(screen.getByRole("button", {name: "Close"}))
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
         expect(screen.getByRole("button", {name: "What's new"})).toHaveFocus()

@@ -3,6 +3,7 @@ import {join, resolve} from "node:path"
 import {createServer, Plugin, ResolvedConfig} from "vite"
 import react from "@vitejs/plugin-react"
 import {analyticsPageUrl, notFoundPage, siteOrigin, staticPages} from "../src/site/pages.ts"
+import {releases} from "../src/site/releases.ts"
 import {feedPath} from "../src/site/feed.ts"
 import type {RenderedPage} from "../src/site/prerender.tsx"
 
@@ -114,6 +115,11 @@ export const site = (): Plugin => {
                     await mkdir(dir, {recursive: true})
                     await writeFile(join(dir, "index.html"), pageHtml(template, page.path, pageMeta(page), page.body))
                 }
+                // The news page changes with every release, so its lastmod comes from the data rather than a hand edit.
+                const sitemap = await readFile(join(outDir, "sitemap.xml"), "utf8")
+                const newsUrl = `<loc>${siteOrigin}/news/</loc><lastmod>`
+                if (!sitemap.includes(newsUrl)) throw new Error("sitemap.xml has no /news/ entry")
+                await writeFile(join(outDir, "sitemap.xml"), sitemap.replace(new RegExp(`(${newsUrl})[^<]*`), `$1${releases[0].date}`))
                 await writeFile(join(outDir, feedPath.slice(1)), renderFeed())
                 await writeFile(join(outDir, notFoundPage.file), pageHtml(template, notFoundPage.path, notFoundMeta, renderNotFound()))
                 const llms = await readFile(join(config.root, "public", "llms.txt"), "utf8")
