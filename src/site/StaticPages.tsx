@@ -6,7 +6,7 @@ import {ReferenceContent} from "@/features/docs/Reference.tsx";
 import {Code} from "@/features/docs/Code.tsx";
 import {awkwordsRows} from "@/features/docs/awkwordsRows.tsx";
 import {awkwordsExample} from "@/features/docs/referenceExamples.ts";
-import {StaticPage, staticPages} from "./pages.ts";
+import {notFoundPage, StaticPage, staticPages} from "./pages.ts";
 import {navLabel} from "./navLabel.ts";
 
 // Prerendered at build time (see scripts/prerender.ts) and served without the app bundle, so crawlers and readers
@@ -15,7 +15,9 @@ import {navLabel} from "./navLabel.ts";
 const linkClass = "text-primary-text underline"
 const GITHUB_URL = "https://github.com/terahlunah/monke"
 
-export const Shell = ({page, children}: { page: StaticPage, children: ReactNode }) => (
+type ShellPage = { path: string, heading: string, description: string }
+
+export const Shell = ({page, children}: { page: ShellPage, children: ReactNode }) => (
     <div className="flex flex-col min-h-screen bg-background text-on-surface">
         <a href="#content" className="absolute -top-20 left-2 z-50 rounded-md bg-primary text-white p-2 focus:top-2">
             Skip to content
@@ -127,7 +129,16 @@ export const AwkwordsAlternative = ({hrefs}: { hrefs: Record<string, string> }) 
     </Prose>
 )
 
-export const StaticPageBody = ({page, hrefs}: { page: StaticPage, hrefs: Record<string, string> }) => (
+export const NotFoundBody = () => (
+    <Shell page={notFoundPage}>
+        <Prose>
+            <p><a className={linkClass} href="/">Open the generator</a> to start a new grammar, or read
+                the <a className={linkClass} href="/reference/">Reference</a>.</p>
+        </Prose>
+    </Shell>
+)
+
+export const StaticPageBody =({page, hrefs}: { page: StaticPage, hrefs: Record<string, string> }) => (
     <Shell page={page}>
         {page.path === "/reference/" ? <ReferenceContent hrefs={hrefs}/> : null}
         {page.path === "/faq/" ? <div className="flex flex-col gap-10"><FaqList/></div> : null}

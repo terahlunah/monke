@@ -2,7 +2,7 @@ import {readFile, writeFile, mkdir} from "node:fs/promises"
 import {join, resolve} from "node:path"
 import {createServer, Plugin, ResolvedConfig} from "vite"
 import react from "@vitejs/plugin-react"
-import {analyticsPageUrl, siteOrigin, staticPages} from "../src/site/pages.ts"
+import {analyticsPageUrl, notFoundPage, siteOrigin, staticPages} from "../src/site/pages.ts"
 import type {RenderedPage} from "../src/site/prerender.tsx"
 
 const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")
@@ -28,9 +28,9 @@ export const htmlToMarkdown = (html: string): string => html
     .replace(/\n{3,}/g, "\n\n")
     .trim()
 
-const pageHtml = (template: string, page: RenderedPage) => {
+const pageMeta = (page: RenderedPage) => {
     const url = siteOrigin + page.path
-    const meta = [
+    return [
         `<title>${escapeAttr(page.title)}</title>`,
         `<meta name="description" content="${escapeAttr(page.description)}"/>`,
         `<link rel="canonical" href="${url}"/>`,
@@ -38,15 +38,25 @@ const pageHtml = (template: string, page: RenderedPage) => {
         `<meta property="og:title" content="${escapeAttr(page.title)}"/>`,
         `<meta property="og:description" content="${escapeAttr(page.description)}"/>`,
         ...page.jsonLd.map(data => `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`),
-    ].join("\n    ")
+    ]
+}
+
+// Served at whatever address was missing, so it has no canonical or og:url.
+const notFoundMeta = [
+    `<title>${escapeAttr(notFoundPage.title)}</title>`,
+    `<meta name="description" content="${escapeAttr(notFoundPage.description)}"/>`,
+    `<meta name="robots" content="noindex"/>`,
+]
+
+const pageHtml = (template: string, path: string, meta: string[], body: string) => {
     const html = template
-        .replace(/<!-- page-meta:[\s\S]*?<!-- \/page-meta -->/, meta)
+        .replace(/<!-- page-meta:[\s\S]*?<!-- \/page-meta -->/, meta.join("\n    "))
         // Static pages are plain documents: no app bundle, no fallback for it.
         .replace(/<script type="module"[^>]*><\/script>/g, "")
         .replace(/<link rel="modulepreload"[^>]*>/g, "")
         .replace(/<noscript>[\s\S]*?<\/noscript>/, "")
-        .replace(/<div id="root"><\/div>/, page.body)
-    if (html.includes('<div id="root">') || html.includes("page-meta")) throw new Error(`Prerender of ${page.path}: template markers not found`)
+        .replace(/<div id="root"><\/div>/, body)
+    if (html.includes('<div id="root">') || html.includes("page-meta")) throw new Error(`Prerender of ${path}: template markers not found`)
     return html
 }
 
@@ -96,13 +106,14 @@ export const site = (): Plugin => {
                 optimizeDeps: {noDiscovery: true, include: []},
             })
             try {
-                const {renderPages} = await server.ssrLoadModule("/src/site/prerender.tsx") as typeof import("../src/site/prerender.tsx")
+                const {renderPages, renderNotFound} = await server.ssrLoadModule("/src/site/prerender.tsx") as typeof import("../src/site/prerender.tsx")
                 const pages = await renderPages()
                 for (const page of pages) {
                     const dir = join(outDir, page.path)
                     await mkdir(dir, {recursive: true})
-                    await writeFile(join(dir, "index.html"), pageHtml(template, page))
+                    await writeFile(join(dir, "index.html"), pageHtml(template, page.path, pageMeta(page), page.body))
                 }
+                await writeFile(join(outDir, notFoundPage.file), pageHtml(template, notFoundPage.path, notFoundMeta, renderNotFound()))
                 const llms = await readFile(join(config.root, "public", "llms.txt"), "utf8")
                 const full = [llms.trim(), ...pages.map(p => `# ${siteOrigin}${p.path}\n\n${htmlToMarkdown(p.body)}`)].join("\n\n---\n\n")
                 await writeFile(join(outDir, "llms-full.txt"), full + "\n")

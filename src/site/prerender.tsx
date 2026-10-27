@@ -3,7 +3,7 @@ import {encodeConfig} from "@/engine/sharing.ts";
 import {faqItems} from "@/features/docs/faqItems.tsx";
 import {allExamples, exampleToConfig} from "@/features/docs/referenceExamples.ts";
 import {siteOrigin, StaticPage, staticPages} from "./pages.ts";
-import {StaticPageBody} from "./StaticPages.tsx";
+import {NotFoundBody, StaticPageBody} from "./StaticPages.tsx";
 
 // Loaded by the build (scripts/prerender.ts) through Vite's SSR loader, so it shares the app's modules and aliases.
 
@@ -27,7 +27,9 @@ const faqJsonLd = () => ({
     })),
 })
 
-export const renderPages = async (): Promise<RenderedPage[]> => {
+export const renderNotFound = () => renderToStaticMarkup(<NotFoundBody/>)
+
+export const renderPages =async (): Promise<RenderedPage[]> => {
     // "Try it" links are share links to the live site, encoded once here instead of on mount.
     const hrefs = Object.fromEntries(await Promise.all(allExamples.map(async e =>
         [e.id, `${siteOrigin}/${await encodeConfig(exampleToConfig(e))}`] as const)))

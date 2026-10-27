@@ -23,6 +23,17 @@ export const staticPages = [
 
 export type StaticPage = typeof staticPages[number]
 
+// Served by the Worker (with status 404) for any path that is neither a file nor a share link. Not listed with the
+// static pages: it is not navigable, indexed or in the sitemap. The Worker requests it as `path` (the html handling
+// serves 404.html there).
+export const notFoundPage = {
+    path: "/404",
+    file: "404.html",
+    title: "Page not found – Monke",
+    heading: "Page not found",
+    description: "There is no page at this address. Share links to a grammar are a single segment after the domain; check that the link was copied whole.",
+} as const
+
 export const siteOrigin = "https://monke.lunah.dev"
 
 // The share link held by a URL path, or "" when the path can't be one (a static page, a file, a nested path).

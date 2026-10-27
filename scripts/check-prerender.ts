@@ -1,7 +1,7 @@
 // Checks the build output: run after `npm run build` (Node strips the types itself).
 import {readFile} from "node:fs/promises"
 import {join} from "node:path"
-import {siteOrigin, staticPages} from "../src/site/pages.ts"
+import {notFoundPage, siteOrigin, staticPages} from "../src/site/pages.ts"
 
 const outDir = process.argv[2] ?? ".cloudflare/output/v0/workers/default/assets"
 const failures: string[] = []
@@ -27,6 +27,11 @@ if (!index.includes(`<link rel="canonical" href="${siteOrigin}/"/>`)) failures.p
 if (index.includes("__ANALYTICS_PAGE_URL__")) failures.push("index.html: analytics sanitizer not inlined")
 if (!/<link rel="preload" href="\/assets\/[^"]+\.woff2"/.test(index)) failures.push("index.html: font preload")
 if (!(await read("faq/index.html")).includes('"@type":"FAQPage"')) failures.push("faq: FAQPage JSON-LD")
+const notFound = await read(notFoundPage.file)
+if (notFound && !notFound.includes(notFoundPage.heading)) failures.push(`${notFoundPage.file}: heading`)
+if (notFound && !notFound.includes('<meta name="robots" content="noindex"/>')) failures.push(`${notFoundPage.file}: noindex`)
+if (/rel="canonical"|<script type="module"/.test(notFound)) failures.push(`${notFoundPage.file}: should have no canonical or app bundle`)
+
 for (const file of ["robots.txt", "sitemap.xml", "llms.txt", "llms-full.txt", "site.webmanifest"]) await read(file)
 
 if (failures.length) {
