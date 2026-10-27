@@ -1,6 +1,6 @@
 import {CopyIcon, EllipsisIcon, SquareMinusIcon, SquarePlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
-import {Dispatch, FormEvent} from "react";
+import {Dispatch, FormEvent, useState} from "react";
 import {MenuButton} from "@headlessui/react";
 import {ToggleLabel} from "@/components/ToggleLabel.tsx";
 import {SortableRow} from "@/components/SortableList.tsx";
@@ -8,17 +8,18 @@ import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {Menu, MenuItem, MenuPanel, menuItemClass} from "@/components/menu.tsx";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
 import {Feature, Rule} from "@/engine/config.ts";
-import {RULE_CHOOSES_ITEM, RULE_VALUES_ITEM} from "@/engine/features.ts";
+import {RULE_CHOOSES_ITEM, RULE_REPEAT_ITEM, RULE_VALUES_ITEM} from "@/engine/features.ts";
 import {Chooses, ValuesDisplay, ValuesPopover} from "./featureParts.tsx";
 import {valueNames} from "./featureNames.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
 import {RuleSection} from "./RuleSection.tsx";
+import {isNumber} from "@/components/text.ts";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";
 import {GripButton} from "./ruleParts.tsx";
-import {valueFont} from "./ruleStyles.ts";
+import {rowInput, valueFont} from "./ruleStyles.ts";
 
 
 export type RuleInstanceProps = {
@@ -177,10 +178,11 @@ export const RuleInstance = ({
                     {/* A collapsed rule hides its items, so their errors show under the header instead. */}
                     <div className="px-3">
                         <InlineGrammarError ruleId={ruleId}
-                                            itemIds={[null, RULE_VALUES_ITEM, RULE_CHOOSES_ITEM, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
+                                            itemIds={[null, RULE_VALUES_ITEM, RULE_CHOOSES_ITEM, RULE_REPEAT_ITEM, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
                     </div>
                     {rule.collapsed ? null : (
                         <div className="flex flex-col gap-1.5 px-2.5 pb-3 pt-1.5 md:px-3">
+                            {enableWeights ? <RepeatWeightField rule={rule} dispatch={dispatch}/> : null}
                             <RuleSection rule={rule} dispatch={dispatch} enableSerif={enableSerif} features={features}
                                          enableWeights={enableWeights}/>
                             {rule.showRewrites && !rule.terminalOnly ? (
@@ -194,5 +196,32 @@ export const RuleInstance = ({
                 </>
             )}
         </SortableRow>
+    )
+}
+
+// Like pattern weights, only shown with weights on, since it only scales weighted picks. Committed on blur; a value
+// the grammar rejects (negative) is kept so its error points here.
+const RepeatWeightField = ({rule, dispatch}: { rule: Rule, dispatch: Dispatch<ConfigAction> }) => {
+    const weight = rule.repeatWeight ?? 1
+    const [text, setText] = useState(weight.toString())
+    const [synced, setSynced] = useState(weight)
+    if (synced !== weight) {
+        setSynced(weight)
+        setText(weight.toString())
+    }
+    const invalid = useInvalidProps(rule.id, RULE_REPEAT_ITEM)
+
+    const onBlur = () => {
+        if (isNumber(text)) dispatch({type: "setRepeatWeight", ruleId: rule.id, weight: +text})
+        else setText(weight.toString())
+    }
+
+    return (
+        <label className="flex items-center gap-2 self-start text-[13px] text-muted">
+            <span>Repeat weight</span>
+            <input type="text" value={text} aria-label={`Repeat weight of rule ${rule.name}`} {...invalid}
+                   onChange={e => setText(e.target.value)} onBlur={onBlur} inputMode="decimal"
+                   className={`${rowInput} w-16 md:w-20 text-center`}/>
+        </label>
     )
 }

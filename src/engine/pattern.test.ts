@@ -151,3 +151,22 @@ describe("pattern error hints", () => {
         for (const src of ["C.V", "C / V", "C*2 / V", "(C*0.5)", "C{2}.V", "[C].V"]) expect(() => parse(src)).not.toThrow()
     })
 })
+
+describe("repeat factors", () => {
+    it("parses `~F` after an alternative, after its weight", () => {
+        expect(parse("'a'*2~0.5 / 'b'~0 / 'c'")).toEqual(makeWeightedChoice([
+            {...makeWeighted(makeAtom("a"), 2), repeat: 0.5},
+            {...makeWeighted(makeAtom("b"), 1), repeat: 0},
+            makeWeighted(makeAtom("c"), 1),
+        ]))
+    })
+
+    it("rejects a weight written after the repeat factor", () => {
+        expect(() => parse("'a'~0.5*2 / 'b'")).toThrow("Write the weight before the repeat factor, as in `x*2~0.5` (rule : 'R') at character 8")
+    })
+
+    it("rejects a missing or negative factor", () => {
+        expect(() => parse("'a'~ / 'b'")).toThrow("Invalid repeat factor")
+        expect(() => parse("'a'~-1 / 'b'")).toThrow("Invalid repeat factor")
+    })
+})

@@ -47,6 +47,13 @@ describe("parseConfigFile", () => {
         expect(parseConfigFile(JSON.stringify(featured))).toEqual(featured)
     })
 
+    it("reads a rule's repeat weight and rejects one that is not a number", () => {
+        const repeating = makeConfig("R", [makeRule("R", ["'a'"], {repeatWeight: 0.5})])
+        expect(parseConfigFile(JSON.stringify(repeating))).toEqual(repeating)
+        const bad = {...repeating, rules: [{...repeating.rules[0], repeatWeight: "x"}]}
+        expect(() => parseConfigFile(JSON.stringify(bad))).toThrow("rules[0].repeatWeight must be a number")
+    })
+
     it("drops unknown keys", () => {
         const parsed = parseConfigFile(JSON.stringify({...valid, extra: 1}))
         expect(parsed).not.toHaveProperty("extra")

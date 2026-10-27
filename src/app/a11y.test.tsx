@@ -87,6 +87,18 @@ describe("accessibility (axe)", () => {
         await check(container)
     })
 
+    it("generator view with an invalid repeat weight", async () => {
+        const user = userEvent.setup()
+        const {container} = await renderApp()
+        await user.click(screen.getByRole("button", {name: "Weights"}))
+        const field = screen.getByLabelText("Repeat weight of rule Vowel")
+        await user.clear(field)
+        await user.type(field, "-1")
+        await user.tab()
+        await expect.poll(() => field.getAttribute("aria-invalid")).toBe("true")
+        await check(container)
+    })
+
     it("view settings menu open", async () => {
         const user = userEvent.setup()
         await renderApp()

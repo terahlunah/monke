@@ -136,3 +136,26 @@ describe("rule actions on a small screen", () => {
         expect(await screen.findByRole("menuitem", {name: `Move rule ${ruleNames()[0]} up`})).toHaveAttribute("aria-disabled", "true")
     })
 })
+
+describe("repeat weight", () => {
+    it("is shown with weights on, and a negative one is flagged on the field", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        expect(screen.queryByLabelText("Repeat weight of rule Vowel")).not.toBeInTheDocument()
+
+        await user.click(screen.getByRole("button", {name: "Weights"}))
+        const field = screen.getByLabelText("Repeat weight of rule Vowel")
+        expect(field).toHaveValue("1")
+
+        await user.clear(field)
+        await user.type(field, "-1")
+        await user.tab()
+        expect(await screen.findByLabelText("Repeat weight of rule Vowel")).toHaveAttribute("aria-invalid", "true")
+
+        await user.clear(field)
+        await user.type(field, "0.5")
+        await user.tab()
+        await expect.poll(() => field.getAttribute("aria-invalid")).not.toBe("true")
+        expect(field).toHaveValue("0.5")
+    })
+})

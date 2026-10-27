@@ -170,7 +170,7 @@ export class Parser {
         let expr = this.parseSequence();
 
         // If the next token is a ChoiceOperator, handle choice
-        if (!option && (this.peek() === '/' || this.peek() === '*')) {
+        if (!option && (this.peek() === '/' || this.peek() === '*' || this.peek() === '~')) {
             expr = this.parseChoice(expr);
         }
 
@@ -207,26 +207,22 @@ export class Parser {
     }
 
     private parseChoice(firstExpr: Expr): Expr {
-
-        let firstWeight = 1.0
-        if (this.consume('*')) {
-            firstWeight = this.parseWeight()
-        }
-
-        const items: WeightedExpr[] = [makeWeighted(firstExpr, firstWeight)];
+        const items: WeightedExpr[] = [this.parseAlternativeSuffix(firstExpr)];
 
         while (this.consume('/')) {
-            const expr = this.parseSequence()
-
-            let weight = 1.0
-            if (this.consume('*')) {
-                weight = this.parseWeight()
-            }
-
-            items.push(makeWeighted(expr, weight))
+            items.push(this.parseAlternativeSuffix(this.parseSequence()))
         }
 
         return makeWeightedChoice(items);
+    }
+
+    // `*N` then `~F`, both optional. One order only, so a pattern reads the same everywhere.
+    private parseAlternativeSuffix(expr: Expr): WeightedExpr {
+        const weight = this.consume('*') ? this.parseWeight() : 1.0
+        if (!this.consume('~')) return makeWeighted(expr, weight)
+        const repeat = this.parseNumber("Invalid repeat factor")
+        if (this.peek() === '*') this.error("Write the weight before the repeat factor, as in `x*2~0.5`")
+        return {...makeWeighted(expr, weight), repeat}
     }
 
     private parseTerm(): Expr {
@@ -332,6 +328,10 @@ export class Parser {
     }
 
     private parseWeight(): number {
+        return this.parseNumber("Invalid weight value")
+    }
+
+    private parseNumber(message: string): number {
         let weightStr = '';
         while (/^[0-9.]+$/.test(this.peek() ?? "")) {
             weightStr += this.input[this.currentPosition];
@@ -340,7 +340,7 @@ export class Parser {
 
         const weight = parseFloat(weightStr);
         if (isNaN(weight) || weight < 0) {
-            this.error("Invalid weight value");
+            this.error(message);
         }
 
         return weight;

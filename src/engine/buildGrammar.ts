@@ -1,5 +1,5 @@
 import {Config, Rule as ConfigRule, RulePattern} from "./config.ts";
-import {checkFeatures, checkFilters, FeatureProblem, FeatureWarning, RULE_CHOOSES_ITEM} from "./features.ts";
+import {checkFeatures, checkFilters, FeatureProblem, FeatureWarning, RULE_CHOOSES_ITEM, RULE_REPEAT_ITEM} from "./features.ts";
 import {containsBoundary, Expr, findInvalidBackReference, findInvalidMatchIndex, getRuleEdges, Grammar, GrammarFeature, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule, Tags, WeightedExpr} from "./grammar.ts";
 import {parsePattern} from "./pattern.ts";
 import {closest} from "./suggest.ts";
@@ -143,10 +143,16 @@ const configRuleToGrammarRule = (rule: ConfigRule, valueNames: ValueNames, featu
         throw new GrammarError(`Invalid rule name : '${rule.name}'`, rule.id);
     }
 
+    const repeat = rule.repeatWeight
+    if (repeat !== undefined && !(Number.isFinite(repeat) && repeat >= 0)) {
+        throw new GrammarError(`Invalid repeat weight ${repeat}: it must be a number of at least 0 (rule : '${rule.name}')`, rule.id, RULE_REPEAT_ITEM)
+    }
+
     const extra = {
         id: rule.id,
         tags: toTags(rule.values, valueNames),
         chooses: (rule.chooses ?? []).flatMap(id => featureNames.get(id) ?? []),
+        ...repeat !== undefined && repeat !== 1 ? {repeat} : {},
     }
 
     if (rule.terminalOnly) {

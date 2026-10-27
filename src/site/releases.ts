@@ -26,6 +26,7 @@ export const releases: Release[] = [
                     "Words update as you edit. Output is driven by a seed you can set and share, so a link always shows the same words; New words picks a fresh seed.",
                     "Generate all lists every distinct word a grammar can make (up to 10,000), with rewrites and exclusions applied.",
                     "Word boundaries `^` and `$` in rewrites and exclusions, e.g. ban a word-final h with `'h'.$` (#21).",
+                    "Repeat factors lower the chance of picking the same thing twice in a word: `x~0.5` on a pattern alternative, or a Repeat weight on a rule for every reference to it (#24).",
                     "Back-references in exclusions: `C.#0#` bans doubled consonants like pp but allows pt (#14).",
                     "\"Repeat rewrites until nothing changes\" option, so a rewrite can act on another rewrite's output (#18).",
                     "Add several terminals at once by typing them separated by spaces.",

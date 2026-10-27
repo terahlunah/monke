@@ -1,6 +1,6 @@
 import {Dispatch, FormEvent, TextareaHTMLAttributes, useLayoutEffect, useRef, useState} from "react";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
-import {lowerFirst} from "@/components/text.ts";
+import {isNumber, lowerFirst} from "@/components/text.ts";
 import {Feature, Rule, RulePattern} from "@/engine/config.ts";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
 import {ValuesDisplay, ValuesPopover} from "./featureParts.tsx";
@@ -166,12 +166,6 @@ type RulePatternProps = {
     onValues?: (ids: string[]) => void
     // Pattern rules get the wide, wrapping field; terminals stay compact.
     wide?: boolean
-}
-
-function isNumber(value?: string | number): boolean {
-    return ((value != null) &&
-        (value !== '') &&
-        !isNaN(Number(value.toString())));
 }
 
 export const RulePatternItem = ({

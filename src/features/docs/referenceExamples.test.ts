@@ -37,6 +37,14 @@ describe("reference syntax table", () => {
         expect(word).toBe("it'sa\\b")
     })
 
+    it("documents repeat factors: written after the weight, a factor of 0 allows only the first pick", () => {
+        expect(() => parsePattern("Demo", "'a'*2~0.5 / 'e'")).not.toThrow()
+        const example = {...demo([{name: "Demo", items: ["['a'~0 / 'e']{3}"]}]), weights: true}
+        const words = sample(example)
+        expect(words.every(w => w.split("a").length - 1 <= 1)).toBe(true)
+        expect(words.some(w => w.includes("a"))).toBe(true)
+    })
+
     it("documents that a choice inside an optional needs a group", () => {
         expect(() => parsePattern("Demo", "('n' / 's')")).toThrow()
         expect(() => parsePattern("Demo", "(['n' / 's'])")).not.toThrow()
@@ -73,6 +81,13 @@ describe("reference grammars", () => {
 
     it("banning sequences never produces a banned sequence", () => {
         for (const w of words("banned")) expect(w).not.toMatch(/ji|wu|wo|nn|nm/)
+    })
+
+    it("a repeat weight makes further closed syllables rarer", () => {
+        const recipe = recipes.find(r => r.id === "repeat-weight")!
+        const many = (example: ReferenceExample) => sample(example, 2000).filter(w => w.split("n").length - 1 >= 2).length
+        const without = {...recipe, rules: recipe.rules.map(r => ({...r, repeatWeight: undefined}))}
+        expect(many(recipe)).toBeLessThan(many(without) / 2)
     })
 
     it("word-final restriction keeps n and s at the end", () => {

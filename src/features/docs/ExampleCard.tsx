@@ -33,6 +33,9 @@ const RuleCard = ({rule, weights}: { rule: ExampleRule, weights: boolean }) => {
                 {rule.chooses?.length ? (
                     <span className="text-[13px] text-muted">chooses <span className="font-mono text-feature">{rule.chooses.join(", ")}</span></span>
                 ) : null}
+                {weights && rule.repeatWeight !== undefined ? (
+                    <span className="text-[13px] text-muted">repeat weight {rule.repeatWeight}</span>
+                ) : null}
             </div>
             <SectionTitle tone="text-muted" count={rule.items.length}>{patternsLabel}</SectionTitle>
             <ul aria-label={`${patternsLabel} of rule ${rule.name}`} className={chipList}>

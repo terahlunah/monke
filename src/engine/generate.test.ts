@@ -391,3 +391,51 @@ describe("detectCycle", () => {
         expect(detectCycle(g) ?? []).toHaveLength(0)
     })
 })
+
+describe("repeat factors", () => {
+    const words = (g: Parameters<typeof generate>[0]) => sample(g, 200)
+    const count = (w: string, c: string) => w.split(c).length - 1
+
+    it("lowers an alternative's weight for each earlier pick of it in the word", () => {
+        const g = makeGrammar("W", [makeRule("W", ["C{3}"]), makeRule("C", ["'a'~0 / 'b'"])], {enableWeights: true})
+        const ws = words(g)
+        expect(ws.every(w => count(w, "a") <= 1)).toBe(true)
+        expect(ws.some(w => w.includes("a"))).toBe(true)
+    })
+
+    it("lowers the weight of references to a rule for each earlier expansion of it", () => {
+        const g = makeGrammar("W", [
+            makeRule("W", ["[V / 'b']{4}"]),
+            makeRule("V", ["a", "e"], {terminalOnly: true, repeatWeight: 0}),
+        ], {enableWeights: true})
+        const ws = words(g)
+        expect(ws.every(w => count(w, "a") + count(w, "e") <= 1)).toBe(true)
+        expect(ws.some(w => /[ae]/.test(w))).toBe(true)
+    })
+
+    it("counts per word", () => {
+        const g = makeGrammar("W", [makeRule("W", ["'a'~0 / 'b'*0.000001"])], {enableWeights: true})
+        expect(words(g).every(w => w === "a")).toBe(true)
+    })
+
+    it("forgets the picks of attempts rejected by an exclusion", () => {
+        const g = makeGrammar("W", [
+            makeRule("W", ["C.Z"], {showExclusions: true, exclusions: [{id: "x", match: "'ax'"}]}),
+            makeRule("C", ["'a'~0 / 'b'*0.000001"]),
+            makeRule("Z", ["'x' / 'y'"]),
+        ], {enableWeights: true})
+        expect(words(g).every(w => w === "ay")).toBe(true)
+    })
+
+    it("has no effect when weights are off", () => {
+        const g = makeGrammar("W", [makeRule("W", ["C{3}"]), makeRule("C", ["'a'~0 / 'b'"])])
+        expect(words(g).some(w => count(w, "a") > 1)).toBe(true)
+    })
+
+    it("draws the same random numbers as without factors", () => {
+        const rules = (p: string, repeatWeight?: number) => [makeRule("W", ["[C / V]{2:5}"]), makeRule("C", [p], {repeatWeight}), makeRule("V", ["'a' / 'e'"])]
+        const plain = makeGrammar("W", rules("'p'*2 / 't'"), {enableWeights: true})
+        const neutral = makeGrammar("W", rules("'p'*2~1 / 't'~1", 1), {enableWeights: true})
+        expect(words(neutral)).toEqual(words(plain))
+    })
+})

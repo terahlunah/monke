@@ -30,6 +30,8 @@ export type Rule = {
     tags?: Tags
     // Feature names whose value is picked on entering the rule.
     chooses?: string[]
+    // Weight factor applied per earlier expansion of this rule in the word to every alternative that is a `Ref` to it.
+    repeat?: number
 }
 
 export type Expr =
@@ -45,6 +47,8 @@ export type Expr =
 export type WeightedExpr = {
     expr: Expr
     weight: number
+    // `x~F`: the weight is multiplied by F for each earlier pick of this alternative in the word.
+    repeat?: number
     // Only on a rule's rows (its top-level choice): the values the row carries and its config id.
     tags?: Tags
     id?: string
@@ -67,7 +71,7 @@ export const makeRange = (expr: Expr, min: number, max: number): Expr => ({
     min: min,
     max: max
 });
-export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][], extra: Pick<Rule, "id" | "tags" | "chooses"> = {}): Rule => ({
+export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][], extra: Pick<Rule, "id" | "tags" | "chooses" | "repeat"> = {}): Rule => ({
     name: name,
     expr: expr,
     exclusions: exclusions,

@@ -23,6 +23,7 @@ export type ConfigAction =
     | { type: "toggleCollapse", ruleId: string }
     | { type: "setShowRewrites", ruleId: string, show: boolean }
     | { type: "setShowExclusions", ruleId: string, show: boolean }
+    | { type: "setRepeatWeight", ruleId: string, weight: number }
     // Patterns
     | { type: "addPattern", ruleId: string }
     | { type: "addPatterns", ruleId: string, patterns: string[] }
@@ -160,6 +161,9 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
             return updateRule(config, action.ruleId, () => ({showRewrites: action.show}))
         case "setShowExclusions":
             return updateRule(config, action.ruleId, () => ({showExclusions: action.show}))
+        // 1 has no effect, so it is stored as absent, like an unset value.
+        case "setRepeatWeight":
+            return updateRule(config, action.ruleId, () => ({repeatWeight: action.weight === 1 ? undefined : action.weight}))
 
         case "addPattern":
             return updateRule(config, action.ruleId, r => ({

@@ -16,6 +16,8 @@ export type ExampleRule = {
     // Values carried by the whole rule, and features it chooses.
     values?: string[]
     chooses?: string[]
+    // Repeat weight of the rule (1, no effect, when absent).
+    repeatWeight?: number
 }
 
 export type ReferenceExample = {
@@ -66,6 +68,7 @@ export const exampleToConfig = (example: ReferenceExample, enableSerif = false):
             collapsed: false,
             ...valueIds(r.values) ? {values: valueIds(r.values)} : {},
             ...chooseIds(r.chooses) ? {chooses: chooseIds(r.chooses)} : {},
+            ...r.repeatWeight !== undefined ? {repeatWeight: r.repeatWeight} : {},
         })),
     }
 }
@@ -100,6 +103,7 @@ export const syntaxRows: SyntaxRow[] = [
     {syntax: "a.b", meaning: "Sequence: a then b.", example: "C.V", output: "ka, mo, …"},
     {syntax: "a / b", meaning: "Choice: one of the alternatives.", example: "'a' / 'e'", output: "a or e"},
     {syntax: "a*N / b", meaning: "Weight of an alternative (default 1). Needs weights enabled.", example: "'a'*3 / 'e'", output: "a three times as often as e"},
+    {syntax: "a~F / b", meaning: "Repeat factor: the weight is multiplied by F each time this alternative was already picked in the word. Goes after *N. Needs weights enabled.", example: "['a'~0.2 / 'e']{3}", output: "aee, eae, eee, rarely aae"},
     {syntax: "[x]", meaning: "Group, to put a choice inside a sequence.", example: "C.['a' / 'e']", output: "ka, se, …"},
     {syntax: "(x)", meaning: "Optional: present half of the time.", example: "C.V.('n')", output: "ka, kan, …"},
     {syntax: "(x*P)", meaning: "Optional with probability P between 0 and 1. Needs weights enabled.", example: "C.V.('n'*0.2)", output: "kan 20% of the time"},
@@ -318,6 +322,21 @@ export const recipes: Recipe[] = [
             {name: "C", terminal: true, items: [["t", 4], ["k", 3], ["m", 2], ["s", 1]]},
             {name: "V", terminal: true, items: [["a", 4], ["i", 2], ["o", 2], ["u", 1]]},
             {name: "Word", items: [["C.V.('n'*0.25)", 1], ["C.V.C.V.('n'*0.25)", 2]]},
+        ],
+    },
+    {
+        id: "repeat-weight",
+        title: "Fewer closed syllables",
+        summary: "Closed has a repeat weight of 0.2: once a word has one closed syllable, each further one is five times less likely.",
+        root: "Word",
+        weights: true,
+        rules: [
+            {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "l"]},
+            V,
+            {name: "Open", items: ["C.V"]},
+            {name: "Closed", items: ["C.V.'n'"], repeatWeight: 0.2},
+            {name: "Syllable", items: ["Open / Closed"]},
+            {name: "Word", items: ["Syllable{2:4}"]},
         ],
     },
     {

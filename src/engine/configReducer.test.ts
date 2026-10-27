@@ -84,6 +84,12 @@ describe("rule actions", () => {
     it("ignores unknown rule ids", () => {
         expect(apply({type: "removeRule", ruleId: "nope"}, {type: "toggleCollapse", ruleId: "nope"})).toEqual(base())
     })
+
+    it("sets a rule's repeat weight, storing 1 as absent", () => {
+        expect(apply({type: "setRepeatWeight", ruleId: "B", weight: 0.5}).rules[1].repeatWeight).toBe(0.5)
+        expect(apply({type: "setRepeatWeight", ruleId: "B", weight: 0.5}, {type: "setRepeatWeight", ruleId: "B", weight: 1}).rules[1].repeatWeight).toBeUndefined()
+        expect(apply({type: "setRepeatWeight", ruleId: "B", weight: 0.5}).rules[0].repeatWeight).toBeUndefined()
+    })
 })
 
 describe("pattern actions", () => {

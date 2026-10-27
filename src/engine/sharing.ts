@@ -8,7 +8,8 @@ import {ByteBuffer} from "./bytebuffer.ts"
 // Version 5 adds the seed text after repeatRewrites.
 // Version 6 adds the feature declarations after the seed, each rule's values and chooses after its collapsed flag,
 // and each pattern's values after its weight. References are written as feature/value indices, not ids.
-const LATEST_VERSION = 6
+// Version 7 adds each rule's repeat weight (float32, 1 when unset) after its chooses.
+const LATEST_VERSION = 7
 
 type ValueIndex = Map<string, [feature: number, value: number]>
 
@@ -70,6 +71,7 @@ export const encodeConfig = async (config: Config): Promise<string> => {
         const chooses = (rule.chooses ?? []).flatMap(id => featureIndex.get(id) ?? [])
         buf.writeUint16(chooses.length)
         for (const f of chooses) buf.writeUint16(f)
+        buf.writeFloat32(rule.repeatWeight ?? 1)
 
         buf.writeUint16(rule.patterns.length)
         for (const p of rule.patterns) {
@@ -104,6 +106,7 @@ type Layout = {
     hasRepeatRewrites: boolean
     hasSeed: boolean
     hasFeatures: boolean
+    hasRepeatWeight: boolean
 }
 
 const narrow = (hasCollapsed: boolean): Layout => ({
@@ -113,18 +116,20 @@ const narrow = (hasCollapsed: boolean): Layout => ({
     hasRepeatRewrites: false,
     hasSeed: false,
     hasFeatures: false,
+    hasRepeatWeight: false,
 })
 
-const wide = (hasRepeatRewrites: boolean, hasSeed = false, hasFeatures = false): Layout => ({
+const wide = (hasRepeatRewrites: boolean, hasSeed = false, hasFeatures = false, hasRepeatWeight = false): Layout => ({
     readString: buf => buf.readText(),
     readCount: buf => buf.readUint16(),
     hasCollapsed: true,
     hasRepeatRewrites,
     hasSeed,
     hasFeatures,
+    hasRepeatWeight,
 })
 
-const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRepeatRewrites, hasSeed, hasFeatures}: Layout): Config => {
+const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRepeatRewrites, hasSeed, hasFeatures, hasRepeatWeight}: Layout): Config => {
     const language = readString(buf)
     const root = readString(buf)
     const enableWeights = buf.readInt8() === 1
@@ -165,6 +170,10 @@ const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRe
                 if (id) chooses.push(id)
             }
             if (chooses.length) extra.chooses = chooses
+        }
+        if (hasRepeatWeight) {
+            const repeatWeight = buf.readFloat32()
+            if (repeatWeight !== 1) extra.repeatWeight = repeatWeight
         }
 
         const patternCount = readCount(buf)
@@ -218,6 +227,7 @@ const decoders: Record<number, (buf: ByteBuffer) => Config> = {
     4: buf => readConfig(buf, wide(true)),
     5: buf => readConfig(buf, wide(true, true)),
     6: buf => readConfig(buf, wide(true, true, true)),
+    7: buf => readConfig(buf, wide(true, true, true, true)),
 }
 
 export const decodeConfig = async (data: string): Promise<Config> => {

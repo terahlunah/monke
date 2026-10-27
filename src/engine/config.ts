@@ -39,6 +39,9 @@ export type Rule = {
     values?: string[]
     // Feature ids whose value the rule picks on entry, constraining its subtree. Absent means none.
     chooses?: string[]
+    // Weight factor applied, per earlier expansion of the rule in the word, to every alternative that references it.
+    // Absent means 1 (no effect).
+    repeatWeight?: number
 }
 
 export type RulePattern = {

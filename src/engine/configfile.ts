@@ -83,6 +83,7 @@ export const parseConfigFile = (text: string): Config => {
             showRewrites: bool(r, "showRewrites", where),
             showExclusions: bool(r, "showExclusions", where),
             collapsed: optional(r, "collapsed", false, bool, where),
+            ...r.repeatWeight === undefined ? {} : {repeatWeight: number(r, "repeatWeight", where)},
         }, r, ["values", "chooses"], where)
     })
 

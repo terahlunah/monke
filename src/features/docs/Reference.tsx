@@ -209,6 +209,25 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <p>Quantifiers like <Code>{"{1:3}"}</Code> always pick each count with the same probability. To favour some
                         lengths, use weighted alternatives instead, such as <Code>{"Syllable*3 / Syllable.Syllable"}</Code>.</p>
                     <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "weighted")!}/>
+
+                    <Sub>Fewer repeats in a word</Sub>
+                    <p>A repeat factor lowers the chance of picking the same thing again in a word. In a pattern,
+                        put <Code>~F</Code> after an alternative, after its weight if it has one: <Code>{"'a'*2~0.5 / 'e'"}</Code>.
+                        Each time that alternative was already picked in the current word, its weight is multiplied by F, so
+                        with <Code>{"['a'~0.2 / 'e']{3}"}</Code> a second a is five times less likely than the first.
+                        The count is kept per place in the grammar: the same alternative written in two patterns has two counts.</p>
+                    <p>With weights on, each rule also has a <b>Repeat weight</b> field (1 by default, no effect). Wherever a
+                        reference to the rule is one of the alternatives of a choice, its weight is multiplied by the repeat
+                        weight once for every time the rule was already used in the word. When both apply, they multiply.</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        <li>Counts start again for every word. When an exclusion rejects a rule&apos;s output and it is
+                            generated again, what the rejected attempt picked no longer counts.</li>
+                        <li>A factor of 0 never blocks the first use: it only rules out repeats.</li>
+                        <li>Factors only change probabilities. Generate all and the number of possible branches are the
+                            same as without them, and with weights off they are ignored.</li>
+                    </ul>
+                    <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "repeat-weight")!}
+                                 summary={recipes.find(r => r.id === "repeat-weight")!.summary}/>
                 </Section>
 
                 <Section id="reference-rewrites">
@@ -513,7 +532,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
 
                 <Section id="reference-recipes">
                     <p>Each recipe is a complete grammar. <b>Try it</b> opens it in a new tab, so your current grammar is untouched.</p>
-                    {recipes.filter(r => !["weighted", "awkwords", "edges", "harmony"].includes(r.id)).map(r =>
+                    {recipes.filter(r => !["weighted", "repeat-weight", "awkwords", "edges", "harmony"].includes(r.id)).map(r =>
                         <ExampleCard hrefs={hrefs} key={r.id} example={r} summary={r.summary}/>)}
                 </Section>
 

@@ -198,4 +198,13 @@ describe("configToGrammar", () => {
             expect([e.ruleId, e.itemId]).toEqual(["second", undefined])
         })
     })
+
+    it("carries rule repeat weights other than 1 and rejects negative ones on the rule's control", () => {
+        const g = configToGrammar(makeConfig("A", [makeRule("A", ["B"], {repeatWeight: 1}), makeRule("B", ["'b'"], {repeatWeight: 0.5})]))!
+        expect(g.ruleMap.get("A")!.repeat).toBeUndefined()
+        expect(g.ruleMap.get("B")!.repeat).toBe(0.5)
+        const bad = () => configToGrammar(makeConfig("A", [makeRule("A", ["'a'"], {repeatWeight: -1})]))
+        expect(bad).toThrow("Invalid repeat weight -1: it must be a number of at least 0 (rule : 'A')")
+        expect(bad).toThrow(expect.objectContaining({ruleId: "A", itemId: "rule-repeat"}))
+    })
 })

@@ -8,6 +8,7 @@ export const emptyScope: Scope = new Map()
 // Item ids standing for a rule's own values and chooses controls, so errors on them can be located like a row's.
 export const RULE_VALUES_ITEM = "rule-values"
 export const RULE_CHOOSES_ITEM = "rule-chooses"
+export const RULE_REPEAT_ITEM = "rule-repeat"
 
 // A problem found on the grammar, located by config ids: a rule (and item), or a feature (and value).
 export class FeatureProblem extends Error {

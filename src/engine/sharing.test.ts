@@ -155,6 +155,24 @@ describe("sharing", () => {
         expect(named(await decodeConfig(link))).toEqual(named(featured()))
     })
 
+    const repeating = () => makeConfig("Word", [
+        makeRule("Word", ["[C.V]{2} / C~0.5"], {repeatWeight: 0.5}),
+        makeRule("C", ["p", "t"], {terminalOnly: true, repeatWeight: 0}),
+        makeRule("V", ["a"], {terminalOnly: true}),
+    ], {language: "frozen", enableWeights: true, seed: "s7"})
+
+    it("round-trips rule repeat weights, leaving the default absent", async () => {
+        const decoded = await roundTrip(repeating())
+        expect(decoded).toEqual(stripIds(repeating()))
+        expect("repeatWeight" in decoded.rules[2]).toBe(false)
+    })
+
+    // Frozen link from format version 7, encoded once from `repeating()`. Same rule: fix the decoder, not the fixture.
+    it("decodes a frozen version 7 link", async () => {
+        const link = "H4sIAAAAAAAACmNnY2BgSCvKr0rNY2FgYAjPL0phZGBgYmBgKDZnYGBmgAkyIIA9I4MAAwNDtLNeWGy1Ua2CvoJznYGeKQNDgz1EASMDA4MzI5IOJrBQAUQFiFmCYIYhFDbYM4KFEiGyAKHthqibAAAA"
+        expect(stripIds(await decodeConfig(link))).toEqual(stripIds(repeating()))
+    })
+
     it("round-trips more than 127 rules and more than 127 patterns in one rule", async () => {
         const many = makeRule("Many", Array.from({length: 300}, (_, i) => `'p${i}'`), {
             showRewrites: true,
