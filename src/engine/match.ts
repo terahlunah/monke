@@ -1,4 +1,5 @@
 import {Expr, Grammar, Rule} from "./grammar.ts";
+import {eligibleRows, emptyScope} from "./features.ts";
 
 // Matchers are generators so a sequence can backtrack into the alternatives of an
 // earlier item. Each yielded array holds one length per sub-part of the expression.
@@ -40,7 +41,9 @@ function* matchExpr(g: Grammar, e: Expr, text: string, pos: number, parts: strin
         case 'Ref': {
             const rule = g.ruleMap.get(e.rule)
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
-            yield* matchExpr(g, rule.expr, text, pos, [])
+            // Matching has no chosen values; only filters narrow the rule's rows.
+            if (!e.filters) yield* matchExpr(g, rule.expr, text, pos, [])
+            else for (const row of eligibleRows(g, rule, emptyScope, e.filters)) yield* matchExpr(g, row.expr, text, pos, [])
             return
         }
         case 'Match': {
