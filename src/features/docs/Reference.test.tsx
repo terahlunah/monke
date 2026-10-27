@@ -27,6 +27,22 @@ describe("reference Try it links", () => {
     })
 })
 
+describe("reference prose", () => {
+    // JSX drops whitespace at a line break next to an element; lint only catches built-in tags, not <Code>.
+    it("never glues inline code to an adjacent word", () => {
+        const {container} = render(<Reference/>)
+        const glued = [...container.querySelectorAll("p code, li code, td code")].flatMap(code => {
+            // Element siblings (e.g. the block "gives …" line in tables) are laid out apart; only text can touch.
+            const text = (node: ChildNode | null) => node?.nodeType === Node.TEXT_NODE ? node.textContent ?? "" : ""
+            const before = text(code.previousSibling).slice(-1)
+            const after = text(code.nextSibling).charAt(0)
+            const word = /[\p{L}\p{N}]/u
+            return word.test(before) || word.test(after) ? [`${before}[${code.textContent}]${after}`] : []
+        })
+        expect(glued).toEqual([])
+    })
+})
+
 describe("reference back to top", () => {
     it("appears only after scrolling and returns focus to the top heading", async () => {
         const user = userEvent.setup()

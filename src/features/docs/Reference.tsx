@@ -98,7 +98,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         work. Names are case-sensitive and must be unique.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li><b>Terminal rules</b> (<b>+ Terminal rule</b>, named in blue) hold plain text, usually the sounds of your
-                            language. Each terminal is used as written, without quotes: <Code>a</Code>, <Code>ch</Code>
+                            language. Each terminal is used as written, without quotes: <Code>a</Code>, <Code>ch</Code>{" "}
                             and <Code>好</Code> are all fine.</li>
                         <li><b>Pattern rules</b> (<b>+ Pattern rule</b>, named in violet) hold patterns that combine other rules and text. A rule needs
                             at least one pattern. Only pattern rules can have rewrites and exclusions.</li>
@@ -113,7 +113,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <p>A pattern describes what a rule produces. Text goes in single quotes, rule names stand alone, and a dot
                         joins parts in order. This rule makes a consonant, a vowel and sometimes an n:</p>
                     <CodeBlock>{"C.V.('n')"}</CodeBlock>
-                    <p>Here is a complete grammar using it. It makes words such as <Code>ka</Code>, <Code>sonmi</Code> and
+                    <p>Here is a complete grammar using it. It makes words such as <Code>ka</Code>, <Code>sonmi</Code> and{" "}
                         <Code>tulipen</Code>.</p>
                     <ExampleCard hrefs={hrefs} example={firstGrammar}/>
 
@@ -137,7 +137,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                 </Section>
 
                 <Section id="reference-syntax">
-                    <p>Patterns, rewrites and exclusions share one syntax. Examples use the rules <Code>C</Code> and
+                    <p>Patterns, rewrites and exclusions share one syntax. Examples use the rules <Code>C</Code> and{" "}
                         <Code>V</Code> from the grammar above.</p>
                     <table className="w-full text-left border-collapse">
                         <caption className="sr-only">Pattern syntax</caption>
@@ -180,7 +180,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>The dot binds tighter than the slash: <Code>{"'a'.'b' / 'c'"}</Code> gives ab or c. Use a group to
                             choose inside a sequence: <Code>{"'a'.['b' / 'c']"}</Code> gives ab or ac.</li>
-                        <li>An optional holds one alternative. To make a choice optional, group it:
+                        <li>An optional holds one alternative. To make a choice optional, group it:{" "}
                             <Code>{"(['n' / 's'])"}</Code>.</li>
                         <li>Spaces and line breaks outside quotes are ignored. Inside quotes they are part of the text.</li>
                         <li>An empty pattern or <Code>{"''"}</Code> produces nothing, which is a simple way to add an
@@ -237,7 +237,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         letters. A match that is a single quoted text is part <Code>#0#</Code>.</p>
                     <p>A reference to a part the match can't have, such as <Code>#2#</Code> for <Code>{"'a'.'b'"}</Code>, is an
                         error. When the number of parts depends on what matched, a missing part inserts nothing.</p>
-                    <p>In a match, and in an exclusion, <Code>#n#</Code> matches exactly the text that part n matched, so
+                    <p>In a match, and in an exclusion, <Code>#n#</Code> matches exactly the text that part n matched, so{" "}
                         <Code>C.#0#</Code> finds pp or tt but not pt. Parts are counted the same way, and a back-reference
                         must come after the part it refers to: <Code>#0#.C</Code> is an error. The parts it can refer to
                         are those of the outer sequence, even from inside a group: in <Code>{"C.V.[#0# / 'h']"}</Code>,
@@ -266,9 +266,9 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>An output is rejected if an exclusion matches <b>anywhere inside it</b>, not only if the whole
                             output matches.</li>
-                        <li>All alternatives of a choice and all outputs of a referenced rule are checked, so
+                        <li>All alternatives of a choice and all outputs of a referenced rule are checked, so{" "}
                             <Code>V.V</Code> rejects any two vowels in a row.</li>
-                        <li><Code>#n#</Code> matches the same text as part n of the exclusion, so <Code>C.#0#</Code>
+                        <li><Code>#n#</Code> matches the same text as part n of the exclusion, so <Code>C.#0#</Code>{" "}
                             rejects any doubled consonant. Parts are counted as in <a href="#reference-rewrites"
                             onClick={e => jumpTo(e, "reference-rewrites")} className="text-primary-text underline">rewrite
                             back-references</a>.</li>
@@ -307,10 +307,10 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         last.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>The start and end are those of the output being checked: the output of the rule the rewrite or
-                            exclusion belongs to. On the start rule, that is the whole word. On a <Code>Syllable</Code> rule,
+                            exclusion belongs to. On the start rule, that is the whole word. On a <Code>Syllable</Code> rule,{" "}
                             <Code>^</Code> is the start of each syllable.</li>
                         <li>With several rewrites, the edges are those of the output as it is when that rewrite runs.</li>
-                        <li>A boundary counts as a part for back-references, an empty one: in <Code>{"^.'ŋ'.V"}</Code>,
+                        <li>A boundary counts as a part for back-references, an empty one: in <Code>{"^.'ŋ'.V"}</Code>,{" "}
                             <Code>#0#</Code> is empty, <Code>#1#</Code> is ŋ and <Code>#2#</Code> is the vowel.</li>
                         <li>A boundary alone matches nothing, since a match must contain at least one character.</li>
                         <li>Boundaries can't be generated, so they are an error in a rule's patterns and in rewrite
@@ -324,13 +324,13 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <Sub>Generator options</Sub>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>The <b>Count</b> field sets how many words to make, from 1 to 10000.</li>
-                        <li><b>Paragraph</b> and <b>List</b> choose between running text and one word per line.
-                            <b> Copy</b> copies the words in the current layout.</li>
+                        <li><b>Paragraph</b> and <b>List</b> choose between running text and one word per line.{" "}
+                            <b>Copy</b> copies the words in the current layout.</li>
                         <li><b>Repeat rewrites</b>, in the bar above the rules, runs each rule's rewrite list until it
                             stops changing the output, instead of once (see Rewrites). It is saved in share links.</li>
-                        <li>The <b>View settings</b> menu (the gear next to <b>Words</b>) holds three options.
-                            <b> Filter duplicates</b> hides repeated words and shows how many are unique.
-                            <b> Serif font</b> switches the words and your patterns to a serif font, which makes some IPA
+                        <li>The <b>View settings</b> menu (the gear next to <b>Words</b>) holds three options.{" "}
+                            <b>Filter duplicates</b> hides repeated words and shows how many are unique.{" "}
+                            <b>Serif font</b> switches the words and your patterns to a serif font, which makes some IPA
                             characters easier to read. <b>Always show reorder buttons</b> is described under Reordering.
                             The menu stays open while you toggle them; press Escape to close it.</li>
                     </ul>
@@ -382,9 +382,9 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <Sub>Files</Sub>
                     <p><b>Export</b>, then <b>Monke file</b>, downloads the configuration as a <Code>.monke</Code> file named
                         after the language. <b>Import</b>, then <b>Monke file</b>, loads one, including files exported by
-                        older versions. Importing replaces the current grammar. On small screens both are in one
-                        <b> Files</b> menu.</p>
-                    <p><b>Examples</b> loads the toki pona grammars or any recipe from this reference, and <b>New</b>
+                        older versions. Importing replaces the current grammar. On small screens both are in one{" "}
+                        <b>Files</b> menu.</p>
+                    <p><b>Examples</b> loads the toki pona grammars or any recipe from this reference, and <b>New</b>{" "}
                         starts an empty grammar. Both replace the current grammar.</p>
 
                     <Sub>Undo and redo</Sub>
@@ -399,11 +399,11 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         <li><b>Drag</b> an item by its grip handle, the three dots (on touch screens, press and hold first).</li>
                         <li><b>Keyboard drag:</b> focus the handle, press Space or Enter to pick the item up, move it with the
                             arrow keys, then press Space or Enter to drop it, or Escape to cancel.</li>
-                        <li><b>Move buttons:</b> rules always show up and down buttons (on small screens they are in the
-                            <b> More actions</b> menu at the end of the rule's header). Terminals, patterns and rewrites are
+                        <li><b>Move buttons:</b> rules always show up and down buttons (on small screens they are in the{" "}
+                            <b>More actions</b> menu at the end of the rule's header). Terminals, patterns and rewrites are
                             rows with up and down buttons, and exclusions have left and right buttons; these appear when
-                            the item has keyboard focus. Turn on <b>Always show reorder buttons</b> in the
-                            <b> View settings</b> menu to keep them visible. This setting stays in your browser and is not
+                            the item has keyboard focus. Turn on <b>Always show reorder buttons</b> in the{" "}
+                            <b>View settings</b> menu to keep them visible. This setting stays in your browser and is not
                             part of share links.</li>
                     </ul>
                     <p>Each rule header also has buttons to collapse the rule, duplicate it and delete it. A collapsed
