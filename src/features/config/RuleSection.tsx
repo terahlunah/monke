@@ -1,4 +1,4 @@
-import {Dispatch, FormEvent, useState} from "react";
+import {Dispatch, FormEvent, TextareaHTMLAttributes, useLayoutEffect, useRef, useState} from "react";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {lowerFirst} from "@/components/text.ts";
 import {Feature, Rule, RulePattern} from "@/engine/config.ts";
@@ -11,7 +11,7 @@ import {textInput} from "@/components/styles.ts";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
 import {AddButton, GripButton, RowDeleteButton} from "./ruleParts.tsx";
-import {rowInput, valueFont} from "./ruleStyles.ts";
+import {rowInput, rowInputMultiline, valueFont} from "./ruleStyles.ts";
 
 
 export type RuleSectionProps = {
@@ -27,8 +27,40 @@ export type RuleSectionProps = {
 // values on a line under the row. The last column is as wide
 // as the revealed move buttons need.
 const columns = {
-    plain: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,1fr)_minmax(0,1.4fr)_auto]",
-    weighted: "grid-cols-[18px_minmax(0,1fr)_56px_auto] md:grid-cols-[24px_minmax(0,1fr)_80px_minmax(0,1.4fr)_auto]",
+    // Terminals are a sound or two, so their field stays compact however wide the panel gets.
+    plain: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,10rem)_minmax(0,1fr)_auto]",
+    weighted: "grid-cols-[18px_minmax(0,1fr)_56px_auto] md:grid-cols-[24px_minmax(0,10rem)_80px_minmax(0,1fr)_auto]",
+}
+
+// Patterns run much longer than terminals, so their text takes the whole row; feature values only take what they need.
+const patternColumns = {
+    plain: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,1fr)_auto_auto]",
+    weighted: "grid-cols-[18px_minmax(0,1fr)_56px_auto] md:grid-cols-[24px_minmax(0,1fr)_80px_auto_auto]",
+}
+
+// A one-line field that wraps and grows instead of scrolling sideways, so a long pattern stays readable in full.
+// Patterns never contain line breaks: Enter is ignored and pasted newlines become spaces.
+const PatternField = ({value, onChange, className, ...rest}: {
+    value: string
+    onChange: (value: string) => void
+    className: string
+} & Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "value" | "onChange" | "className">) => {
+    const field = useRef<HTMLTextAreaElement>(null)
+    // Browsers without `field-sizing: content` keep a fixed height, so size it to the content after each change.
+    useLayoutEffect(() => {
+        const el = field.current
+        if (!el || CSS.supports?.("field-sizing", "content")) return
+        el.style.height = "auto"
+        el.style.height = `${el.scrollHeight}px`
+    }, [value])
+    return (
+        <textarea ref={field} rows={1} value={value} {...rest}
+                  onChange={e => onChange(e.currentTarget.value.replace(/\r?\n/g, " "))}
+                  onKeyDown={e => {
+                      if (e.key === "Enter") e.preventDefault()
+                  }}
+                  className={`${className} [field-sizing:content] resize-none overflow-hidden wrap-anywhere`}/>
+    )
 }
 
 export const RuleSection = ({rule, dispatch, enableSerif, enableWeights, features = []}: RuleSectionProps) => {
@@ -57,7 +89,8 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights, feature
                                          enableWeight={enableWeights}
                                          features={features}
                                          onValues={values => dispatch({type: "setPatternValues", ruleId, id: p.id, values})}
-                                         enableSerif={enableSerif}/>
+                                         enableSerif={enableSerif}
+                                         wide={!rule.terminalOnly}/>
                     )}
                 </div>
             </SortableList>
@@ -131,6 +164,8 @@ type RulePatternProps = {
     enableSerif?: boolean
     features?: Feature[]
     onValues?: (ids: string[]) => void
+    // Pattern rules get the wide, wrapping field; terminals stay compact.
+    wide?: boolean
 }
 
 function isNumber(value?: string | number): boolean {
@@ -152,6 +187,7 @@ export const RulePatternItem = ({
                                     enableSerif,
                                     features = [],
                                     onValues,
+                                    wide = false,
                                 }: RulePatternProps) => {
     const desktop = useMediaQuery("(min-width: 768px)")
     const names = valueNames(features, pattern.values)
@@ -180,12 +216,17 @@ export const RulePatternItem = ({
         <SortableRow id={pattern.id} role="listitem" className="group/row border-t border-line-row py-1 first:border-t-0"
                      draggingClassName="relative z-30 bg-surface shadow-lg">
             {({handleProps}) => (
-                <div className={`grid items-center gap-x-1.5 md:gap-x-2.5 ${enableWeight ? columns.weighted : columns.plain}`}>
+                <div className={`grid items-center gap-x-1.5 md:gap-x-2.5 ${(wide ? patternColumns : columns)[enableWeight ? "weighted" : "plain"]}`}>
                     <GripButton label={`Drag ${lowerFirst(label)}`} handleProps={handleProps}/>
-                    <input type="text" value={pattern.pattern} aria-label={label} {...invalid}
-                           onChange={(e: FormEvent<HTMLInputElement>) => onChange({pattern: e.currentTarget.value})}
-                           spellCheck={false}
-                           className={`${rowInput} ${valueFont(enableSerif)}`}/>
+                    {wide ?
+                        <PatternField value={pattern.pattern} aria-label={label} {...invalid}
+                                      onChange={value => onChange({pattern: value})}
+                                      spellCheck={false}
+                                      className={`${rowInputMultiline} ${valueFont(enableSerif)}`}/> :
+                        <input type="text" value={pattern.pattern} aria-label={label} {...invalid}
+                               onChange={(e: FormEvent<HTMLInputElement>) => onChange({pattern: e.currentTarget.value})}
+                               spellCheck={false}
+                               className={`${rowInput} ${valueFont(enableSerif)}`}/>}
                     {enableWeight ? (
                         <input type="text" value={weightValue} aria-label={`Weight of ${lowerFirst(label)}`}
                                onChange={e => setWeightValue(e.target.value)}

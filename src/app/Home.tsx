@@ -1,4 +1,4 @@
-import {lazy, Suspense, useEffect, useMemo, useRef, useState} from "react";
+import {CSSProperties, lazy, Suspense, useEffect, useMemo, useRef, useState} from "react";
 import {Bounce, ToastContainer} from "react-toastify";
 
 import {configToGrammar, GrammarError} from "@/engine/buildGrammar.ts";
@@ -11,6 +11,8 @@ import {Navbar} from "./Navbar.tsx";
 import {Tab, tabs} from "./tabs.ts";
 import {useUrlConfig} from "./useUrlConfig.ts";
 import {useMediaQuery} from "./useMediaQuery.ts";
+import {PanelSplitter} from "./PanelSplit.tsx";
+import {usePanelSplit} from "./panelSplitPref.ts";
 
 // The docs tabs are reading material most visits never open, so they load on demand (the static pages carry them
 // for crawlers and for reading without the app).
@@ -32,6 +34,8 @@ export const Home = () => {
     // Switching views swaps the content under a focused nav button, which assistive tech wouldn't notice.
     // Moving focus to the labelled main landmark announces the new view and starts reading from it.
     const main = useRef<HTMLElement>(null)
+    const panels = useRef<HTMLDivElement>(null)
+    const [split, setSplit] = usePanelSplit()
     const focusMainOnTabChange = useRef(false)
     const selectTab = (next: Tab) => {
         focusMainOnTabChange.current = next !== tab
@@ -98,8 +102,14 @@ export const Home = () => {
                         tab === "generator" && synced ?
                             <GrammarErrorContext value={errorLocation}>
                                 <GrammarToolbar config={config} dispatch={dispatch} view={view}/>
-                                <div className="flex flex-col grow min-h-0 md:flex-row md:overflow-hidden">
-                                    {desktop ? [configuration, output] : [output, configuration]}
+                                {/* --split sizes the grammar panel; the words panel takes the rest. */}
+                                <div ref={panels} style={{"--split": `${split}%`} as CSSProperties}
+                                     className="flex flex-col grow min-h-0 md:flex-row md:overflow-hidden">
+                                    {desktop ?
+                                        [configuration,
+                                            <PanelSplitter key="splitter" split={split} onChange={setSplit} container={panels}/>,
+                                            output] :
+                                        [output, configuration]}
                                 </div>
                             </GrammarErrorContext> : null
                     }

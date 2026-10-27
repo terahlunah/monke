@@ -17,7 +17,7 @@ export const Configuration = ({config, dispatch}: ConfigurationProps) => {
 
     return (
         <section aria-labelledby="config-heading"
-                 className="flex flex-col p-4 md:p-6 gap-3 md:basis-0 md:grow-[3] md:min-w-[420px] md:overflow-auto md:no-scrollbar">
+                 className="flex flex-col p-4 md:p-6 gap-3 md:basis-[var(--split,60%)] md:grow-0 md:shrink md:min-w-[420px] md:overflow-auto md:no-scrollbar">
             <h2 id="config-heading" className="sr-only">Grammar configuration</h2>
 
             <FeaturesPanel features={config.features} dispatch={dispatch} enableWeights={config.enableWeights}/>

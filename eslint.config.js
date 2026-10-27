@@ -17,6 +17,8 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       // JSX drops whitespace at a line break next to an element, gluing inline code to the next word in prose.
       'react/jsx-child-element-spacing': 'error',
+      // A focusable separator is the WAI-ARIA window splitter; the plugin's default only knows tabpanel.
+      'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['tabpanel', 'separator'] }],
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },

@@ -219,7 +219,7 @@ export const Generator = ({config, grammar, error, dispatch, view}: GeneratorPro
 
     return (
         <section id="generator" aria-label="Generator" tabIndex={-1}
-                 className="flex flex-col bg-surface px-4 py-3.5 md:p-6 gap-3 md:gap-3.5 border-b border-line md:border-b-0 md:border-l md:basis-0 md:grow-[2] md:min-w-[340px] md:overflow-auto md:no-scrollbar outline-none">
+                 className="flex flex-col bg-surface px-4 py-3.5 md:p-6 gap-3 md:gap-3.5 border-b border-line md:border-b-0 md:border-l md:basis-0 md:grow md:min-w-[340px] md:overflow-auto md:no-scrollbar outline-none">
             <div className="flex items-center gap-2 md:gap-2.5">
                 <h2 className="text-[15px] font-semibold">Words</h2>
                 {branchSummary ? <p className="text-xs md:text-[13px] text-muted">{branchSummary}</p> : null}

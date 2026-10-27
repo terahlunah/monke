@@ -31,6 +31,17 @@ describe("grammar errors", () => {
         expect(screen.getByLabelText("Pattern 1 of rule Word")).toBeValid()
     })
 
+    it("keeps a pattern on one line: Enter and pasted line breaks add no newline", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        const input = screen.getByLabelText<HTMLTextAreaElement>("Pattern 1 of rule Syllable")
+        await user.clear(input)
+        await user.type(input, "Consonant{Enter}.Vowel")
+        await user.paste("\n.('n')")
+
+        expect(input.value).toBe("Consonant.Vowel .('n')")
+    })
+
     it("suggests the closest rule name under the pattern with a typo", async () => {
         const user = userEvent.setup()
         await renderApp()
