@@ -104,7 +104,7 @@ export const Home = () => {
                                 <GrammarToolbar config={config} dispatch={dispatch} view={view}/>
                                 {/* --split sizes the grammar panel; the words panel takes the rest. */}
                                 <div ref={panels} style={{"--split": `${split}%`} as CSSProperties}
-                                     className="flex flex-col grow min-h-0 md:flex-row md:overflow-hidden">
+                                     className="flex flex-col grow min-h-0 md:relative md:flex-row md:overflow-hidden">
                                     {desktop ?
                                         [configuration,
                                             <PanelSplitter key="splitter" split={split} onChange={setSplit} container={panels}/>,

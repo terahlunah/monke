@@ -21,12 +21,12 @@ export const releases: Release[] = [
             {
                 title: "New",
                 items: [
-                    "Phonological features: declare features like `harmony: front | back`, tag terminals, patterns or whole rules, and let a rule choose a value for everything inside it. Vowel harmony and consistent branching without duplicating rules. Filter references with `Vowel<front>` or `Vowel<!back>`. Unnamed features and unchosen values give warnings instead of stopping generation.",
+                    "Phonological features: declare features like `harmony: front | back`, list on each rule the features that sort its rows, tag terminals or patterns, and let a rule choose a value for everything inside it. Vowel harmony and consistent branching without duplicating rules. Filter references through every rule below them with `Vowel<front>` (only front) or `Vowel<!back>` (anything but back). Unnamed features and unchosen values give warnings instead of stopping generation.",
                     "Import from Awkwords: open an .awkw file or paste a pattern. Subpatterns become rules, filters become exact exclusions, and anything that can't be translated exactly is listed for review.",
                     "Words update as you edit. Output is driven by a seed you can set and share, so a link always shows the same words; New words picks a fresh seed.",
                     "Generate all lists every distinct word a grammar can make (up to 10,000), with rewrites and exclusions applied.",
                     "Word boundaries `^` and `$` in rewrites and exclusions, e.g. ban a word-final h with `'h'.$` (#21).",
-                    "Repeat factors lower the chance of picking the same thing twice in a word: `x~0.5` on a pattern alternative, or a Repeat weight on a rule for every reference to it (#24).",
+                    "Repeat factors lower the chance of picking the same thing twice in a word: a Repeat field next to each row's Weight, or `x~0.5` on an alternative inside a pattern (#24).",
                     "Back-references in exclusions: `C.#0#` bans doubled consonants like pp but allows pt (#14).",
                     "\"Repeat rewrites until nothing changes\" option, so a rewrite can act on another rewrite's output (#18).",
                     "Add several terminals at once by typing them separated by spaces.",

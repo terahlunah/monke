@@ -84,15 +84,16 @@ describe("rule actions", () => {
     it("ignores unknown rule ids", () => {
         expect(apply({type: "removeRule", ruleId: "nope"}, {type: "toggleCollapse", ruleId: "nope"})).toEqual(base())
     })
-
-    it("sets a rule's repeat weight, storing 1 as absent", () => {
-        expect(apply({type: "setRepeatWeight", ruleId: "B", weight: 0.5}).rules[1].repeatWeight).toBe(0.5)
-        expect(apply({type: "setRepeatWeight", ruleId: "B", weight: 0.5}, {type: "setRepeatWeight", ruleId: "B", weight: 1}).rules[1].repeatWeight).toBeUndefined()
-        expect(apply({type: "setRepeatWeight", ruleId: "B", weight: 0.5}).rules[0].repeatWeight).toBeUndefined()
-    })
 })
 
 describe("pattern actions", () => {
+    it("sets a pattern's repeat factor, storing 1 as absent", () => {
+        const set = {type: "setPatternRepeat", ruleId: "A", id: "A1", repeat: 0.5} as const
+        expect(apply(set).rules[0].patterns[1].repeat).toBe(0.5)
+        expect(apply(set).rules[0].patterns[0]).not.toHaveProperty("repeat")
+        expect(apply(set, {...set, repeat: 1}).rules[0].patterns[1]).not.toHaveProperty("repeat")
+    })
+
     it("adds, edits, moves and removes patterns", () => {
         let c = apply({type: "addPattern", ruleId: "A"})
         expect(c.rules[0].patterns).toHaveLength(3)
@@ -157,9 +158,10 @@ describe("feature actions", () => {
             {type: "renameFeatureValue", featureId, valueId: front.id, name: "front"},
             {type: "renameFeatureValue", featureId, valueId: back.id, name: "back"},
             {type: "setFeatureValueWeight", featureId, valueId: back.id, weight: 3},
+            {type: "addRuleFeature", ruleId: "A", featureId},
+            {type: "addRuleFeature", ruleId: "A", featureId},
             {type: "setPatternValues", ruleId: "A", id: "A0", values: [front.id]},
             {type: "setPatternValues", ruleId: "A", id: "A1", values: [back.id]},
-            {type: "setRuleValues", ruleId: "B", values: [front.id]},
             {type: "addRuleChoice", ruleId: "A", featureId},
             {type: "addRuleChoice", ruleId: "A", featureId},
         ].reduce((acc, a) => configReducer(acc, a as ConfigAction), c)
@@ -173,8 +175,17 @@ describe("feature actions", () => {
             {id: back, name: "back", weight: 3},
         ]}])
         expect(c.rules[0].patterns.map(p => p.values)).toEqual([[front], [back]])
-        expect(c.rules[1].values).toEqual([front])
         expect(c.rules[0].chooses).toEqual([featureId])
+        expect(c.rules[0].classifies).toEqual([featureId])
+    })
+
+    it("inserts a value right after another with a caller-chosen id", () => {
+        const {c, featureId, front, back} = withHarmony()
+        const inserted = configReducer(c, {type: "addFeatureValue", featureId, afterId: front, id: "new"})
+        expect(inserted.features[0].values.map(v => v.id)).toEqual([front, "new", back])
+        const appended = configReducer(c, {type: "addFeatureValue", featureId, afterId: "missing"})
+        expect(appended.features[0].values).toHaveLength(3)
+        expect(appended.features[0].values[2].id).not.toBe(back)
     })
 
     it("renaming keeps references, which are ids", () => {
@@ -189,25 +200,40 @@ describe("feature actions", () => {
         const removed = configReducer(c, {type: "removeFeatureValue", featureId, valueId: front})
         expect(removed.features[0].values.map(v => v.id)).toEqual([back])
         expect(removed.rules[0].patterns[0].values).toBeUndefined()
-        expect(removed.rules[1].values).toBeUndefined()
         expect(removed.rules[0].chooses).toEqual([featureId])
     })
 
-    it("removing a feature removes its values and chooses everywhere", () => {
+    it("removing a feature removes its values, declarations and chooses everywhere", () => {
         const {c, featureId} = withHarmony()
         const removed = configReducer(c, {type: "removeFeature", featureId})
         expect(removed.features).toEqual([])
-        expect(removed.rules.flatMap(r => [r.values, r.chooses, ...r.patterns.map(p => p.values)]).every(v => v === undefined)).toBe(true)
+        expect(removed.rules.flatMap(r => [r.chooses, r.classifies, ...r.patterns.map(p => p.values)]).every(v => v === undefined)).toBe(true)
+    })
+
+    it("removing a feature from a rule removes its values from the rule's rows only", () => {
+        const {c, featureId} = withHarmony()
+        const other = configReducer(c, {type: "addFeature"})
+        const roundId = other.features[1].id
+        const withRound = [
+            {type: "addFeatureValue", featureId: roundId, id: "round"},
+            {type: "addRuleFeature", ruleId: "A", featureId: roundId},
+            {type: "setPatternValues", ruleId: "A", id: "A0", values: [c.rules[0].patterns[0].values![0], "round"]},
+        ].reduce((acc, a) => configReducer(acc, a as ConfigAction), other)
+        const next = configReducer(withRound, {type: "removeRuleFeature", ruleId: "A", featureId})
+        expect(next.rules[0].classifies).toEqual([roundId])
+        expect(next.rules[0].patterns.map(p => p.values)).toEqual([["round"], undefined])
+        expect(next.rules[0].chooses).toEqual([featureId])
+        expect(configReducer(next, {type: "removeRuleFeature", ruleId: "A", featureId: roundId}).rules[0].classifies).toBeUndefined()
     })
 
     it("stops choosing a feature and stores no values as absent", () => {
         const {c, featureId} = withHarmony()
         const next = [
             {type: "removeRuleChoice", ruleId: "A", featureId},
-            {type: "setRuleValues", ruleId: "B", values: []},
+            {type: "setPatternValues", ruleId: "A", id: c.rules[0].patterns[0].id, values: []},
         ].reduce((acc, a) => configReducer(acc, a as ConfigAction), c)
         expect(next.rules[0].chooses).toBeUndefined()
-        expect(next.rules[1].values).toBeUndefined()
+        expect(next.rules[0].patterns[0].values).toBeUndefined()
     })
 
     it("clear removes the features", () => {

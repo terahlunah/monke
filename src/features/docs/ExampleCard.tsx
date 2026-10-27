@@ -1,6 +1,6 @@
 import {ReactNode} from "react";
 import {ChevronsRightIcon, ExternalLinkIcon} from "lucide-react";
-import {ExampleRule, itemText, itemWeight, ReferenceExample} from "./referenceExamples.ts";
+import {exampleClassifies, ExampleRule, itemText, itemWeight, ReferenceExample} from "./referenceExamples.ts";
 
 // Read-only rendition of the editor's rule cards: same colours and shapes, but plain text with no controls,
 // so screen readers get lists of real text instead of dozens of inputs.
@@ -21,7 +21,8 @@ const SectionTitle = ({tone, count, children}: { tone: string, count: number, ch
 
 const chipList = "flex flex-row flex-wrap gap-2"
 
-const RuleCard = ({rule, weights}: { rule: ExampleRule, weights: boolean }) => {
+const RuleCard = ({rule, weights, features}: { rule: ExampleRule, weights: boolean, features: ReferenceExample["features"] }) => {
+    const classifies = exampleClassifies(rule, features)
     const patternsLabel = rule.terminal ? "Terminals" : "Patterns"
     return (
         <li className="flex flex-col gap-2 rounded-[10px] border border-line bg-surface p-3">
@@ -29,23 +30,25 @@ const RuleCard = ({rule, weights}: { rule: ExampleRule, weights: boolean }) => {
                 <span className="sr-only">Rule</span>
                 <span className={`text-[15px] font-semibold [overflow-wrap:anywhere] ${rule.terminal ? "text-terminal" : "text-pattern"}`}>{rule.name}</span>
                 <span className="text-[13px] text-subtle">{rule.terminal ? "terminal rule" : "pattern rule"}</span>
-                {rule.values?.length ? <span className="font-mono text-[13px] text-feature"><span className="sr-only">values </span>[{rule.values.join(", ")}]</span> : null}
+                {classifies.length ? (
+                    <span className="text-[13px] text-muted">features <span className="font-mono text-feature">{classifies.join(", ")}</span></span>
+                ) : null}
                 {rule.chooses?.length ? (
                     <span className="text-[13px] text-muted">chooses <span className="font-mono text-feature">{rule.chooses.join(", ")}</span></span>
-                ) : null}
-                {weights && rule.repeatWeight !== undefined ? (
-                    <span className="text-[13px] text-muted">repeat weight {rule.repeatWeight}</span>
                 ) : null}
             </div>
             <SectionTitle tone="text-muted" count={rule.items.length}>{patternsLabel}</SectionTitle>
             <ul aria-label={`${patternsLabel} of rule ${rule.name}`} className={chipList}>
                 {rule.items.map((item, i) => {
                     const weight = weights ? itemWeight(item) : null
+                    const repeat = weights ? rule.itemRepeats?.[i] : undefined
                     return (
                         <Chip key={i}>
                             <Cell>{itemText(item)}</Cell>
                             {weight !== null ?
                                 <Cell className="border-l border-line-strong text-muted"><span className="sr-only">weight </span>{weight}</Cell> : null}
+                            {repeat !== undefined ?
+                                <Cell className="border-l border-line-strong text-muted">repeat {repeat}</Cell> : null}
                             {rule.itemValues?.[i]?.length ?
                                 <Cell className="border-l border-line-strong text-feature"><span className="sr-only">values </span>[{rule.itemValues[i]!.join(", ")}]</Cell> : null}
                         </Chip>
@@ -122,7 +125,7 @@ export const ExampleCard = ({example, summary, hrefs}: {
                 </ul>
             ) : null}
             <ul aria-label={`Rules of ${example.title}`} className="flex flex-col gap-2">
-                {example.rules.map(r => <RuleCard key={r.name} rule={r} weights={example.weights ?? false}/>)}
+                {example.rules.map(r => <RuleCard key={r.name} rule={r} weights={example.weights ?? false} features={example.features}/>)}
             </ul>
         </figure>
     )

@@ -1,6 +1,8 @@
 import {Dispatch, FormEvent, TextareaHTMLAttributes, useLayoutEffect, useRef, useState} from "react";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
-import {isNumber, lowerFirst} from "@/components/text.ts";
+import {lowerFirst} from "@/components/text.ts";
+import {NumberChip} from "@/components/NumberChip.tsx";
+import {HelpTip} from "@/components/HelpTip.tsx";
 import {Feature, Rule, RulePattern} from "@/engine/config.ts";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
 import {ValuesDisplay, ValuesPopover} from "./featureParts.tsx";
@@ -10,7 +12,7 @@ import {SortableList, SortableRow} from "@/components/SortableList.tsx";
 import {textInput} from "@/components/styles.ts";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
-import {AddButton, GripButton, RowDeleteButton} from "./ruleParts.tsx";
+import {GripButton, RowDeleteButton, SectionPanel} from "./ruleParts.tsx";
 import {rowInput, rowInputMultiline, valueFont} from "./ruleStyles.ts";
 
 
@@ -22,20 +24,19 @@ export type RuleSectionProps = {
     features?: Feature[]
 }
 
-// handle | value | weight (only with weights on) | feature values | actions.
-// The feature values cell only exists on wide screens; small ones put the edit button with the row actions and the
-// values on a line under the row. The last column is as wide
-// as the revealed move buttons need.
+// handle | value | weight and repeat chips (only with weights on) | feature values | actions.
+// The chips and feature values cells only exist on wide screens; small ones put the edit button with the row actions,
+// and the chips and values on lines under the row. The last column is as wide as the revealed move buttons need.
 const columns = {
     // Terminals are a sound or two, so their field stays compact however wide the panel gets.
     plain: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,10rem)_minmax(0,1fr)_auto]",
-    weighted: "grid-cols-[18px_minmax(0,1fr)_56px_auto] md:grid-cols-[24px_minmax(0,10rem)_80px_minmax(0,1fr)_auto]",
+    weighted: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,10rem)_auto_minmax(0,1fr)_auto]",
 }
 
 // Patterns run much longer than terminals, so their text takes the whole row; feature values only take what they need.
 const patternColumns = {
     plain: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,1fr)_auto_auto]",
-    weighted: "grid-cols-[18px_minmax(0,1fr)_56px_auto] md:grid-cols-[24px_minmax(0,1fr)_80px_auto_auto]",
+    weighted: "grid-cols-[18px_minmax(0,1fr)_auto] md:grid-cols-[24px_minmax(0,1fr)_auto_auto_auto]",
 }
 
 // A one-line field that wraps and grows instead of scrolling sideways, so a long pattern stays readable in full.
@@ -69,8 +70,18 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights, feature
     const kind = rule.terminalOnly ? "terminal" : "pattern"
 
     return (
-        <>
-            <h4 className="sr-only">{rule.terminalOnly ? "Terminals" : "Patterns"}</h4>
+        <SectionPanel kind={kind} title={rule.terminalOnly ? "Terminals" : "Patterns"}
+                      addLabel={`Add ${kind} to rule ${rule.name}`}
+                      onAdd={() => dispatch({type: "addPattern", ruleId})}
+                      controls={enableWeights ? (
+                          // One tip per rule rather than per row, so rows stay uncluttered.
+                          <HelpTip compact label="About weight and repeat" section="reference-fewer-repeats">
+                              <b>Weight</b>: how often this {kind} is picked compared with the others (default 1).
+                              {" "}<b>Repeat</b>: each time it was already picked in the word, its weight is multiplied by
+                              this number. 1 has no effect, 0.5 halves the chance each repeat, 0 allows it only once.
+                              Inside a pattern, write <code className="font-mono">x~0.5</code>.
+                          </HelpTip>
+                      ) : null}>
             <SortableList items={rule.patterns} onMove={(from, to) => dispatch({type: "movePattern", ruleId, from, to})}
                           direction="vertical"
                           describe={p => p.pattern ? `${kind} ${p.pattern}` : `empty ${kind}`}>
@@ -89,23 +100,20 @@ export const RuleSection = ({rule, dispatch, enableSerif, enableWeights, feature
                                          enableWeight={enableWeights}
                                          features={features}
                                          onValues={values => dispatch({type: "setPatternValues", ruleId, id: p.id, values})}
+                                         onRepeat={repeat => dispatch({type: "setPatternRepeat", ruleId, id: p.id, repeat})}
                                          enableSerif={enableSerif}
                                          wide={!rule.terminalOnly}/>
                     )}
                 </div>
             </SortableList>
             <InlineGrammarError ruleId={ruleId} itemIds={rule.patterns.map(p => p.id)}/>
-            <div className="flex items-center gap-2.5 pt-1.5">
-                <AddButton tone="text-primary-text" label={`Add ${kind} to rule ${rule.name}`}
-                           onClick={() => dispatch({type: "addPattern", ruleId})}>
-                    {rule.terminalOnly ? "Terminal" : "Pattern"}
-                </AddButton>
-                {rule.terminalOnly ?
+            {rule.terminalOnly ? (
+                <div className="flex items-center pl-6 md:pl-[34px]">
                     <AddSeveral ruleName={rule.name} enableSerif={enableSerif}
-                                onAdd={patterns => dispatch({type: "addPatterns", ruleId, patterns})}/> :
-                    null}
-            </div>
-        </>
+                                onAdd={patterns => dispatch({type: "addPatterns", ruleId, patterns})}/>
+                </div>
+            ) : null}
+        </SectionPanel>
     );
 }
 
@@ -139,7 +147,7 @@ const AddSeveral = ({ruleName, enableSerif, onAdd}: AddSeveralProps) => {
                        submit()
                    }}
                    aria-label={`Add several terminals to rule ${ruleName}, separated by spaces`}
-                   placeholder="Add several: p t k s"
+                   placeholder="Add several, separated by spaces"
                    spellCheck={false}
                    className={`${textInput} h-9 md:h-[30px] min-w-0 flex-1 bg-transparent border-line ${valueFont(enableSerif)}`}/>
             <div role="status" className="sr-only">
@@ -164,6 +172,7 @@ type RulePatternProps = {
     enableSerif?: boolean
     features?: Feature[]
     onValues?: (ids: string[]) => void
+    onRepeat?: (repeat: number) => void
     // Pattern rules get the wide, wrapping field; terminals stay compact.
     wide?: boolean
 }
@@ -181,34 +190,31 @@ export const RulePatternItem = ({
                                     enableSerif,
                                     features = [],
                                     onValues,
+                                    onRepeat,
                                     wide = false,
                                 }: RulePatternProps) => {
     const desktop = useMediaQuery("(min-width: 768px)")
     const names = valueNames(features, pattern.values)
     const popover = features.length && onValues ?
-        <ValuesPopover features={features} selected={pattern.values} label={lowerFirst(label)} onChange={onValues}
-                       collapseWhenEmpty={names.length === 0}/> : null
+        <ValuesPopover features={features} selected={pattern.values} label={lowerFirst(label)} onChange={onValues}/> : null
 
     const invalid = useInvalidProps(ruleId, pattern.id)
-    const [weightValue, setWeightValue] = useState(pattern.weight.toString())
+    const repeat = pattern.repeat ?? 1
+    // The grammar only rejects a negative factor, so only then does the row's error point at this field too.
+    const repeatInvalid = repeat < 0 ? invalid : {}
 
-    // Resync the text field when the pattern changes, during render rather than in an effect to avoid a cascading render.
-    const [syncedPattern, setSyncedPattern] = useState(pattern)
-    if (syncedPattern !== pattern) {
-        setSyncedPattern(pattern)
-        setWeightValue(pattern.weight.toString())
-    }
-
-    const onWeightBlur = () => {
-        if (isNumber(weightValue)) {
-            onChange({weight: +weightValue})
-        } else {
-            setWeightValue('1')
-        }
-    }
+    // Small screens put the chips on a line under the row, so the pattern keeps its width.
+    const chips = enableWeight ? (
+        <div className={desktop ? "flex items-center gap-1.5" : "col-span-full flex flex-wrap items-center gap-1.5 pl-6 pt-1"}>
+            <NumberChip label="Weight" accessibleName={`Weight of ${lowerFirst(label)}`} value={pattern.weight} neutral={1}
+                        onCommit={weight => onChange({weight})}/>
+            <NumberChip label="Repeat" accessibleName={`Repeat factor of ${lowerFirst(label)}`} value={repeat} neutral={1}
+                        onCommit={value => onRepeat?.(value)} {...repeatInvalid}/>
+        </div>
+    ) : null
 
     return (
-        <SortableRow id={pattern.id} role="listitem" className="group/row border-t border-line-row py-1 first:border-t-0"
+        <SortableRow id={pattern.id} role="listitem" className="group/row border-t border-line py-1 first:border-t-0"
                      draggingClassName="relative z-30 bg-surface shadow-lg">
             {({handleProps}) => (
                 <div className={`grid items-center gap-x-1.5 md:gap-x-2.5 ${(wide ? patternColumns : columns)[enableWeight ? "weighted" : "plain"]}`}>
@@ -222,13 +228,7 @@ export const RulePatternItem = ({
                                onChange={(e: FormEvent<HTMLInputElement>) => onChange({pattern: e.currentTarget.value})}
                                spellCheck={false}
                                className={`${rowInput} ${valueFont(enableSerif)}`}/>}
-                    {enableWeight ? (
-                        <input type="text" value={weightValue} aria-label={`Weight of ${lowerFirst(label)}`}
-                               onChange={e => setWeightValue(e.target.value)}
-                               onBlur={onWeightBlur}
-                               inputMode="decimal"
-                               className={`${rowInput} text-center text-muted`}/>
-                    ) : null}
+                    {desktop ? chips : null}
                     {desktop ? <div className="flex min-w-0 items-center gap-0.5"><ValuesDisplay names={names}/>{popover}</div> : null}
                     <div className="flex items-center">
                         {desktop ? null : popover}
@@ -237,6 +237,7 @@ export const RulePatternItem = ({
                                      iconClassName="size-4"/>
                         <RowDeleteButton label={`Delete ${lowerFirst(label)}`} onClick={onDelete}/>
                     </div>
+                    {desktop ? null : chips}
                     {!desktop && names.length ? <ValuesDisplay names={names} className="col-span-full pl-6"/> : null}
                 </div>
             )}

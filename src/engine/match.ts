@@ -1,5 +1,5 @@
 import {Expr, Grammar, Rule} from "./grammar.ts";
-import {eligibleRows, emptyScope} from "./features.ts";
+import {eligibleRows, emptyScope, Scope, scopeOptions, withFilters} from "./features.ts";
 
 // Matchers are generators so a sequence can backtrack into the alternatives of an
 // earlier item. Each yielded array holds one length per sub-part of the expression.
@@ -7,30 +7,31 @@ import {eligibleRows, emptyScope} from "./features.ts";
 // They work on the whole text plus a position so boundaries can tell where the text starts and ends.
 // `parts` holds the text matched by earlier parts of the top-level sequence, for `#n#`.
 // In the top-level sequence (`capture`), each matched item becomes a part later items can refer to.
-function* matchSeq(g: Grammar, items: Expr[], text: string, pos: number, parts: string[], capture = false): Generator<number[]> {
+// `scope` holds the filters of the references above and the values their rules choose, as in generation.
+function* matchSeq(g: Grammar, items: Expr[], text: string, pos: number, parts: string[], scope: Scope, capture = false): Generator<number[]> {
     if (items.length === 0) {
         yield []
         return
     }
 
-    for (const first of matchExpr(g, items[0], text, pos, parts)) {
+    for (const first of matchExpr(g, items[0], text, pos, parts, scope)) {
         // A nested match reports one length per sub-part; the item as a whole
         // consumes their sum and counts as a single back-reference.
         const consumed = first.reduce((a, b) => a + b, 0)
         const next = capture ? [...parts, text.slice(pos, pos + consumed)] : parts
-        for (const rest of matchSeq(g, items.slice(1), text, pos + consumed, next, capture)) {
+        for (const rest of matchSeq(g, items.slice(1), text, pos + consumed, next, scope, capture)) {
             yield [consumed, ...rest]
         }
     }
 }
 
-function* matchQuantifier(g: Grammar, expr: Expr, min: number, max: number, text: string, pos: number, parts: string[]): Generator<number[]> {
+function* matchQuantifier(g: Grammar, expr: Expr, min: number, max: number, text: string, pos: number, parts: string[], scope: Scope): Generator<number[]> {
     for (let i = min; i <= max; ++i) {
-        yield* matchSeq(g, Array(i).fill(expr), text, pos, parts)
+        yield* matchSeq(g, Array(i).fill(expr), text, pos, parts, scope)
     }
 }
 
-function* matchExpr(g: Grammar, e: Expr, text: string, pos: number, parts: string[]): Generator<number[]> {
+function* matchExpr(g: Grammar, e: Expr, text: string, pos: number, parts: string[], scope: Scope): Generator<number[]> {
     switch (e.tag) {
         case 'Atom':
             if (text.startsWith(e.value, pos)) yield [e.value.length]
@@ -41,9 +42,10 @@ function* matchExpr(g: Grammar, e: Expr, text: string, pos: number, parts: strin
         case 'Ref': {
             const rule = g.ruleMap.get(e.rule)
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
-            // Matching has no chosen values; only filters narrow the rule's rows.
-            if (!e.filters) yield* matchExpr(g, rule.expr, text, pos, [])
-            else for (const row of eligibleRows(g, rule, emptyScope, e.filters)) yield* matchExpr(g, row.expr, text, pos, [])
+            // Text matches the rule when, for some value its choices can take, one of its rows matches.
+            for (const [inner] of scopeOptions(g, rule, withFilters(g, scope, e.filters))) {
+                for (const row of eligibleRows(rule, inner)) yield* matchExpr(g, row.expr, text, pos, [], inner)
+            }
             return
         }
         case 'Match': {
@@ -53,19 +55,19 @@ function* matchExpr(g: Grammar, e: Expr, text: string, pos: number, parts: strin
             return
         }
         case "Seq":
-            yield* matchSeq(g, e.items, text, pos, parts)
+            yield* matchSeq(g, e.items, text, pos, parts, scope)
             return
         case "Choice":
-            for (const c of e.items) yield* matchExpr(g, c.expr, text, pos, parts)
+            for (const c of e.items) yield* matchExpr(g, c.expr, text, pos, parts, scope)
             return
         case "Quantifier":
-            yield* matchQuantifier(g, e.expr, e.min, e.max, text, pos, parts)
+            yield* matchQuantifier(g, e.expr, e.min, e.max, text, pos, parts, scope)
     }
 }
 
 // First match starting at `pos` that consumes at least one character.
 export const matchNonEmpty = (g: Grammar, e: Expr, text: string, pos: number): number[] | null => {
-    const matches = e.tag === "Seq" ? matchSeq(g, e.items, text, pos, [], true) : matchExpr(g, e, text, pos, [])
+    const matches = e.tag === "Seq" ? matchSeq(g, e.items, text, pos, [], emptyScope, true) : matchExpr(g, e, text, pos, [], emptyScope)
     for (const m of matches) {
         if (m.some(l => l > 0)) return m
     }

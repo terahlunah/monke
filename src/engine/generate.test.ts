@@ -2,7 +2,7 @@ import {describe, expect, it} from "vitest"
 import {generate} from "./generate.ts"
 import {countCombinations, detectCycle} from "./analysis.ts"
 import {matchesExclusion} from "./match.ts"
-import {makeGrammar, makeRule, mulberry32, sequenceRng} from "./test-helpers.ts"
+import {makeGrammar, makeRule, mulberry32, repeatRows, sequenceRng} from "./test-helpers.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
 
 // Exact-pick tests pass sequenceRng: every rule consumes one value for its own pattern choice before its contents.
@@ -403,14 +403,14 @@ describe("repeat factors", () => {
         expect(ws.some(w => w.includes("a"))).toBe(true)
     })
 
-    it("lowers the weight of references to a rule for each earlier expansion of it", () => {
+    it("lowers a row's weight for each earlier pick of that row in the word", () => {
         const g = makeGrammar("W", [
-            makeRule("W", ["[V / 'b']{4}"]),
-            makeRule("V", ["a", "e"], {terminalOnly: true, repeatWeight: 0}),
+            makeRule("W", ["V{4}"]),
+            repeatRows(makeRule("V", ["a", "e"], {terminalOnly: true}), [0]),
         ], {enableWeights: true})
         const ws = words(g)
-        expect(ws.every(w => count(w, "a") + count(w, "e") <= 1)).toBe(true)
-        expect(ws.some(w => /[ae]/.test(w))).toBe(true)
+        expect(ws.every(w => count(w, "a") <= 1)).toBe(true)
+        expect(ws.some(w => w.includes("a"))).toBe(true)
     })
 
     it("counts per word", () => {
@@ -433,7 +433,7 @@ describe("repeat factors", () => {
     })
 
     it("draws the same random numbers as without factors", () => {
-        const rules = (p: string, repeatWeight?: number) => [makeRule("W", ["[C / V]{2:5}"]), makeRule("C", [p], {repeatWeight}), makeRule("V", ["'a' / 'e'"])]
+        const rules = (p: string, repeat?: number) => [makeRule("W", ["[C / V]{2:5}"]), repeatRows(makeRule("C", [p]), [repeat]), makeRule("V", ["'a' / 'e'"])]
         const plain = makeGrammar("W", rules("'p'*2 / 't'"), {enableWeights: true})
         const neutral = makeGrammar("W", rules("'p'*2~1 / 't'~1", 1), {enableWeights: true})
         expect(words(neutral)).toEqual(words(plain))

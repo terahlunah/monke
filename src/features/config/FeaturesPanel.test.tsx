@@ -22,6 +22,11 @@ const declareHarmony = async (user: UserEvent) => {
     await user.type(screen.getByLabelText("Value 2 of feature harmony"), "back")
 }
 
+const classify = async (user: UserEvent, rule: string, feature = "harmony") => {
+    await user.click(screen.getByRole("button", {name: `Add feature that tags rows of rule ${rule}`}))
+    await user.click(await screen.findByRole("menuitem", {name: feature}))
+}
+
 const tag = async (user: UserEvent, item: string, value: string) => {
     await user.click(screen.getByRole("button", {name: `Feature values of ${item}`}))
     await user.click(await screen.findByRole("checkbox", {name: value}))
@@ -36,7 +41,7 @@ const words = () => {
 describe("phonological features panel", () => {
     it("explains features when there are none", async () => {
         await renderApp()
-        expect(panel()).toHaveTextContent(/A rule that chooses a feature keeps one value/)
+        expect(panel()).toHaveTextContent(/keep them consistent across a word/)
         expect(screen.queryByRole("button", {name: /^Feature values of/})).not.toBeInTheDocument()
     })
 
@@ -80,17 +85,19 @@ describe("phonological features panel", () => {
         const user = userEvent.setup()
         await renderApp()
         await declareHarmony(user)
+        await classify(user, "Vowel")
+        expect(within(screen.getByRole("group", {name: "Tags by, rule Vowel"})).getByText("harmony")).toBeInTheDocument()
         await tag(user, "terminal 2 of rule Vowel", "front")
         await tag(user, "terminal 3 of rule Vowel", "front")
         await tag(user, "terminal 4 of rule Vowel", "back")
         await tag(user, "terminal 5 of rule Vowel", "back")
         // Tagged but not chosen yet: a warning, the values have no effect.
-        expect(await screen.findAllByText(/Feature .harmony. is not chosen when rule .Vowel. is used in .Word./)).not.toHaveLength(0)
-        expect(screen.getByRole("group", {name: "Features chosen by rule Vowel"})).toBeInTheDocument()
+        expect(await screen.findAllByText(/Feature .harmony. is neither chosen nor filtered when rule .Vowel. is used in .Word./)).not.toHaveLength(0)
+        expect(screen.getByRole("group", {name: "Picks, rule Vowel"})).toBeInTheDocument()
 
-        await user.click(screen.getByRole("button", {name: "Choose a feature in rule Word"}))
+        await user.click(screen.getByRole("button", {name: "Add feature picked by rule Word"}))
         await user.click(await screen.findByRole("menuitem", {name: "harmony"}))
-        expect(within(screen.getByRole("group", {name: "Features chosen by rule Word"})).getByText("harmony")).toBeInTheDocument()
+        expect(within(screen.getByRole("group", {name: "Picks, rule Word"})).getByText("harmony")).toBeInTheDocument()
         await waitFor(() => expect(screen.queryByText(/Invalid grammar/)).not.toBeInTheDocument())
 
         const vowelCard = screen.getByRole("heading", {name: "Rule Vowel"}).parentElement!
@@ -103,14 +110,20 @@ describe("phonological features panel", () => {
             expect(words().filter(w => /[ei]/.test(w) && /[ou]/.test(w))).toEqual([])
         }, {timeout: 3000})
 
-        await user.click(screen.getByRole("button", {name: "Stop choosing harmony in rule Word"}))
-        expect(await screen.findAllByText(/Feature .harmony. is not chosen when rule .Vowel./)).not.toHaveLength(0)
+        await user.click(screen.getByRole("button", {name: "Stop picking harmony in rule Word"}))
+        expect(await screen.findAllByText(/Feature .harmony. is neither chosen nor filtered when rule .Vowel. is used in .Word./)).not.toHaveLength(0)
+
+        // Removing the feature from the rule strips its rows' values.
+        await user.click(screen.getByRole("button", {name: "Remove feature harmony from rule Vowel"}))
+        expect(screen.getByRole("heading", {name: "Rule Vowel"}).parentElement!).not.toHaveTextContent("[front]")
+        expect(screen.queryByRole("button", {name: /^Feature values of terminal 1 of rule Vowel/})).not.toBeInTheDocument()
     })
 
     it("returns focus to the values button when the popover closes", async () => {
         const user = userEvent.setup()
         await renderApp()
         await declareHarmony(user)
+        await classify(user, "Vowel")
         const button = screen.getByRole("button", {name: "Feature values of terminal 1 of rule Vowel"})
         await user.click(button)
         await screen.findByRole("checkbox", {name: "front"})
@@ -118,15 +131,56 @@ describe("phonological features panel", () => {
         await waitFor(() => expect(button).toHaveFocus())
     })
 
-    it("collapses a row's values button until the row has values, but keeps it in the tab order", async () => {
+    it("shows the values button only on rows of a rule with features, even untagged rows", async () => {
         const user = userEvent.setup()
         await renderApp()
         await declareHarmony(user)
-        const name = "Feature values of terminal 1 of rule Vowel"
-        const wrapper = () => screen.getByRole("button", {name}).parentElement!
-        expect(wrapper()).toHaveAttribute("data-collapsed", "true")
-        await tag(user, "terminal 1 of rule Vowel", "front")
-        expect(wrapper()).toHaveAttribute("data-collapsed", "false")
+        expect(screen.queryByRole("button", {name: /^Feature values of/})).not.toBeInTheDocument()
+        await classify(user, "Vowel")
+        expect(screen.queryByRole("button", {name: /^Feature values of terminal 1 of rule Consonant/})).not.toBeInTheDocument()
+        expect(screen.getByRole("button", {name: "Feature values of terminal 1 of rule Vowel"})).toBeVisible()
+        expect(screen.getByRole("button", {name: "Feature values of terminal 2 of rule Vowel"})).toBeVisible()
+    })
+
+    it("adds a value after the current one on Enter and focuses it", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await declareHarmony(user)
+        await user.type(screen.getByLabelText("Value 1 of feature harmony"), "{Enter}")
+        const inserted = screen.getByLabelText("Value 2 of feature harmony")
+        expect(inserted).toHaveValue("")
+        expect(inserted).toHaveFocus()
+        expect(screen.getByLabelText("Value 3 of feature harmony")).toHaveValue("back")
+    })
+
+    it("deletes an empty value on Backspace and focuses the previous value, or the name", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await declareHarmony(user)
+        await user.click(screen.getByRole("button", {name: "Add a value to feature harmony"}))
+        const third = screen.getByLabelText("Value 3 of feature harmony")
+        await user.click(third)
+        await user.keyboard("{Backspace}")
+        expect(screen.queryByLabelText("Value 3 of feature harmony")).not.toBeInTheDocument()
+        expect(screen.getByLabelText("Value 2 of feature harmony")).toHaveFocus()
+
+        await user.clear(screen.getByLabelText("Value 2 of feature harmony"))
+        await user.keyboard("{Backspace}")
+        await user.clear(screen.getByLabelText("Value 1 of feature harmony"))
+        await user.keyboard("{Backspace}")
+        expect(screen.getByLabelText("Name of feature 1")).toHaveFocus()
+        expect(screen.queryByLabelText("Value 1 of feature harmony")).not.toBeInTheDocument()
+    })
+
+    it("edits text normally on Backspace in a non-empty value", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await declareHarmony(user)
+        const first = screen.getByLabelText("Value 1 of feature harmony")
+        await user.type(first, "{Backspace}")
+        expect(first).toHaveValue("fron")
+        expect(first).toHaveFocus()
+        expect(screen.getByLabelText("Value 2 of feature harmony")).toBeInTheDocument()
     })
 
     it("warns about a declared feature nothing uses", async () => {

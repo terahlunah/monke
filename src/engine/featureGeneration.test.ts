@@ -1,5 +1,6 @@
 import {describe, expect, it} from "vitest"
 import {generate} from "./generate.ts"
+import {enumerate} from "./enumerate.ts"
 import {configToGrammar} from "./buildGrammar.ts"
 import {Config} from "./config.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
@@ -57,12 +58,10 @@ describe("generation with a chosen feature", () => {
         expect(sample(harmonyConfig("S{3}", {chooses: ["harmony"]}, [syllable, vowels, consonants])).filter(mixes)).toEqual([])
     })
 
-    it("removes tagged rules referenced as alternatives, at any choice", () => {
-        const front = makeRule("F", ["e", "i"], {terminalOnly: true, values: ["front"]})
-        const back = makeRule("B", ["o", "u"], {terminalOnly: true, values: ["back"]})
-        const rows = makeRule("V", ["F", "B", "'a'"])
-        expect(sample(harmonyConfig("[C.V]{3}", {chooses: ["harmony"]}, [rows, front, back, consonants])).filter(mixes)).toEqual([])
-        expect(sample(harmonyConfig("[C.[F / B]]{3}", {chooses: ["harmony"]}, [front, back, consonants])).filter(mixes)).toEqual([])
+    it("filters the rows of a rule referenced as an alternative, at any choice", () => {
+        const rows = makeRule("S", ["V", "'y'"])
+        expect(sample(harmonyConfig("[C.S]{3}", {chooses: ["harmony"]}, [rows, vowels, consonants])).filter(mixes)).toEqual([])
+        expect(sample(harmonyConfig("[C.[V / 'y']]{3}", {chooses: ["harmony"]}, [vowels, consonants])).filter(mixes)).toEqual([])
     })
 
     it("branches pattern rows on a chosen feature", () => {
@@ -136,17 +135,82 @@ describe("runtime dead ends", () => {
     // configToGrammar rejects these statically; a raw grammar shows the generator still names the problem.
     const raw = (word: string) => makeRawGrammar("W", [
         makeRawRule("W", makeRef("F", [{value: "back", negate: false}]), [], [], {chooses: ["harmony"]}),
-        makeRawRule("F", makeWeightedChoice([{expr: makeAtom(word), weight: 1, tags: new Map([["harmony", new Set(["front"])]])}]), [], []),
+        makeRawRule("F", makeWeightedChoice([{expr: makeAtom(word), weight: 1, tags: new Map([["harmony", new Set(["front"])]])}]), [], [], {classifies: ["harmony"]}),
     ], false, false, [{name: "harmony", values: [{name: "front", weight: 1}, {name: "back", weight: 1}]}])
 
     it("names the rule, the chosen value and the filter", () => {
-        expect(() => generate(raw("e"), mulberry32(1))).toThrow(/No alternative of rule 'F' can be used when harmony is (front|back) through <back>/)
+        expect(() => generate(raw("e"), mulberry32(1))).toThrow(/No row of rule 'F' can be used when harmony (is (front|back) and )?must be back/)
     })
 })
 
-describe("matching ignores scope", () => {
+describe("matching without filters", () => {
     it("lets a filter-free exclusion see every alternative", () => {
         const config = harmonyConfig("C.V", {chooses: ["harmony"], showExclusions: true, exclusions: [{id: "x", match: "'p'.V"}]})
         expect(sample(config).filter(w => w.startsWith("p"))).toEqual([])
+    })
+})
+
+describe("declared features", () => {
+    // a carries height a, e carries b, i carries none of the values.
+    const height = makeFeature("height", ["low", "high"])
+    const vowel = tagRows(makeRule("Vowel", ["a", "e", "i"], {terminalOnly: true}), [["low"], ["high"]])
+    const syllable = makeRule("Syllable", ["'t'.Vowel"])
+    const words = (word: string, extra: Parameters<typeof makeRule>[2] = {}) =>
+        enumerate(configToGrammar(makeConfig("Word", [makeRule("Word", [word], extra), syllable, vowel], {features: [height]}))!).words
+
+    it("keeps only the rows carrying the value with <value>, untagged ones included", () => {
+        expect(words("Vowel<low>")).toEqual(["a"])
+    })
+
+    it("removes only the rows carrying the value with <!value>", () => {
+        expect(words("Vowel<!high>")).toEqual(["a", "i"])
+    })
+
+    it("keeps untagged rows under a choice", () => {
+        expect(words("Vowel", {chooses: ["height"]})).toEqual(["a", "e", "i"])
+        const g = configToGrammar(makeConfig("Word", [makeRule("Word", ["Vowel.Vowel"], {chooses: ["height"]}), vowel], {features: [height]}))!
+        expect(enumerate(g).words).not.toContain("ae")
+        expect(enumerate(g).words).toContain("ai")
+    })
+
+    it("reaches through rules that are not classified by the feature", () => {
+        expect(words("Syllable<low>")).toEqual(["ta"])
+        expect(words("Syllable<!low>")).toEqual(["te", "ti"])
+    })
+
+    it("lets a choice below a filter pick only among the values it allows, keeping the filter strict", () => {
+        const g = configToGrammar(makeConfig("Word", [
+            makeRule("Word", ["Inner<low>"]),
+            makeRule("Inner", ["Vowel"], {chooses: ["height"]}),
+            vowel,
+        ], {features: [height]}))!
+        expect(enumerate(g).words).toEqual(["a"])
+        expect(new Set(Array.from({length: 50}, (_, i) => generate(g, mulberry32(i))))).toEqual(new Set(["a"]))
+    })
+
+    it("lets a nested choice pick again among every value", () => {
+        const g = configToGrammar(makeConfig("Word", [
+            makeRule("Word", ["Vowel.Inner"], {chooses: ["height"]}),
+            makeRule("Inner", ["Vowel"], {chooses: ["height"]}),
+            vowel,
+        ], {features: [height]}))!
+        expect(enumerate(g).words).toContain("ae")
+    })
+
+    // Words drawn by the previous release, so old seeds keep their words.
+    it("gives grammars without features the same words for the same seed", () => {
+        const plain = makeConfig("Word", [makeRule("Word", ["Syllable{2}"]), syllable, makeRule("Vowel", ["a", "e", "i"], {terminalOnly: true})])
+        const g = configToGrammar(plain)!
+        expect(Array.from({length: 5}, (_, i) => generate(g, mulberry32(i)))).toEqual(["tate", "tita", "tete", "tate", "tate"])
+    })
+
+    it("applies the same recursive filter in exclusions", () => {
+        const g = configToGrammar(makeConfig("Word", [
+            makeRule("Word", ["Syllable{2}"], {showExclusions: true, exclusions: [{id: "x", match: "Syllable<low>.Syllable<low>"}]}),
+            syllable, vowel,
+        ], {features: [height]}))!
+        const all = enumerate(g).words
+        expect(all).not.toContain("tata")
+        expect(all).toContain("tate")
     })
 })

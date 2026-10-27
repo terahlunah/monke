@@ -13,12 +13,17 @@ export type ExampleRule = {
     exclusions?: string[]
     // Feature values carried by each item, by position; a missing entry is neutral.
     itemValues?: (string[] | undefined)[]
-    // Values carried by the whole rule, and features it chooses.
-    values?: string[]
+    // Repeat factor of each item, by position; a missing entry is 1 (no effect).
+    itemRepeats?: (number | undefined)[]
+    // Features the rule chooses.
     chooses?: string[]
-    // Repeat weight of the rule (1, no effect, when absent).
-    repeatWeight?: number
+    // Features that classify the rule's rows; absent means the features its items carry values of.
+    classifies?: string[]
 }
+
+// The features a rule of an example is classified by.
+export const exampleClassifies = (rule: ExampleRule, features: ReferenceExample["features"] = []): string[] =>
+    rule.classifies ?? features.filter(([, values]) => values.some(v => rule.itemValues?.some(iv => iv?.includes(itemText(v))))).map(([name]) => name)
 
 export type ReferenceExample = {
     id: string
@@ -59,16 +64,16 @@ export const exampleToConfig = (example: ReferenceExample, enableSerif = false):
             terminalOnly: r.terminal ?? false,
             patterns: r.items.map((item, i) => {
                 const values = valueIds(r.itemValues?.[i])
-                return {id: crypto.randomUUID(), pattern: itemText(item), weight: itemWeight(item) ?? 1, ...values ? {values} : {}}
+                const repeat = r.itemRepeats?.[i]
+                return {id: crypto.randomUUID(), pattern: itemText(item), weight: itemWeight(item) ?? 1, ...repeat !== undefined ? {repeat} : {}, ...values ? {values} : {}}
             }),
             rewrites: (r.rewrites ?? []).map(([match, replace]) => ({id: crypto.randomUUID(), match, replace})),
             exclusions: (r.exclusions ?? []).map(match => ({id: crypto.randomUUID(), match})),
             showRewrites: (r.rewrites ?? []).length > 0,
             showExclusions: (r.exclusions ?? []).length > 0,
             collapsed: false,
-            ...valueIds(r.values) ? {values: valueIds(r.values)} : {},
             ...chooseIds(r.chooses) ? {chooses: chooseIds(r.chooses)} : {},
-            ...r.repeatWeight !== undefined ? {repeatWeight: r.repeatWeight} : {},
+            ...chooseIds(exampleClassifies(r, example.features)) ? {classifies: chooseIds(exampleClassifies(r, example.features))} : {},
         })),
     }
 }
@@ -243,20 +248,46 @@ export const filterExample: ReferenceExample = {
     ],
 }
 
-export const featureExamples = [harmonyExample, twoFeaturesExample, branchingExample, filterExample]
+// Contrasts filters and a choice on one vowel set: e is front, o is back, a carries no harmony value.
+// Syllable is not classified by harmony, so a filter on it reaches Vowel through it.
+export const contrastExample: ReferenceExample = {
+    id: "filter-contrast",
+    title: "Filters and choices compared",
+    root: "Word",
+    features: [["harmony", ["front", "back"]]],
+    rules: [
+        {name: "Vowel", terminal: true, items: ["e", "o", "a"], itemValues: [["front"], ["back"]]},
+        {name: "Syllable", items: ["'t'.Vowel"]},
+        {name: "Word", items: ["Vowel"], chooses: ["harmony"]},
+    ],
+}
+
+// Word patterns of contrastExample and every word each gives. `chooses`: Word chooses harmony; `value` names the
+// pick the words are listed for.
+export type ContrastRow = { pattern: string, chooses?: boolean, value?: string, words: string[], meaning: string }
+export const contrastRows: ContrastRow[] = [
+    {pattern: "Vowel<front>", words: ["e"], meaning: "only rows carrying front"},
+    {pattern: "Vowel<!back>", words: ["a", "e"], meaning: "everything but back rows; a stays"},
+    {pattern: "Vowel", chooses: true, value: "front", words: ["a", "e"], meaning: "the other value is removed; a stays"},
+    {pattern: "Vowel", chooses: true, value: "back", words: ["a", "o"], meaning: "the same, when back is picked"},
+    {pattern: "Syllable<front>", words: ["te"], meaning: "the filter reaches Vowel through Syllable"},
+]
+
+export const featureExamples = [harmonyExample, twoFeaturesExample, branchingExample, filterExample, contrastExample]
 
 export type FeatureErrorDemo = { pattern: string, chooses: boolean, message: string }
 
 // The Word pattern of harmonyExample without its choice of harmony, and the warning it gives.
 export const unchosenWarningDemo = {
     pattern: "Consonant.Vowel",
-    message: "Feature 'harmony' is not chosen when rule 'Vowel' is used in 'Word'; its values are all kept",
+    message: "Feature 'harmony' is neither chosen nor filtered when rule 'Vowel' is used in 'Word'; all its rows are kept",
 }
 
 // The Word pattern of harmonyExample, with or without its choice of harmony, and the error each gives.
 export const featureErrorDemos: FeatureErrorDemo[] = [
-    {pattern: "Consonant.Vowel<front>", chooses: true, message: "No alternative of rule 'Vowel' can be used when harmony is back through <front>"},
+    {pattern: "Consonant.Vowel<front>", chooses: true, message: "No row of rule 'Vowel' can be used when harmony is back and must be front"},
     {pattern: "Consonant.Vowel<frnt>", chooses: true, message: "Unknown feature value 'frnt' in the filter on 'Vowel'"},
+    {pattern: "Consonant<front>.Vowel", chooses: true, message: "The filter front on 'Consonant' has no effect: no rule it reaches is classified by harmony"},
 ]
 
 export const recipes: Recipe[] = [
@@ -327,15 +358,13 @@ export const recipes: Recipe[] = [
     {
         id: "repeat-weight",
         title: "Fewer closed syllables",
-        summary: "Closed has a repeat weight of 0.2: once a word has one closed syllable, each further one is five times less likely.",
+        summary: "The closed syllable row of Syllable has a repeat factor of 0.2: once a word has one closed syllable, each further one is five times less likely.",
         root: "Word",
         weights: true,
         rules: [
             {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "l"]},
             V,
-            {name: "Open", items: ["C.V"]},
-            {name: "Closed", items: ["C.V.'n'"], repeatWeight: 0.2},
-            {name: "Syllable", items: ["Open / Closed"]},
+            {name: "Syllable", items: ["C.V", "C.V.'n'"], itemRepeats: [undefined, 0.2]},
             {name: "Word", items: ["Syllable{2:4}"]},
         ],
     },
@@ -397,4 +426,4 @@ export const errorHintDemos: ErrorHintDemo[] = [
 export const awkwordsExample = recipes.find(r => r.id === "awkwords")!
 
 // Every example offering a Try it link, so their share URLs are encoded together once.
-export const allExamples = [firstGrammar, ...recipes, twoFeaturesExample, branchingExample, filterExample]
+export const allExamples = [firstGrammar, ...recipes, twoFeaturesExample, branchingExample, filterExample, contrastExample]

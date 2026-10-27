@@ -39,19 +39,46 @@ describe("parseConfigFile", () => {
         expect(parsed.features).toEqual([])
     })
 
-    it("round-trips features, item values and chooses", () => {
-        const featured = makeConfig("R", [makeRule("R", ["'a'"], {values: ["f"], chooses: ["h"]})], {
+    it("round-trips features, rule declarations, item values and chooses", () => {
+        const featured = makeConfig("R", [makeRule("R", ["'a'"], {chooses: ["h"], classifies: ["h"]})], {
             features: [{id: "h", name: "harmony", values: [{id: "f", name: "front", weight: 2}]}],
         })
         featured.rules[0].patterns[0].values = ["f"]
         expect(parseConfigFile(JSON.stringify(featured))).toEqual(featured)
     })
 
-    it("reads a rule's repeat weight and rejects one that is not a number", () => {
-        const repeating = makeConfig("R", [makeRule("R", ["'a'"], {repeatWeight: 0.5})])
+    it("reads a rule without declarations as classified by the features its rows carry", () => {
+        const features = [
+            {id: "h", name: "harmony", values: [{id: "f", name: "front", weight: 1}]},
+            {id: "r", name: "rounding", values: [{id: "o", name: "round", weight: 1}]},
+        ]
+        const old = makeConfig("R", [makeRule("R", ["'a'", "'b'"], {classifies: []}), makeRule("S", ["'c'"], {classifies: []})], {features})
+        old.rules[0].patterns[1].values = ["f"]
+        const json = JSON.parse(JSON.stringify(old))
+        for (const r of json.rules) delete r.classifies
+        const parsed = parseConfigFile(JSON.stringify(json))
+        expect(parsed.rules.map(r => r.classifies)).toEqual([["h"], undefined])
+    })
+
+    it("rejects declarations that are not a list of ids", () => {
+        const bad = JSON.parse(JSON.stringify(valid))
+        bad.rules[0].classifies = "harmony"
+        expect(() => parseConfigFile(JSON.stringify(bad))).toThrow(/rules\[0\]\.classifies must be a list of text/)
+    })
+
+    it("ignores values on a rule, which only rows carry", () => {
+        const config = makeConfig("R", [makeRule("R", ["'a'"])])
+        const json = JSON.parse(JSON.stringify(config))
+        json.rules[0].values = ["f"]
+        expect(parseConfigFile(JSON.stringify(json))).toEqual(config)
+    })
+
+    it("reads a pattern's repeat factor and rejects one that is not a number", () => {
+        const rule = makeRule("R", ["'a'", "'b'"])
+        const repeating = makeConfig("R", [{...rule, patterns: [{...rule.patterns[0], repeat: 0.5}, rule.patterns[1]]}])
         expect(parseConfigFile(JSON.stringify(repeating))).toEqual(repeating)
-        const bad = {...repeating, rules: [{...repeating.rules[0], repeatWeight: "x"}]}
-        expect(() => parseConfigFile(JSON.stringify(bad))).toThrow("rules[0].repeatWeight must be a number")
+        const bad = {...repeating, rules: [{...rule, patterns: [{...rule.patterns[0], repeat: "x"}]}]}
+        expect(() => parseConfigFile(JSON.stringify(bad))).toThrow("rules[0].patterns[0].repeat must be a number")
     })
 
     it("drops unknown keys", () => {
@@ -71,7 +98,7 @@ describe("parseConfigFile", () => {
             ...valid,
             rules: [{...valid.rules[0], patterns: [{id: "p", pattern: "a", weight: "1"}]}],
         })],
-        ["values that are not a list of ids", JSON.stringify({...valid, rules: [{...valid.rules[0], values: [1]}]})],
+        ["chooses that are not a list of ids", JSON.stringify({...valid, rules: [{...valid.rules[0], chooses: [1]}]})],
         ["a feature value without a weight", JSON.stringify({...valid, features: [{id: "h", name: "h", values: [{id: "v", name: "v"}]}]})],
         ["a non-boolean flag", JSON.stringify({...valid, enableSerif: "yes"})],
     ])("rejects %s", (_, text) => {

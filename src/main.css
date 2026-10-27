@@ -39,6 +39,13 @@
     --color-exclusion: #e895d6;
     --color-exclusion-bg: #3a2436;
     --color-exclusion-line: #6b3a62;
+    /* Section panel tints: the hue at about 3% over surface, faint enough that row separators (line) and input
+       borders (line-strong) still show. On each, muted text is 6.5:1 or more, subtle 5.1:1 or more and the hue
+       itself 7.6:1 or more. */
+    --color-terminal-tint: #1d1f25;
+    --color-pattern-tint: #1f1e26;
+    --color-rewrite-tint: #201f1d;
+    --color-exclusion-tint: #201d23;
     --color-feature: #b5d96a;
     --color-feature-dim: #94b356;
     --color-feature-line: #3d4a26;

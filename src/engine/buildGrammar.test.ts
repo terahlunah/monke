@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest"
 import {configToGrammar, GrammarError} from "./buildGrammar.ts"
-import {makeAtom, makeChoice, makeWeighted, makeWeightedChoice} from "./grammar.ts"
-import {makeConfig, makeRule} from "./test-helpers.ts"
+import {Expr, makeAtom, makeChoice, makeWeighted, makeWeightedChoice} from "./grammar.ts"
+import {makeConfig, makeRule, repeatRows} from "./test-helpers.ts"
 
 const choice = makeChoice
 
@@ -92,6 +92,19 @@ describe("configToGrammar", () => {
         expect(error).toBeInstanceOf(GrammarError)
         expect((error as GrammarError).message).toBe("Unknown rule 'Vowl' (rule : 'Word'). Did you mean `Vowel`?")
         expect((error as GrammarError).itemId).toBe(config.rules[1].patterns[1].id)
+    })
+
+    it("rejects unknown rules in rewrites and exclusions, flagging the item", () => {
+        const rewrite = makeConfig("R", [makeRule("R", ["'a'"], {showRewrites: true, rewrites: [{id: "w", match: "a", replace: "'p'"}]})])
+        expect(() => configToGrammar(rewrite)).toThrow(/^Unknown rule 'a' \(rule : 'R'\)\..*Quote text to match it literally, as in `'a'`$/)
+        const exclusion = makeConfig("R", [makeRule("R", ["'a'"], {showExclusions: true, exclusions: [{id: "x", match: "'a'.Nope"}]})])
+        let error: unknown
+        try {
+            configToGrammar(exclusion)
+        } catch (e) {
+            error = e
+        }
+        expect((error as GrammarError).itemId).toBe("x")
     })
 
     it("does not suggest names more than two edits away", () => {
@@ -199,12 +212,13 @@ describe("configToGrammar", () => {
         })
     })
 
-    it("carries rule repeat weights other than 1 and rejects negative ones on the rule's control", () => {
-        const g = configToGrammar(makeConfig("A", [makeRule("A", ["B"], {repeatWeight: 1}), makeRule("B", ["'b'"], {repeatWeight: 0.5})]))!
-        expect(g.ruleMap.get("A")!.repeat).toBeUndefined()
-        expect(g.ruleMap.get("B")!.repeat).toBe(0.5)
-        const bad = () => configToGrammar(makeConfig("A", [makeRule("A", ["'a'"], {repeatWeight: -1})]))
-        expect(bad).toThrow("Invalid repeat weight -1: it must be a number of at least 0 (rule : 'A')")
-        expect(bad).toThrow(expect.objectContaining({ruleId: "A", itemId: "rule-repeat"}))
+    it("carries row repeat factors other than 1 and rejects negative ones on the row", () => {
+        const g = configToGrammar(makeConfig("A", [repeatRows(makeRule("A", ["B", "'a'"]), [1, 0.5]), repeatRows(makeRule("B", ["b"], {terminalOnly: true}), [0])]))!
+        const rows = (name: string) => (g.ruleMap.get(name)!.expr as Extract<Expr, { tag: "Choice" }>).items
+        expect(rows("A").map(r => r.repeat)).toEqual([undefined, 0.5])
+        expect(rows("B")[0].repeat).toBe(0)
+        const bad = () => configToGrammar(makeConfig("A", [repeatRows(makeRule("A", ["'a'", "'b'"]), [undefined, -1])]))
+        expect(bad).toThrow("Invalid repeat factor -1: it must be a number of at least 0 (rule : 'A')")
+        expect(bad).toThrow(expect.objectContaining({ruleId: "A", itemId: "A1"}))
     })
 })

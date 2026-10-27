@@ -16,15 +16,13 @@ const expectMatchesGenerator = (config: Config, samples = 6000) => {
     expect(enumerate(g).words.slice().sort()).toEqual([...seen].sort())
 }
 
-const front = makeRule("F", ["e", "i"], {terminalOnly: true, values: ["front"]})
-const back = makeRule("B", ["o", "u"], {terminalOnly: true, values: ["back"]})
 const twoFeatureVowels = tagRows(makeRule("V", ["a", "e", "o", "y"], {terminalOnly: true}),
     [["flat"], ["front", "flat"], ["back", "round"], ["front", "round"]])
 
 const cases: [string, Config][] = [
     ["harmony", harmonyConfig("C.V.V")],
     ["nested re-choose", harmonyConfig("V.'-'.Inner", {chooses: ["harmony"]}, [makeRule("Inner", ["V{2}"], {chooses: ["harmony"]}), vowels])],
-    ["rule-level values as alternatives", harmonyConfig("[F / B / 'a']{2}", {chooses: ["harmony"]}, [front, back])],
+    ["a referenced rule as an alternative", harmonyConfig("[V / 'y']{2}", {chooses: ["harmony"]})],
     ["two features", harmonyConfig("V{2}", {chooses: ["harmony", "rounding"]}, [twoFeatureVowels], [harmony, rounding])],
     ["filters only", harmonyConfig("C.V<!back>.V<front>", {})],
     ["filters with a choice", harmonyConfig("V.V<!front>", {chooses: ["harmony"]})],

@@ -67,18 +67,19 @@ describe("rule header", () => {
         expect(screen.getByText(values.join(" "))).toBeInTheDocument()
     })
 
-    it("counts rewrites and exclusions in their section labels", async () => {
+    it("keeps the exclusions panel header when exclusions are switched off", async () => {
         const user = userEvent.setup()
         await renderApp()
         const word = screen.getByRole("heading", {name: "Rule Word"}).parentElement!
-        const rewrites = within(word).getAllByLabelText(/^Rewrite \d+ of rule Word, match$/).length
-        const exclusions = within(word).getAllByLabelText(/^Exclusion \d+ of rule Word$/).length
+        expect(within(word).getAllByLabelText(/^Exclusion \d+ of rule Word$/).length).toBeGreaterThan(0)
 
-        expect(within(word).getByRole("heading", {name: `Rewrites ${rewrites}`})).toBeInTheDocument()
-        expect(within(word).getByRole("heading", {name: `Exclusions ${exclusions}`})).toBeInTheDocument()
+        expect(within(word).getByRole("heading", {name: "Rewrites"})).toBeInTheDocument()
+        expect(within(word).getByRole("heading", {name: "Exclusions"})).toBeInTheDocument()
 
         await user.click(within(word).getByRole("button", {name: "Exclusions of rule Word"}))
-        expect(within(word).queryByRole("heading", {name: /^Exclusions/})).not.toBeInTheDocument()
+        expect(within(word).getByRole("heading", {name: "Exclusions"})).toBeInTheDocument()
+        expect(within(word).queryByLabelText(/^Exclusion \d+ of rule Word$/)).not.toBeInTheDocument()
+        expect(within(word).queryByRole("button", {name: "Add exclusion to rule Word"})).not.toBeInTheDocument()
     })
 })
 
@@ -137,20 +138,21 @@ describe("rule actions on a small screen", () => {
     })
 })
 
-describe("repeat weight", () => {
-    it("is shown with weights on, and a negative one is flagged on the field", async () => {
+describe("weight and repeat factor", () => {
+    it("are shown per row with weights on, and a negative factor is flagged on its field", async () => {
         const user = userEvent.setup()
         await renderApp()
-        expect(screen.queryByLabelText("Repeat weight of rule Vowel")).not.toBeInTheDocument()
+        expect(screen.queryByLabelText("Repeat factor of terminal 1 of rule Vowel")).not.toBeInTheDocument()
 
         await user.click(screen.getByRole("button", {name: "Weights"}))
-        const field = screen.getByLabelText("Repeat weight of rule Vowel")
+        expect(screen.getByRole("textbox", {name: "Weight of terminal 1 of rule Vowel"})).toHaveValue("1")
+        const field = screen.getByRole("textbox", {name: "Repeat factor of terminal 1 of rule Vowel"})
         expect(field).toHaveValue("1")
 
         await user.clear(field)
         await user.type(field, "-1")
         await user.tab()
-        expect(await screen.findByLabelText("Repeat weight of rule Vowel")).toHaveAttribute("aria-invalid", "true")
+        expect(await screen.findByLabelText("Repeat factor of terminal 1 of rule Vowel")).toHaveAttribute("aria-invalid", "true")
 
         await user.clear(field)
         await user.type(field, "0.5")

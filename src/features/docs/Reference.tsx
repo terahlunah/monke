@@ -14,6 +14,8 @@ import {
     itemText,
     errorHintDemos,
     branchingExample,
+    contrastExample,
+    contrastRows,
     featureErrorDemos,
     unchosenWarningDemo,
     filterExample,
@@ -66,15 +68,13 @@ export const Reference = () => {
 // The prerendered /reference/ page passes share URLs encoded at build time; the app encodes them on mount.
 export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => {
     return (
-            <div className="flex flex-col gap-3 max-w-3xl w-full mx-auto">
-                <p className="text-lg">
-                    Monke builds words from rules you write. This reference starts with a five-minute tour and ends with a
-                    reference you can come back to.
-                </p>
-
-                <nav aria-label="Reference contents" className="rounded-sm bg-surface p-4">
+            // The nav comes first in the DOM: inline above the text on small screens, a sticky left column from lg up.
+            // Sticky needs no effects, so it works in the prerendered page (window scroll) and in the app's scroll region.
+            <div className="flex flex-col lg:flex-row lg:items-start gap-3 lg:gap-10 max-w-6xl w-full mx-auto">
+                <nav aria-label="Reference contents"
+                     className="rounded-sm bg-surface p-4 lg:w-72 lg:shrink-0 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto">
                     <h2 className="font-bold mb-2">Contents</h2>
-                    <ol className="list-decimal list-inside grid sm:grid-cols-2 gap-x-6 gap-y-1">
+                    <ol className="list-decimal list-inside grid sm:grid-cols-2 lg:grid-cols-1 gap-x-6 gap-y-1">
                         {sections.map(s => (
                             <li key={s.id}>
                                 <a href={`#${s.id}`} onClick={e => jumpTo(e, s.id)}
@@ -83,6 +83,12 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         ))}
                     </ol>
                 </nav>
+
+                <div className="flex flex-col gap-3 max-w-3xl min-w-0 w-full">
+                <p className="text-lg">
+                    Monke builds words from rules you write. This reference starts with a five-minute tour and ends with a
+                    reference you can come back to.
+                </p>
 
                 <Section id="reference-quick-start">
                     <ol className="list-decimal pl-6 flex flex-col gap-2">
@@ -210,15 +216,16 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         lengths, use weighted alternatives instead, such as <Code>{"Syllable*3 / Syllable.Syllable"}</Code>.</p>
                     <ExampleCard hrefs={hrefs} example={recipes.find(r => r.id === "weighted")!}/>
 
-                    <Sub>Fewer repeats in a word</Sub>
-                    <p>A repeat factor lowers the chance of picking the same thing again in a word. In a pattern,
-                        put <Code>~F</Code> after an alternative, after its weight if it has one: <Code>{"'a'*2~0.5 / 'e'"}</Code>.
-                        Each time that alternative was already picked in the current word, its weight is multiplied by F, so
-                        with <Code>{"['a'~0.2 / 'e']{3}"}</Code> a second a is five times less likely than the first.
-                        The count is kept per place in the grammar: the same alternative written in two patterns has two counts.</p>
-                    <p>With weights on, each rule also has a <b>Repeat weight</b> field (1 by default, no effect). Wherever a
-                        reference to the rule is one of the alternatives of a choice, its weight is multiplied by the repeat
-                        weight once for every time the rule was already used in the word. When both apply, they multiply.</p>
+                    <Sub id="reference-fewer-repeats">Fewer repeats in a word</Sub>
+                    <p>A repeat factor lowers the chance of picking the same thing again in a word. With weights on, every
+                        terminal and pattern row has a <b>Repeat</b> field next to its <b>Weight</b> (1 by default, no
+                        effect). A rule&apos;s rows are the alternatives of its choice: each time a row was already picked
+                        in the current word, its weight is multiplied by the factor. With 0.5 the second pick of the row is
+                        half as likely as the first, the third a quarter, and so on.</p>
+                    <p>Inside a pattern, put <Code>~F</Code> after an alternative, after its weight if it has one:
+                        <Code>{"'a'*2~0.5 / 'e'"}</Code>. With <Code>{"['a'~0.2 / 'e']{3}"}</Code> a second a is five times
+                        less likely than the first. The count is kept per place in the grammar: the same alternative
+                        written in two patterns, or two rules, has two counts.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
                         <li>Counts start again for every word. When an exclusion rejects a rule&apos;s output and it is
                             generated again, what the rejected attempt picked no longer counts.</li>
@@ -241,7 +248,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         <li>Each rewrite scans the word from left to right. After a replacement, scanning continues after the
                             inserted text, so new text is never rewritten by the same rewrite.</li>
                         <li>By default the list runs once, so an earlier rewrite never sees what a later one produced. Turn
-                            on <b>Repeat rewrites until nothing changes</b> in the generator panel to run the whole list
+                            on <b>Repeat rewrites</b> in the bar above the rules to run the whole list
                             again and again until a pass leaves the output unchanged. If the output still changes after 32
                             passes, for example because two rewrites undo each other, or grows past 10000 characters
                             because a rewrite keeps adding text, generation stops with <b>Rewrites of rule … did not
@@ -273,7 +280,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <ul className="flex flex-col gap-3">
                         {rewriteDemos.map((d, i) => (
                             <li key={i} className="rounded-sm bg-surface p-3 flex flex-col gap-1">
-                                {d.repeat && <p>With <b>Repeat rewrites until nothing changes</b> on</p>}
+                                {d.repeat && <p>With <b>Repeat rewrites</b> on</p>}
                                 {d.rules?.map(r => <p key={r.name}>With rule <Code>{r.name}</Code> = <Code>{r.items.map(itemText).join(" / ")}</Code></p>)}
                                 {d.rewrites.map(([m, r], j) => (
                                     <p key={j}>{d.rewrites.length > 1 ? `Rewrite ${j + 1}: ` : "Rewrite: "}
@@ -348,58 +355,100 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
 
                 <Section id="reference-features">
                     <p>Features keep sounds consistent across a word, like vowel harmony: once a word picks front
-                        vowels, every vowel in it is front. A feature has a name and a few values, such as{" "}
-                        <Code>harmony</Code> with <Code>front</Code> and <Code>back</Code>. Items carry values, and a
-                        rule <b>chooses</b> a feature to keep one value for everything it produces.</p>
+                        vowels, every vowel in it is front. It takes four steps: declare a feature and its values, say
+                        which rules it tags, put values on their rows, then pick or filter.</p>
 
-                    <Sub>Declaring features</Sub>
+                    <Sub>1. Declaring features</Sub>
                     <p>Use <b>+ Feature</b> in the <b>Phonological features</b> panel above the rules, name it, and add
-                        its values with <b>+ value</b>. Feature and value names follow the rules for rule names: letters,
-                        digits and underscores, not starting with a digit. A value name can be used only once in the
-                        grammar, even across features, so a value on its own says which feature it belongs to. With{" "}
-                        <b>Weights</b> on, each value has a weight that sets how often a rule chooses it; with weights off,
-                        values are chosen equally often, like everything else.</p>
-                    <p>Deleting a feature or a value also removes it from every item and rule that carried it. Browser
-                        Back undoes it. Filters written in patterns are text, so renaming or deleting does not change
-                        them.</p>
+                        its values with <b>+ value</b>, such as <Code>harmony</Code> with <Code>front</Code> and{" "}
+                        <Code>back</Code>. Feature and value names follow the rules for rule names: letters, digits and
+                        underscores, not starting with a digit. A value name can be used only once in the grammar, even
+                        across features, so a value on its own says which feature it belongs to. With <b>Weights</b> on,
+                        each value has a weight that sets how often a rule chooses it.</p>
+                    <p>Deleting a feature or a value also removes it from every rule and row that used it. Browser Back
+                        undoes it. Filters written in patterns are text, so renaming or deleting does not change them.</p>
 
-                    <Sub>Giving values to items</Sub>
-                    <p>Each terminal and pattern row has a <b>Feature values</b> button, a tag icon, that opens a list of
-                        every value to check. The row then shows its values in brackets, like <Code>[front]</Code>. The
-                        same button in a rule&apos;s header gives values to the whole rule, as if every row in it carried
-                        them. A rule used directly as an alternative of a choice counts as an alternative carrying its
-                        values.</p>
+                    <Sub id="reference-rule-features">2. Rule features</Sub>
+                    <p>In a rule&apos;s header, the <b>+</b> after <b>Tags by</b> adds a feature that classifies that
+                        rule&apos;s rows: for a Vowel rule, harmony. Only the rules that list a feature are concerned by it:</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li>An item with no value for a feature is <b>neutral</b>: it goes with any value of that
-                            feature. In vowel harmony, a vowel like a that belongs to neither side stays neutral.</li>
-                        <li>An item can carry values of several features, such as <Code>[front, flat]</Code>.</li>
-                        <li>An item can carry several values of one feature; it then goes with each of them.</li>
+                        <li>In a rule that lists the feature, every row has a definite status: it carries one or more
+                            of its values, or none of them. A row without a value is <b>none of the values</b>, like a
+                            neutral vowel that is neither front nor back.</li>
+                        <li>A rule that does not list the feature is only structure, like a Syllable rule. Filters and
+                            choices pass through it to the rules it uses.</li>
                     </ul>
 
-                    <Sub>Choosing a value</Sub>
-                    <p>In a rule&apos;s header, <b>Choose</b> adds a feature the rule chooses. Each time the rule is used,
-                        it picks one value of each feature it chooses, before generating anything. In everything below
-                        it, its rows and every rule it uses, alternatives that carry another value of that feature are
-                        removed. Neutral alternatives stay, and the weights of what is left are shared out as usual.</p>
+                    <Sub>3. Giving values to rows</Sub>
+                    <p>Once a rule lists a feature, each of its terminal and pattern rows has a <b>Feature values</b>{" "}
+                        button, a tag icon, with a checkbox for each value of the rule&apos;s features. The row then
+                        shows its values in brackets, like <Code>[front]</Code>. A row can carry values of several
+                        features, such as <Code>[front, flat]</Code>, and several values of one feature, counting as
+                        each of them. Removing a feature from a rule removes its values from that rule&apos;s rows.</p>
+
+                    <Sub id="reference-choosing-a-value">4. Choosing a value</Sub>
+                    <p>The <b>+</b> after <b>Picks</b> in a rule&apos;s header adds a feature the rule picks. Each time
+                        the rule is used, it picks one value of each feature it picks, before generating anything. In everything below
+                        it, its own rows and every rule it reaches, rows carrying another value of that feature are
+                        removed. Rows with none of the values stay: that is how a neutral vowel goes with both sides.
+                        The weights of what is left are shared out as usual.</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li>Choose on the start rule to keep a whole word consistent, or on a <Code>Syllable</Code> rule
-                            to choose again in each syllable.</li>
-                        <li>A rule below may choose the same feature again: its own value applies to everything under it
+                        <li>Pick on the start rule to keep a whole word consistent, or on a <Code>Syllable</Code> rule
+                            to pick again in each syllable.</li>
+                        <li>A rule below may pick the same feature again: its own pick applies to everything under it
                             instead.</li>
-                        <li>Each rule picks its values when it starts, so the order of the parts of a pattern does not
-                            matter.</li>
-                        <li>Rewrites and exclusions work as before on the rule&apos;s output. Rule names in a rewrite
-                            replacement are generated with the rule&apos;s chosen values. When an exclusion rejects an
-                            output, the rule chooses again.</li>
-                        <li>Where no enclosing rule chooses a feature and no filter selects on it, its values have no
-                            effect: every alternative stays in play, as if neutral. This gives a warning, since it is
-                            usually a missing choice.</li>
+                        <li>Rewrites and exclusions work on the rule&apos;s output. Rule names in a rewrite replacement
+                            are generated with the rule&apos;s chosen values. When an exclusion rejects an output, the
+                            rule picks again.</li>
                     </ul>
                     <ExampleCard hrefs={hrefs} example={harmonyExample} summary={harmonyExample.summary}/>
 
+                    <Sub>5. Filters</Sub>
+                    <p>A filter after a rule name narrows that rule and everything it reaches, in every rule listing
+                        the feature, with or without a choice:</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        <li><Code>{"Vowel<front>"}</Code> means <b>only front</b>: rows without front are removed, rows
+                            with none of the values included.</li>
+                        <li><Code>{"Vowel<!back>"}</Code> means <b>anything but back</b>: only rows carrying back are
+                            removed, so rows with none of the values stay.</li>
+                        <li>Several values of one feature allow any of them: <Code>{"Vowel<front, back>"}</Code>. Values
+                            of different features must all hold: <Code>{"Vowel<front, !round>"}</Code>.</li>
+                        <li>Filters work in patterns, rewrite matches and exclusions, and reach through rules that do
+                            not list the feature: <Code>{"Syllable<front>"}</Code> gives syllables with front vowels.</li>
+                    </ul>
+                    <p>Filters and choices add up: what reaches a rule must pass every filter above it and match the
+                        chosen value. A filter only narrows, and a Choose below it picks only among the values the
+                        filters allow, so under <Code>{"<front>"}</Code> it always picks front and rows with none of
+                        the values stay out. Only a Choose replaces an earlier choice of the same feature.</p>
+                    <p>With this Vowel rule, where e is front, o is back and a carries no value, and{" "}
+                        <Code>Syllable</Code> = <Code>{"'t'.Vowel"}</Code>, a Word pattern gives:</p>
+                    <ExampleCard hrefs={hrefs} example={contrastExample}/>
+                    <table className="w-full text-left border-collapse">
+                        <caption className="sr-only">Filters and choices compared</caption>
+                        <thead>
+                        <tr className="border-b border-white/20">
+                            <th scope="col" className="py-2 pr-3">Word pattern</th>
+                            <th scope="col" className="py-2 pr-3">Words</th>
+                            <th scope="col" className="py-2">Why</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {contrastRows.map(row => (
+                            <tr key={row.pattern + (row.value ?? "")} className="border-b border-white/10 align-top">
+                                <th scope="row" className="py-2 pr-3 font-normal">
+                                    <Code>{row.pattern}</Code>{row.chooses ? `, Word chooses harmony, picking ${row.value}` : ""}
+                                </th>
+                                <td className="py-2 pr-3">{row.words.join(", ")}</td>
+                                <td className="py-2">{row.meaning}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                    <ExampleCard hrefs={hrefs} example={filterExample}/>
+
                     <Sub>Several features</Sub>
-                    <p>A rule can choose several features, and items can carry values of each. Here a word is front or
-                        back and round or flat; y is front and round, and flat words are twice as likely.</p>
+                    <p>A rule can tag by and pick several features, and rows can carry values of each. Here a word is
+                        front or back and round or flat; y is front and round, and flat words are twice as likely.</p>
                     <ExampleCard hrefs={hrefs} example={twoFeaturesExample}/>
 
                     <Sub>Branching on a choice</Sub>
@@ -407,22 +456,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                         as verb; nouns end in n or nothing, verbs in la or nothing.</p>
                     <ExampleCard hrefs={hrefs} example={branchingExample}/>
 
-                    <Sub>Filters</Sub>
-                    <p>A filter after a rule name keeps only some of that rule&apos;s alternatives, with or without a
-                        choice:</p>
-                    <ul className="list-disc pl-6 flex flex-col gap-2">
-                        <li><Code>{"Vowel<front>"}</Code> keeps the alternatives that carry front. Neutral ones are
-                            left out.</li>
-                        <li><Code>{"Vowel<!back>"}</Code> keeps those that do not carry back, neutral ones included.</li>
-                        <li>Commas combine filters, all of which must hold: <Code>{"Vowel<front, !round>"}</Code>.</li>
-                        <li>Filters work in patterns, rewrite matches and exclusions. In a rule that chooses, they apply
-                            on top of the chosen value.</li>
-                        <li>A filter only looks at the rule&apos;s own alternatives. Values carried deeper, in rules
-                            those alternatives use, still need a rule that chooses to have any effect.</li>
-                    </ul>
-                    <ExampleCard hrefs={hrefs} example={filterExample}/>
-
-                    <Sub>Errors and warnings</Sub>
+                    <Sub>6. Errors and warnings</Sub>
                     <p>Problems are found before generating and shown under the input at fault. With the vowel harmony
                         grammar above, these Word patterns give:</p>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
@@ -430,14 +464,16 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                             <li key={d.pattern}><Code>{d.pattern}</Code>{d.chooses ? "" : ", without choosing harmony"}: <b>{d.message}</b></li>
                         ))}
                     </ul>
-                    <p>Invalid or duplicate feature and value names are errors too. A feature or value without a name
-                        yet is ignored until it gets one. That, a feature that nothing uses, a rule that chooses a
-                        feature nothing below it carries, and values carried where their feature is not chosen are only
-                        warnings, listed under the word count. For example, <Code>{unchosenWarningDemo.pattern}</Code>{" "}
+                    <p>Also errors: a rule left with no row at some spot, a Choose the filters above leave no value
+                        for, a row carrying a value of a feature its rule does not list, and invalid or duplicate
+                        names. Only warnings, listed under the word count: a feature or value without a name yet
+                        (ignored until it gets one), a feature nothing uses, a rule listing a feature none of its rows
+                        carries, a Choose no rule below it lists, and a rule reached where its feature is neither chosen
+                        nor filtered, which keeps all its rows. For example, <Code>{unchosenWarningDemo.pattern}</Code>{" "}
                         without choosing harmony gives: <b>{unchosenWarningDemo.message}</b></p>
                     <p>Generate all lists the words for every value each choice can take. The number of possible
-                        branches counts each chosen value separately, so a word made only of neutral items is counted
-                        once per value.</p>
+                        branches counts each chosen value separately, so a word made only of rows without values is
+                        counted once per value.</p>
                 </Section>
 
                 <Section id="reference-output">
@@ -618,6 +654,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                     <p>Repetition with <Code>{"{min:max}"}</Code>, rewrites with back-references, exclusions that match
                         patterns instead of fixed text, optional probabilities, decimal weights and weighted rule patterns.</p>
                 </Section>
+                </div>
             </div>
     )
 }
@@ -632,7 +669,9 @@ const Section = ({id, children}: { id: SectionId, children: ReactNode }) => (
     </section>
 )
 
-const Sub = ({children}: { children: ReactNode }) => <h3 className="font-bold text-lg mt-2">{children}</h3>
+// An id makes the subsection a target for help tips and links, like a section heading.
+const Sub = ({children, id}: { children: ReactNode, id?: string }) =>
+    <h3 id={id} tabIndex={id ? -1 : undefined} className="font-bold text-lg mt-2 scroll-mt-4">{children}</h3>
 
 const CodeBlock = ({children}: { children: string }) => (
     <pre className="font-mono rounded-sm bg-white/10 px-3 py-2 whitespace-pre-wrap"><code>{children}</code></pre>

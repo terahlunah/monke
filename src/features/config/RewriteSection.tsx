@@ -6,7 +6,8 @@ import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
-import {AddButton, GripButton, RowDeleteButton, SectionLabel} from "./ruleParts.tsx";
+import {GripButton, RowDeleteButton, SectionPanel} from "./ruleParts.tsx";
+import {ToggleLabel} from "@/components/ToggleLabel.tsx";
 import {rowInput, valueFont} from "./ruleStyles.ts";
 
 
@@ -21,8 +22,14 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
     const ruleId = rule.id
 
     return (
-        <>
-            <SectionLabel tone="text-rewrite" count={rule.rewrites.length}>Rewrites</SectionLabel>
+        <SectionPanel kind="rewrite" title="Rewrites"
+                      toggle={<ToggleLabel label="" accessibleName={`Rewrites of rule ${rule.name}`} checked={rule.showRewrites}
+                                             onChange={show => dispatch({type: "setShowRewrites", ruleId, show})}
+                                             tone="rewrite" switchMark className="h-8 md:h-7 px-1.5"/>}
+                      addLabel={rule.showRewrites ? `Add rewrite to rule ${rule.name}` : undefined}
+                      onAdd={() => dispatch({type: "addRewrite", ruleId})}>
+            {/* Off, the rewrites are kept but ignored, so the panel folds to its header. */}
+            {rule.showRewrites && rule.rewrites.length ? <>
             <SortableList items={rule.rewrites} onMove={(from, to) => dispatch({type: "moveRewrite", ruleId, from, to})}
                           direction="vertical"
                           describe={r => `rewrite ${r.match || "empty"} to ${r.replace || "empty"}`}>
@@ -41,14 +48,9 @@ export const RewriteSection = ({rule, dispatch, enableSerif}: RewriteSectionProp
                     )}
                 </div>
             </SortableList>
+            </> : null}
             <InlineGrammarError ruleId={ruleId} itemIds={rule.rewrites.map(p => p.id)}/>
-            <div>
-                <AddButton tone="text-primary-text" label={`Add rewrite to rule ${rule.name}`}
-                           onClick={() => dispatch({type: "addRewrite", ruleId})}>
-                    Rewrite
-                </AddButton>
-            </div>
-        </>
+        </SectionPanel>
     );
 }
 

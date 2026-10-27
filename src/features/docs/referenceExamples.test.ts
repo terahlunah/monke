@@ -8,7 +8,7 @@ import {importAwkwords} from "@/engine/awkwords.ts"
 import {enumerate} from "@/engine/enumerate.ts"
 import {seededRng} from "@/engine/seed.ts"
 import {featureWarnings} from "@/engine/features.ts"
-import {awkwordsImportDemo, branchingExample, exampleToConfig, ExampleRule, featureErrorDemos, unchosenWarningDemo, filterExample, harmonyExample, twoFeaturesExample, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
+import {awkwordsImportDemo, branchingExample, contrastExample, contrastRows, exampleToConfig, ExampleRule, featureErrorDemos, unchosenWarningDemo, filterExample, harmonyExample, twoFeaturesExample, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
 const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
@@ -83,10 +83,10 @@ describe("reference grammars", () => {
         for (const w of words("banned")) expect(w).not.toMatch(/ji|wu|wo|nn|nm/)
     })
 
-    it("a repeat weight makes further closed syllables rarer", () => {
+    it("a repeat factor makes further closed syllables rarer", () => {
         const recipe = recipes.find(r => r.id === "repeat-weight")!
         const many = (example: ReferenceExample) => sample(example, 2000).filter(w => w.split("n").length - 1 >= 2).length
-        const without = {...recipe, rules: recipe.rules.map(r => ({...r, repeatWeight: undefined}))}
+        const without = {...recipe, rules: recipe.rules.map(r => ({...r, itemRepeats: undefined}))}
         expect(many(recipe)).toBeLessThan(many(without) / 2)
     })
 
@@ -185,7 +185,14 @@ describe("phonological feature examples", () => {
         expect(() => grammarOf({...harmonyExample, rules})).toThrow(message)
     })
 
-    it("warns about values carried where nothing chooses them", () => {
+    // A choice is listed for one value: weights on, the other value at weight 0, so only that value is ever picked.
+    it.each(contrastRows)("contrast: $pattern ($value) gives $words", ({pattern, chooses, value, words}) => {
+        const features: ReferenceExample["features"] = value ? [["harmony", [["front", value === "front" ? 1 : 0], ["back", value === "back" ? 1 : 0]]]] : contrastExample.features
+        const rules = contrastExample.rules.map(r => r.name === "Word" ? {...r, items: [pattern], chooses: chooses ? ["harmony"] : undefined} : r)
+        expect(enumerate(grammarOf({...contrastExample, weights: !!value, features, rules})).words).toEqual(words)
+    })
+
+    it("warns about a classified rule reached where nothing chooses or filters its feature", () => {
         const rules = harmonyExample.rules.map(r => r.name === "Word" ? {...r, items: [unchosenWarningDemo.pattern], chooses: undefined} : r)
         expect(featureWarnings(grammarOf({...harmonyExample, rules})).map(w => w.message)).toContain(unchosenWarningDemo.message)
     })

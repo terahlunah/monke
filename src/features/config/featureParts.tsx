@@ -15,14 +15,11 @@ type ValuesPopoverProps = {
     // Locates the item, e.g. "terminal 2 of rule Vowel": the button is "Feature values of terminal 2 of rule Vowel".
     label: string
     invalid?: object
-    // Row buttons collapse to zero width while the row has no values, until the row has keyboard focus or the panel is
-    // open. Not display:none, so the button stays in the tab order and the accessibility tree.
-    collapseWhenEmpty?: boolean
 }
 
 // Checkboxes grouped by feature in a popover. Headless UI moves focus into the panel, closes on Escape or Tab out,
 // and returns focus to the button. Each checkbox announces its own state, so no extra live region is needed.
-export const ValuesPopover = ({features, selected, onChange, label, invalid, collapseWhenEmpty}: ValuesPopoverProps) => {
+export const ValuesPopover = ({features, selected, onChange, label, invalid}: ValuesPopoverProps) => {
     const set = new Set(selected ?? [])
     const toggle = (id: string, on: boolean) => {
         const next = new Set(set)
@@ -33,14 +30,10 @@ export const ValuesPopover = ({features, selected, onChange, label, invalid, col
     }
     return (
         <Popover className="flex shrink-0">
-            {({open}) => (<>
-            <span className={`flex overflow-hidden transition-[max-width] duration-150 motion-reduce:transition-none ${collapseWhenEmpty && !open ? "max-w-0 group-has-[:focus-visible]/row:max-w-9 md:group-has-[:focus-visible]/row:max-w-[30px]" : ""}`}
-                  data-collapsed={collapseWhenEmpty && !open}>
-                <PopoverButton aria-label={`Feature values of ${label}`} {...invalid}
-                               className="flex size-9 md:size-[30px] shrink-0 items-center justify-center rounded-md text-feature-dim hover:bg-white/10 focus-visible:-outline-offset-2">
-                    <TagIcon className="size-4" aria-hidden="true"/>
-                </PopoverButton>
-            </span>
+            <PopoverButton aria-label={`Feature values of ${label}`} {...invalid}
+                           className="flex size-9 md:size-[30px] shrink-0 items-center justify-center rounded-md text-feature-dim hover:bg-white/10 focus-visible:-outline-offset-2">
+                <TagIcon className="size-4" aria-hidden="true"/>
+            </PopoverButton>
             <PopoverPanel anchor="bottom end" focus
                           className="z-30 flex min-w-48 max-w-[calc(100vw-2rem)] flex-col gap-2 rounded-lg border border-line-strong bg-surface p-3 text-on-surface shadow-lg [--anchor-gap:4px]">
                 <p className="text-sm text-muted">Values of {label}</p>
@@ -58,32 +51,36 @@ export const ValuesPopover = ({features, selected, onChange, label, invalid, col
                     </fieldset>
                 ))}
             </PopoverPanel>
-            </>)}
         </Popover>
     )
 }
 
-type ChoosesProps = {
+type FeatureChipsProps = {
     features: Feature[]
-    chooses: string[] | undefined
-    ruleName: string
+    selected: string[] | undefined
     onAdd: (featureId: string) => void
     onRemove: (featureId: string) => void
+    // Group name, e.g. "Picks, rule Vowel".
+    groupLabel: string
+    // Role label, always shown before the chips, e.g. "Picks:". Hidden from assistive tech: the group name says it.
+    caption: string
+    addLabel: string
+    removeLabel: (featureName: string) => string
     invalid?: object
 }
 
-// The features a rule picks a value for on entry. Outlined lime boxes, each with its own remove button.
-export const Chooses = ({features, chooses, ruleName, onAdd, onRemove, invalid}: ChoosesProps) => {
-    const chosen = (chooses ?? []).flatMap(id => features.filter(f => f.id === id))
+// Features selected on a rule: a role label, outlined lime boxes each with its own remove button, and an icon-only
+// menu button to add more.
+const FeatureChips = ({features, selected, onAdd, onRemove, groupLabel, caption, addLabel, removeLabel, invalid}: FeatureChipsProps) => {
+    const chosen = (selected ?? []).flatMap(id => features.filter(f => f.id === id))
     const available = features.filter(f => !chosen.includes(f))
     return (
-        <div role="group" aria-label={`Features chosen by rule ${ruleName}`} className="flex flex-wrap items-center gap-1.5">
-            {chosen.length ? <span className="text-[13px] text-muted">chooses</span> : null}
+        <div role="group" aria-label={groupLabel} className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[13px] text-muted">{caption}</span>
             {chosen.map(f => (
                 <span key={f.id} className="inline-flex h-8 md:h-7 items-center gap-0.5 rounded-md border border-feature-line pl-2 pr-0.5 font-mono text-[13px] text-feature">
                     {f.name || "unnamed"}
-                    <button type="button" onClick={() => onRemove(f.id)}
-                            aria-label={`Stop choosing ${f.name} in rule ${ruleName}`}
+                    <button type="button" onClick={() => onRemove(f.id)} aria-label={removeLabel(f.name)}
                             className="flex size-7 md:size-6 items-center justify-center rounded text-feature-dim hover:bg-white/10">
                         <XIcon className="size-3.5" aria-hidden="true"/>
                     </button>
@@ -91,10 +88,9 @@ export const Chooses = ({features, chooses, ruleName, onAdd, onRemove, invalid}:
             ))}
             {available.length ? (
                 <Menu>
-                    <MenuButton {...invalid} aria-label={`Choose a feature in rule ${ruleName}`}
-                                className="inline-flex h-8 md:h-7 items-center gap-1 rounded-md px-1.5 text-[13px] text-primary-text hover:bg-white/5">
+                    <MenuButton {...invalid} aria-label={addLabel}
+                                className="flex size-8 md:size-6 items-center justify-center rounded-md text-primary-text hover:bg-white/5">
                         <PlusIcon className="size-4" aria-hidden="true"/>
-                        {chosen.length ? null : "Choose"}
                     </MenuButton>
                     <MenuPanel anchor="bottom start">
                         {available.map(f => (
@@ -110,3 +106,24 @@ export const Chooses = ({features, chooses, ruleName, onAdd, onRemove, invalid}:
         </div>
     )
 }
+
+type RuleFeatureChipsProps = {
+    features: Feature[]
+    selected: string[] | undefined
+    ruleName: string
+    onAdd: (featureId: string) => void
+    onRemove: (featureId: string) => void
+    invalid?: object
+}
+
+// The features that classify the rule's rows: only their values can tag its rows, and filters on them act on the rule.
+export const RuleFeatures = ({ruleName, ...rest}: RuleFeatureChipsProps) =>
+    <FeatureChips {...rest} groupLabel={`Tags by, rule ${ruleName}`} caption="Tags by:"
+                  addLabel={`Add feature that tags rows of rule ${ruleName}`}
+                  removeLabel={name => `Remove feature ${name} from rule ${ruleName}`}/>
+
+// The features a rule picks a value for on entry.
+export const Chooses = ({ruleName, ...rest}: RuleFeatureChipsProps) =>
+    <FeatureChips {...rest} groupLabel={`Picks, rule ${ruleName}`} caption="Picks:"
+                  addLabel={`Add feature picked by rule ${ruleName}`}
+                  removeLabel={name => `Stop picking ${name} in rule ${ruleName}`}/>

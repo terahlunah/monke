@@ -8,7 +8,8 @@ import {ConfigAction} from "@/engine/configReducer.ts";
 import {SortableList, SortableRow} from "@/components/SortableList.tsx";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
-import {AddButton, SectionLabel} from "./ruleParts.tsx";
+import {SectionPanel} from "./ruleParts.tsx";
+import {ToggleLabel} from "@/components/ToggleLabel.tsx";
 import {valueFont} from "./ruleStyles.ts";
 
 
@@ -23,13 +24,18 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
     const ruleId = rule.id
 
     return (
-        <>
-            <SectionLabel tone="text-exclusion" count={rule.exclusions.length}>Exclusions</SectionLabel>
-            <div className="flex flex-wrap items-center gap-2">
+        <SectionPanel kind="exclusion" title="Exclusions"
+                      toggle={<ToggleLabel label="" accessibleName={`Exclusions of rule ${rule.name}`} checked={rule.showExclusions}
+                                             onChange={show => dispatch({type: "setShowExclusions", ruleId, show})}
+                                             tone="exclusion" switchMark className="h-8 md:h-7 px-1.5"/>}
+                      addLabel={rule.showExclusions ? `Add exclusion to rule ${rule.name}` : undefined}
+                      onAdd={() => dispatch({type: "addExclusion", ruleId})}>
+            {/* Off, the exclusions are kept but ignored, so the panel folds to its header. */}
+            {rule.showExclusions && rule.exclusions.length ? <>
+            <div className="flex flex-wrap items-center gap-2 pl-1">
                 <SortableList items={rule.exclusions} onMove={(from, to) => dispatch({type: "moveExclusion", ruleId, from, to})}
                               direction="horizontal"
                               describe={e => e.match ? `exclusion ${e.match}` : "empty exclusion"}>
-                    {/* Contents-only wrapper: the chips are the list's items, and the add button beside them is not. */}
                     <div role="list" aria-label={`Exclusions of rule ${rule.name}`} className="contents">
                         {rule.exclusions.map((e, index) =>
                             <ExclusionPatternItem key={e.id}
@@ -45,13 +51,10 @@ export const ExclusionSection = ({rule, dispatch, enableSerif}: ExclusionSection
                         )}
                     </div>
                 </SortableList>
-                <AddButton tone="text-primary-text" label={`Add exclusion to rule ${rule.name}`}
-                           onClick={() => dispatch({type: "addExclusion", ruleId})}>
-                    Exclusion
-                </AddButton>
             </div>
+            </> : null}
             <InlineGrammarError ruleId={ruleId} itemIds={rule.exclusions.map(p => p.id)}/>
-        </>
+        </SectionPanel>
     );
 }
 

@@ -1,4 +1,4 @@
-import {Config, Feature, Rule} from "./config.ts"
+import {carriedFeatures, Config, Feature, Rule} from "./config.ts"
 import {configToGrammar} from "./buildGrammar.ts"
 
 export const makeRule = (name: string, patterns: string[], extra: Partial<Rule> = {}): Rule => ({
@@ -14,17 +14,25 @@ export const makeRule = (name: string, patterns: string[], extra: Partial<Rule> 
     ...extra,
 })
 
-export const makeConfig = (root: string, rules: Rule[], extra: Partial<Config> = {}): Config => ({
-    language: "test",
-    root,
-    rules,
-    enableWeights: false,
-    enableSerif: false,
-    repeatRewrites: false,
-    seed: "",
-    features: [],
-    ...extra,
-})
+// A rule without `classifies` is classified by the features its rows carry (as old links and files are read), so
+// tests only spell out declarations when they matter. Pass `classifies: []` for a rule that declares none.
+export const makeConfig = (root: string, rules: Rule[], extra: Partial<Config> = {}): Config => {
+    const features = extra.features ?? []
+    return {
+        language: "test",
+        root,
+        enableWeights: false,
+        enableSerif: false,
+        repeatRewrites: false,
+        seed: "",
+        ...extra,
+        features,
+        rules: rules.map(r => {
+            const classifies = r.classifies ?? carriedFeatures(r, features)
+            return classifies ? {...r, classifies} : r
+        }),
+    }
+}
 
 export const makeGrammar = (root: string, rules: Rule[], extra: Partial<Config> = {}) =>
     configToGrammar(makeConfig(root, rules, extra))!
@@ -51,7 +59,13 @@ export const tagRows = (rule: Rule, rows: (string[] | undefined)[]): Rule => ({
     patterns: rule.patterns.map((p, i) => rows[i]?.length ? {...p, values: rows[i]} : p),
 })
 
-export const harmony = makeFeature("harmony", ["front", "back"])
+// Gives row i the repeat factor factors[i]; a missing entry leaves the row without one.
+export const repeatRows = (rule: Rule, factors: (number | undefined)[]): Rule => ({
+    ...rule,
+    patterns: rule.patterns.map((p, i) => factors[i] === undefined ? p : {...p, repeat: factors[i]}),
+})
+
+export const harmony =makeFeature("harmony", ["front", "back"])
 export const rounding = makeFeature("rounding", ["round", ["flat", 2]])
 // a is neutral, e i front, o u back.
 export const vowels = tagRows(makeRule("V", ["a", "e", "i", "o", "u"], {terminalOnly: true}),

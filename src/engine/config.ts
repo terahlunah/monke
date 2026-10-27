@@ -35,19 +35,19 @@ export type Rule = {
     showRewrites: boolean
     showExclusions: boolean
     collapsed: boolean
-    // Feature value ids carried by everything the rule produces. Absent means none.
-    values?: string[]
     // Feature ids whose value the rule picks on entry, constraining its subtree. Absent means none.
     chooses?: string[]
-    // Weight factor applied, per earlier expansion of the rule in the word, to every alternative that references it.
-    // Absent means 1 (no effect).
-    repeatWeight?: number
+    // Feature ids that classify the rule's rows. Each row has a definite status for them: the values it carries, or
+    // none (untagged). Filters and choices on other features pass through the rule. Absent means none.
+    classifies?: string[]
 }
 
 export type RulePattern = {
     id: string
     pattern: string
     weight: number
+    // Factor applied to the weight for each earlier pick of this row in the word. Absent means 1 (no effect).
+    repeat?: number
     // Feature value ids this terminal entry or pattern row carries. Absent means none: neutral for every feature.
     values?: string[]
 }
@@ -61,4 +61,12 @@ export type RewritePattern = {
 export type ExclusionPattern = {
     id: string
     match: string,
+}
+
+// Features any row of the rule carries a value of, in declaration order. Configs from before rules declared their
+// features are read as declaring these.
+export const carriedFeatures = (rule: Rule, features: Feature[]): string[] | undefined => {
+    const carried = new Set(rule.patterns.flatMap(p => p.values ?? []))
+    const ids = features.filter(f => f.values.some(v => carried.has(v.id))).map(f => f.id)
+    return ids.length ? ids : undefined
 }

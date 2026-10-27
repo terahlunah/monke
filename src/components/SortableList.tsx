@@ -95,7 +95,7 @@ export const SortableRow = ({id, role, className, draggingClassName, children}: 
 
     return (
         <div ref={setNodeRef}
-             style={{transform: CSS.Transform.toString(transform), transition}}
+             style={{transform: CSS.Translate.toString(transform), transition}}
              id={id}
              role={role}
              className={`${className ?? ""} ${isDragging ? draggingClassName ?? "" : ""}`}>

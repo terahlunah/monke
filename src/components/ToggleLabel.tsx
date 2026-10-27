@@ -17,19 +17,35 @@ type ToggleLabelProps = {
     checked: boolean
     onChange: (enabled: boolean) => void
     tone: ToggleTone
-    // A small indicator ahead of the label that fills in when on, for toggles that stand alone in the toolbar.
-    dot?: boolean
+    // Borderless, with a small switch ahead of the label (knob left and hollow when off, right on a filled track
+    // when on), for toggles that stand alone in the toolbar, where a tint alone would not say which state is on.
+    switchMark?: boolean
+}
+
+// Switch look per tone: label colour when on, and the on track (dark shade of the hue) and knob (the hue itself).
+// Knob against track is at least 6.5:1 for every tone; off, the hollow knob and track outline use the muted text colour.
+const switchTones: Record<ToggleTone, { label: string, track: string, knob: string }> = {
+    primary: {label: "aria-pressed:text-primary-text", track: "border-primary bg-primary-soft", knob: "bg-primary-text"},
+    rewrite: {label: "aria-pressed:text-rewrite", track: "border-rewrite-line bg-rewrite-bg", knob: "bg-rewrite"},
+    exclusion: {label: "aria-pressed:text-exclusion", track: "border-exclusion-line bg-exclusion-bg", knob: "bg-exclusion"},
 }
 
 // State lives in aria-pressed, which also drives the styling, so the two cannot disagree.
-export const ToggleLabel = ({className, label, accessibleName, checked, onChange, tone, dot}: GenericProps<ToggleLabelProps>) => {
+export const ToggleLabel = ({className, label, accessibleName, checked, onChange, tone, switchMark}: GenericProps<ToggleLabelProps>) => {
+    const look = switchMark ?
+        `${switchTones[tone].label} rounded-md text-muted hover:text-on-surface` :
+        `${tones[tone]} rounded-md border border-line-strong text-muted hover:bg-white/5 aria-pressed:hover:brightness-110`
     return (
         <button type="button" onClick={() => onChange(!checked)}
-                className={`${className ?? ""} ${tones[tone]} inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-strong text-muted hover:bg-white/5 aria-pressed:hover:brightness-110`}
+                className={`${className ?? ""} ${look} inline-flex items-center gap-1.5 whitespace-nowrap`}
                 aria-pressed={checked}
                 aria-label={accessibleName}>
-            {dot ? <span aria-hidden="true"
-                         className={`size-2 rounded-full border-[1.5px] ${checked ? "bg-current border-current" : "border-current"}`}/> : null}
+            {switchMark ? (
+                <span aria-hidden="true"
+                      className={`flex h-[18px] w-8 shrink-0 items-center rounded-full border-[1.5px] px-px ${checked ? `justify-end ${switchTones[tone].track}` : "justify-start border-current"}`}>
+                    <span className={`size-3 rounded-full ${checked ? switchTones[tone].knob : "border-[1.5px] border-current"}`}/>
+                </span>
+            ) : null}
             {label}
         </button>
     )

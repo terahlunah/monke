@@ -1,4 +1,4 @@
-import {Config, ExclusionPattern, Feature, RewritePattern, Rule, RulePattern} from "./config.ts";
+import {carriedFeatures, Config, ExclusionPattern, Feature, RewritePattern, Rule, RulePattern} from "./config.ts";
 
 import {ByteBuffer} from "./bytebuffer.ts"
 
@@ -8,7 +8,10 @@ import {ByteBuffer} from "./bytebuffer.ts"
 // Version 5 adds the seed text after repeatRewrites.
 // Version 6 adds the feature declarations after the seed, each rule's values and chooses after its collapsed flag,
 // and each pattern's values after its weight. References are written as feature/value indices, not ids.
-// Version 7 adds each rule's repeat weight (float32, 1 when unset) after its chooses.
+// Version 7 adds each pattern's repeat factor (float32, 1 when unset) after its weight, drops the rule's values
+// (rules no longer carry values; version 6 links still hold them and they are skipped), and adds the features that
+// classify each rule (feature indices) after its chooses. Version 6 rules are read as classified by the features
+// their rows carry.
 const LATEST_VERSION = 7
 
 type ValueIndex = Map<string, [feature: number, value: number]>
@@ -67,16 +70,18 @@ export const encodeConfig = async (config: Config): Promise<string> => {
         buf.writeInt8(rule.showRewrites ? 1 : 0)
         buf.writeInt8(rule.showExclusions ? 1 : 0)
         buf.writeInt8(rule.collapsed ? 1 : 0)
-        writeValues(buf, valueIndex, rule.values)
         const chooses = (rule.chooses ?? []).flatMap(id => featureIndex.get(id) ?? [])
         buf.writeUint16(chooses.length)
         for (const f of chooses) buf.writeUint16(f)
-        buf.writeFloat32(rule.repeatWeight ?? 1)
+        const classifies = (rule.classifies ?? []).flatMap(id => featureIndex.get(id) ?? [])
+        buf.writeUint16(classifies.length)
+        for (const f of classifies) buf.writeUint16(f)
 
         buf.writeUint16(rule.patterns.length)
         for (const p of rule.patterns) {
             buf.writeText(p.pattern)
             buf.writeFloat32(p.weight)
+            buf.writeFloat32(p.repeat ?? 1)
             writeValues(buf, valueIndex, p.values)
         }
 
@@ -106,7 +111,9 @@ type Layout = {
     hasRepeatRewrites: boolean
     hasSeed: boolean
     hasFeatures: boolean
-    hasRepeatWeight: boolean
+    hasPatternRepeat: boolean
+    hasRuleValues: boolean
+    hasClassifies: boolean
 }
 
 const narrow = (hasCollapsed: boolean): Layout => ({
@@ -116,20 +123,24 @@ const narrow = (hasCollapsed: boolean): Layout => ({
     hasRepeatRewrites: false,
     hasSeed: false,
     hasFeatures: false,
-    hasRepeatWeight: false,
+    hasPatternRepeat: false,
+    hasRuleValues: false,
+    hasClassifies: false,
 })
 
-const wide = (hasRepeatRewrites: boolean, hasSeed = false, hasFeatures = false, hasRepeatWeight = false): Layout => ({
+const wide = (hasRepeatRewrites: boolean, hasSeed = false, hasFeatures = false, hasPatternRepeat = false): Layout => ({
     readString: buf => buf.readText(),
     readCount: buf => buf.readUint16(),
     hasCollapsed: true,
     hasRepeatRewrites,
     hasSeed,
     hasFeatures,
-    hasRepeatWeight,
+    hasPatternRepeat,
+    hasRuleValues: false,
+    hasClassifies: hasPatternRepeat,
 })
 
-const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRepeatRewrites, hasSeed, hasFeatures, hasRepeatWeight}: Layout): Config => {
+const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRepeatRewrites, hasSeed, hasFeatures, hasPatternRepeat, hasRuleValues, hasClassifies}: Layout): Config => {
     const language = readString(buf)
     const root = readString(buf)
     const enableWeights = buf.readInt8() === 1
@@ -161,8 +172,7 @@ const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRe
         // Empty lists are left out, as in configs built by the app, so absent always means none.
         const extra: Partial<Rule> = {}
         if (hasFeatures) {
-            const values = readValues(buf, features)
-            if (values.length) extra.values = values
+            if (hasRuleValues) readValues(buf, features)
             const chooseCount = readCount(buf)
             const chooses: string[] = []
             for (let n = 0; n < chooseCount; n++) {
@@ -170,16 +180,25 @@ const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRe
                 if (id) chooses.push(id)
             }
             if (chooses.length) extra.chooses = chooses
-        }
-        if (hasRepeatWeight) {
-            const repeatWeight = buf.readFloat32()
-            if (repeatWeight !== 1) extra.repeatWeight = repeatWeight
+            if (hasClassifies) {
+                const classifyCount = readCount(buf)
+                const classifies: string[] = []
+                for (let n = 0; n < classifyCount; n++) {
+                    const id = features[readCount(buf)]?.id
+                    if (id) classifies.push(id)
+                }
+                if (classifies.length) extra.classifies = classifies
+            }
         }
 
         const patternCount = readCount(buf)
         const patterns: RulePattern[] = []
         for (let n = 0; n < patternCount; n++) {
             const pattern: RulePattern = {id: crypto.randomUUID(), pattern: readString(buf), weight: buf.readFloat32()}
+            if (hasPatternRepeat) {
+                const repeat = buf.readFloat32()
+                if (repeat !== 1) pattern.repeat = repeat
+            }
             if (hasFeatures) {
                 const values = readValues(buf, features)
                 if (values.length) pattern.values = values
@@ -201,6 +220,9 @@ const readConfig = (buf: ByteBuffer, {readString, readCount, hasCollapsed, hasRe
                 exclusions.push({id: crypto.randomUUID(), match: readString(buf)})
             }
         }
+
+        const migrated = hasFeatures && !hasClassifies ? carriedFeatures({patterns} as Rule, features) : undefined
+        if (migrated) extra.classifies = migrated
 
         rules.push({
             id: crypto.randomUUID(),
@@ -226,7 +248,7 @@ const decoders: Record<number, (buf: ByteBuffer) => Config> = {
     3: buf => readConfig(buf, wide(false)),
     4: buf => readConfig(buf, wide(true)),
     5: buf => readConfig(buf, wide(true, true)),
-    6: buf => readConfig(buf, wide(true, true, true)),
+    6: buf => readConfig(buf, {...wide(true, true, true), hasRuleValues: true}),
     7: buf => readConfig(buf, wide(true, true, true, true)),
 }
 

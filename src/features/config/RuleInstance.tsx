@@ -1,25 +1,23 @@
 import {CopyIcon, EllipsisIcon, SquareMinusIcon, SquarePlusIcon, XIcon} from "lucide-react";
 import AutowidthInput from "react-autowidth-input";
-import {Dispatch, FormEvent, useState} from "react";
+import {Dispatch, FormEvent} from "react";
 import {MenuButton} from "@headlessui/react";
-import {ToggleLabel} from "@/components/ToggleLabel.tsx";
 import {SortableRow} from "@/components/SortableList.tsx";
+import {HelpTip} from "@/components/HelpTip.tsx";
 import {MoveButtons} from "@/components/MoveButtons.tsx";
 import {Menu, MenuItem, MenuPanel, menuItemClass} from "@/components/menu.tsx";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
 import {Feature, Rule} from "@/engine/config.ts";
-import {RULE_CHOOSES_ITEM, RULE_REPEAT_ITEM, RULE_VALUES_ITEM} from "@/engine/features.ts";
-import {Chooses, ValuesDisplay, ValuesPopover} from "./featureParts.tsx";
-import {valueNames} from "./featureNames.ts";
+import {RULE_CHOOSES_ITEM, RULE_CLASSIFIES_ITEM} from "@/engine/features.ts";
+import {Chooses, RuleFeatures} from "./featureParts.tsx";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
 import {RuleSection} from "./RuleSection.tsx";
-import {isNumber} from "@/components/text.ts";
 import {RewriteSection} from "./RewriteSection.tsx";
 import {ExclusionSection} from "./ExclusionSection.tsx";
 import {GripButton} from "./ruleParts.tsx";
-import {rowInput, valueFont} from "./ruleStyles.ts";
+import {valueFont} from "./ruleStyles.ts";
 
 
 export type RuleInstanceProps = {
@@ -50,8 +48,8 @@ export const RuleInstance = ({
 
     const ruleId = rule.id
     const invalid = useInvalidProps(ruleId)
-    const invalidValues = useInvalidProps(ruleId, RULE_VALUES_ITEM)
     const invalidChooses = useInvalidProps(ruleId, RULE_CHOOSES_ITEM)
+    const invalidFeatures = useInvalidProps(ruleId, RULE_CLASSIFIES_ITEM)
     const desktop = useMediaQuery("(min-width: 768px)")
     const name = rule.name
 
@@ -59,21 +57,9 @@ export const RuleInstance = ({
         dispatch({type: "renameRule", ruleId, name: e.currentTarget.value});
     }
 
-    const toggles = rule.terminalOnly ? null : (
-        <>
-            <ToggleLabel label="Rewrites" accessibleName={`Rewrites of rule ${name}`} checked={rule.showRewrites}
-                         onChange={show => dispatch({type: "setShowRewrites", ruleId, show})}
-                         tone="rewrite" className="h-8 md:h-7 px-2.5 text-xs"/>
-            <ToggleLabel label="Exclusions" accessibleName={`Exclusions of rule ${name}`} checked={rule.showExclusions}
-                         onChange={show => dispatch({type: "setShowExclusions", ruleId, show})}
-                         tone="exclusion" className="h-8 md:h-7 px-2.5 text-xs"/>
-        </>
-    )
-
     // Wide screens show every action; small ones fold them into a menu so the name keeps its room.
     const actions = desktop ? (
         <div className="flex items-center gap-1.5">
-            {toggles}
             <MoveButtons label={`rule ${name || index + 1}`} index={index} total={total} onMove={onMove}
                          orientation="vertical" scope="rule"
                          buttonClassName={iconButton}
@@ -123,17 +109,23 @@ export const RuleInstance = ({
 
     // Only once features exist, so grammars without them keep a quiet header.
     const featureControls = features.length ? (
-        <>
-            <span className="flex min-w-0 items-center gap-0.5">
-                <ValuesDisplay names={valueNames(features, rule.values)}/>
-                <ValuesPopover features={features} selected={rule.values} label={`rule ${name}`} invalid={invalidValues}
-                               onChange={values => dispatch({type: "setRuleValues", ruleId, values})}/>
-            </span>
-            <Chooses features={features} chooses={rule.chooses} ruleName={name} invalid={invalidChooses}
+        <span className="flex flex-wrap items-center gap-x-2.5 gap-y-2 md:before:h-4 md:before:w-px md:before:bg-line-strong md:before:content-['']">
+            <RuleFeatures features={features} selected={rule.classifies} ruleName={name} invalid={invalidFeatures}
+                          onAdd={featureId => dispatch({type: "addRuleFeature", ruleId, featureId})}
+                          onRemove={featureId => dispatch({type: "removeRuleFeature", ruleId, featureId})}/>
+            <Chooses features={features} selected={rule.chooses} ruleName={name} invalid={invalidChooses}
                      onAdd={featureId => dispatch({type: "addRuleChoice", ruleId, featureId})}
                      onRemove={featureId => dispatch({type: "removeRuleChoice", ruleId, featureId})}/>
-        </>
+            <HelpTip label="About rule features" section="reference-rule-features">
+                <b>Tags by</b>: the features that classify this rule's rows. A row without a value of one counts as
+                none of them, and filters like <code>{"<a>"}</code> act on these rows. <b>Picks</b>: each use of
+                the rule picks one value of the feature for everything below it, as in vowel harmony.
+            </HelpTip>
+        </span>
     ) : null
+
+    // Rows can only carry values of the features the rule declares.
+    const classifying = features.filter(f => rule.classifies?.includes(f.id))
 
     const inventory = rule.terminalOnly && rule.collapsed ?
         rule.patterns.map(p => p.pattern).filter(p => p !== "").join(" ") :
@@ -166,62 +158,32 @@ export const RuleInstance = ({
                         </span>
                         {desktop ? featureControls : null}
                         {inventory ?
-                            <span className={`min-w-0 max-w-full truncate text-[13px] text-muted ${valueFont(enableSerif)}`}>{inventory}</span> :
+                            <span className={`min-w-0 max-w-full truncate ml-1 px-2 py-0.5 rounded-md border border-terminal/30 bg-terminal/10 text-[13px] text-terminal ${valueFont(enableSerif)}`}>{inventory}</span> :
                             null}
                         </div>
                         <div className="ml-auto flex shrink-0 justify-end">{actions}</div>
                         {/* On small screens the feature controls and toggles drop to a line of their own under the name. */}
-                        {desktop || !(toggles || featureControls) ? null : (
-                            <div className="flex w-full flex-wrap items-center gap-2">{featureControls}<div className="flex-1"/>{toggles}</div>
+                        {desktop || !featureControls ? null : (
+                            <div className="flex w-full flex-wrap items-center gap-2">{featureControls}</div>
                         )}
                     </div>
                     {/* A collapsed rule hides its items, so their errors show under the header instead. */}
                     <div className="px-3">
                         <InlineGrammarError ruleId={ruleId}
-                                            itemIds={[null, RULE_VALUES_ITEM, RULE_CHOOSES_ITEM, RULE_REPEAT_ITEM, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
+                                            itemIds={[null, RULE_CLASSIFIES_ITEM, RULE_CHOOSES_ITEM, ...(rule.collapsed ? [...rule.patterns, ...rule.rewrites, ...rule.exclusions].map(p => p.id) : [])]}/>
                     </div>
                     {rule.collapsed ? null : (
                         <div className="flex flex-col gap-1.5 px-2.5 pb-3 pt-1.5 md:px-3">
-                            {enableWeights ? <RepeatWeightField rule={rule} dispatch={dispatch}/> : null}
-                            <RuleSection rule={rule} dispatch={dispatch} enableSerif={enableSerif} features={features}
+                            <RuleSection rule={rule} dispatch={dispatch} enableSerif={enableSerif} features={classifying}
                                          enableWeights={enableWeights}/>
-                            {rule.showRewrites && !rule.terminalOnly ? (
+                            {rule.terminalOnly ? null : <>
                                 <RewriteSection rule={rule} dispatch={dispatch} enableSerif={enableSerif}/>
-                            ) : null}
-                            {rule.showExclusions && !rule.terminalOnly ? (
                                 <ExclusionSection rule={rule} dispatch={dispatch} enableSerif={enableSerif}/>
-                            ) : null}
+                            </>}
                         </div>
                     )}
                 </>
             )}
         </SortableRow>
-    )
-}
-
-// Like pattern weights, only shown with weights on, since it only scales weighted picks. Committed on blur; a value
-// the grammar rejects (negative) is kept so its error points here.
-const RepeatWeightField = ({rule, dispatch}: { rule: Rule, dispatch: Dispatch<ConfigAction> }) => {
-    const weight = rule.repeatWeight ?? 1
-    const [text, setText] = useState(weight.toString())
-    const [synced, setSynced] = useState(weight)
-    if (synced !== weight) {
-        setSynced(weight)
-        setText(weight.toString())
-    }
-    const invalid = useInvalidProps(rule.id, RULE_REPEAT_ITEM)
-
-    const onBlur = () => {
-        if (isNumber(text)) dispatch({type: "setRepeatWeight", ruleId: rule.id, weight: +text})
-        else setText(weight.toString())
-    }
-
-    return (
-        <label className="flex items-center gap-2 self-start text-[13px] text-muted">
-            <span>Repeat weight</span>
-            <input type="text" value={text} aria-label={`Repeat weight of rule ${rule.name}`} {...invalid}
-                   onChange={e => setText(e.target.value)} onBlur={onBlur} inputMode="decimal"
-                   className={`${rowInput} w-16 md:w-20 text-center`}/>
-        </label>
     )
 }

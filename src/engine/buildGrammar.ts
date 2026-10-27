@@ -1,6 +1,6 @@
 import {Config, Rule as ConfigRule, RulePattern} from "./config.ts";
-import {checkFeatures, checkFilters, FeatureProblem, FeatureWarning, RULE_CHOOSES_ITEM, RULE_REPEAT_ITEM} from "./features.ts";
-import {containsBoundary, Expr, findInvalidBackReference, findInvalidMatchIndex, getRuleEdges, Grammar, GrammarFeature, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule, Tags, WeightedExpr} from "./grammar.ts";
+import {checkFeatures, checkFilters, FeatureProblem, FeatureWarning, RULE_CHOOSES_ITEM} from "./features.ts";
+import {containsBoundary, Expr, findInvalidBackReference, findInvalidMatchIndex, getExprEdges, getRuleEdges, Grammar, GrammarFeature, makeAtom, makeGrammar, makeRule, makeWeighted, makeWeightedChoice, Rule, Tags, WeightedExpr} from "./grammar.ts";
 import {parsePattern} from "./pattern.ts";
 import {closest} from "./suggest.ts";
 
@@ -106,6 +106,19 @@ export const configToGrammar = (config: Config): Grammar | null => {
             }
         }
 
+        const items: [string, Expr][] = [
+            ...rule.rewrites.flatMap((pair, n) => pair.map(e => [config.rules[i].rewrites[n].id, e] as [string, Expr])),
+            ...rule.exclusions.map((e, n) => [config.rules[i].exclusions[n].id, e] as [string, Expr]),
+        ]
+        for (const [itemId, expr] of items) {
+            const unknown = getExprEdges(expr).find(e => !rulesNames.includes(e))
+            if (unknown !== undefined) {
+                const suggestion = closest(unknown, rulesNames)
+                const hint = suggestion ? ` Did you mean \`${suggestion}\`?` : ""
+                throw new GrammarError(`Unknown rule '${unknown}' (rule : '${rule.name}').${hint} Quote text to match it literally, as in \`'${unknown}'\``, config.rules[i].id, itemId)
+            }
+        }
+
         for (const f of rule.chooses ?? []) {
             if (features.find(d => d.name === f)?.values.length === 0) {
                 throw new GrammarError(`Feature '${f}' has no values to choose from (rule : '${rule.name}')`, config.rules[i].id, RULE_CHOOSES_ITEM)
@@ -143,20 +156,14 @@ const configRuleToGrammarRule = (rule: ConfigRule, valueNames: ValueNames, featu
         throw new GrammarError(`Invalid rule name : '${rule.name}'`, rule.id);
     }
 
-    const repeat = rule.repeatWeight
-    if (repeat !== undefined && !(Number.isFinite(repeat) && repeat >= 0)) {
-        throw new GrammarError(`Invalid repeat weight ${repeat}: it must be a number of at least 0 (rule : '${rule.name}')`, rule.id, RULE_REPEAT_ITEM)
-    }
-
     const extra = {
         id: rule.id,
-        tags: toTags(rule.values, valueNames),
         chooses: (rule.chooses ?? []).flatMap(id => featureNames.get(id) ?? []),
-        ...repeat !== undefined && repeat !== 1 ? {repeat} : {},
+        classifies: (rule.classifies ?? []).flatMap(id => featureNames.get(id) ?? []),
     }
 
     if (rule.terminalOnly) {
-        const ruleExpr = terminalPatternsToExpr(rule.patterns, valueNames)
+        const ruleExpr = terminalPatternsToExpr(rule, rule.patterns, valueNames, extra.classifies)
         return makeRule(rule.name, ruleExpr, [], [], extra)
     }
 
@@ -164,7 +171,7 @@ const configRuleToGrammarRule = (rule: ConfigRule, valueNames: ValueNames, featu
         throw new GrammarError(`Rule '${rule.name}' is empty`, rule.id)
     }
 
-    const ruleExpr = rulePatternsToExpr(rule, rule.patterns, valueNames)
+    const ruleExpr = rulePatternsToExpr(rule, rule.patterns, valueNames, extra.classifies)
 
     // Hidden sections are kept in the config but must not affect generation.
     const exclusions = rule.showExclusions ? rule.exclusions.map(p => locate(rule.id, p.id, () => parseMatchPattern(rule.name, p.match))) : []
@@ -180,16 +187,26 @@ const configRuleToGrammarRule = (rule: ConfigRule, valueNames: ValueNames, featu
     return makeRule(rule.name, ruleExpr, exclusions, rewrites, extra)
 }
 
-const row = (expr: Expr, p: RulePattern, valueNames: ValueNames): WeightedExpr => {
+// A repeat factor of 1 has no effect, so it is left out and the row is never counted.
+const row = (rule: ConfigRule, expr: Expr, p: RulePattern, valueNames: ValueNames, classifies: string[]): WeightedExpr => {
+    const repeat = p.repeat
+    if (repeat !== undefined && !(Number.isFinite(repeat) && repeat >= 0)) {
+        throw new GrammarError(`Invalid repeat factor ${repeat}: it must be a number of at least 0 (rule : '${rule.name}')`, rule.id, p.id)
+    }
     const tags = toTags(p.values, valueNames)
-    return {...makeWeighted(expr, p.weight), id: p.id, ...tags ? {tags} : {}}
+    // A value only means something in a rule its feature classifies.
+    const stray = [...tags?.keys() ?? []].find(f => !classifies.includes(f))
+    if (stray !== undefined) {
+        throw new GrammarError(`Rule '${rule.name}' is not classified by ${stray}, so its rows cannot carry ${stray} values`, rule.id, p.id)
+    }
+    return {...makeWeighted(expr, p.weight), id: p.id, ...tags ? {tags} : {}, ...repeat !== undefined && repeat !== 1 ? {repeat} : {}}
 }
 
-const terminalPatternsToExpr = (patterns: RulePattern[], valueNames: ValueNames): Expr =>
-    makeWeightedChoice(patterns.map(p => row(makeAtom(p.pattern), p, valueNames)))
+const terminalPatternsToExpr = (rule: ConfigRule, patterns: RulePattern[], valueNames: ValueNames, classifies: string[]): Expr =>
+    makeWeightedChoice(patterns.map(p => row(rule, makeAtom(p.pattern), p, valueNames, classifies)))
 
-const rulePatternsToExpr = (rule: ConfigRule, patterns: RulePattern[], valueNames: ValueNames): Expr =>
-    makeWeightedChoice(patterns.map(p => row(locate(rule.id, p.id, () => noBoundary(rule.name, parsePattern(rule.name, p.pattern))), p, valueNames)))
+const rulePatternsToExpr = (rule: ConfigRule, patterns: RulePattern[], valueNames: ValueNames, classifies: string[]): Expr =>
+    makeWeightedChoice(patterns.map(p => row(rule, locate(rule.id, p.id, () => noBoundary(rule.name, parsePattern(rule.name, p.pattern))), p, valueNames, classifies)))
 
 const parseMatchPattern = (ruleName: string, src: string): Expr => {
     const e = parsePattern(ruleName, src)

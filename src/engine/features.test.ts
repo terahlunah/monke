@@ -4,7 +4,7 @@ import {enumerate} from "./enumerate.ts"
 import {generate} from "./generate.ts"
 import {countCombinations} from "./analysis.ts"
 import {seededRng} from "./seed.ts"
-import {featureWarnings, RULE_CHOOSES_ITEM, RULE_VALUES_ITEM} from "./features.ts"
+import {featureWarnings, RULE_CHOOSES_ITEM, RULE_CLASSIFIES_ITEM} from "./features.ts"
 import {Config, Feature} from "./config.ts"
 import {consonants, harmony, harmonyConfig, makeConfig, makeFeature, makeRule, rounding, tagRows, vowels} from "./test-helpers.ts"
 
@@ -42,6 +42,14 @@ describe("feature declarations", () => {
         const e = errorOf(harmonyConfig("'x'", {chooses: ["h"]}, [], [makeFeature("h", [])]))
         expect(e.message).toMatch(/has no values/)
         expect([e.ruleId, e.itemId]).toEqual(["Word", RULE_CHOOSES_ITEM])
+    })
+})
+
+describe("rule declarations", () => {
+    it("rejects a row value of a feature the rule is not classified by, on the row", () => {
+        const e = errorOf(harmonyConfig("C.V", {chooses: ["harmony"]}, [{...vowels, classifies: []}, consonants]))
+        expect(e.message).toMatch(/Rule 'V' is not classified by harmony, so its rows cannot carry harmony values/)
+        expect([e.ruleId, e.itemId]).toEqual(["V", "V1"])
     })
 })
 
@@ -85,22 +93,11 @@ describe("unchosen features", () => {
         expect(drawn.size).toBe(15)
     })
 
-    it("warns once on the tagged item, naming the rule, its user and the feature", () => {
+    it("warns once on the rule's features control, naming the rule, its user and the feature", () => {
         const g = configToGrammar(harmonyConfig("[C.V]{2}", {}))!
         expect(featureWarnings(g)).toEqual([
-            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V1"},
-            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V2"},
-            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V3"},
-            {message: "Feature 'harmony' is not chosen when rule 'V' is used in 'Word'; its values are all kept", ownerId: "V", itemId: "V4"},
+            {message: "Feature 'harmony' is neither chosen nor filtered when rule 'V' is used in 'Word'; all its rows are kept", ownerId: "V", itemId: RULE_CLASSIFIES_ITEM},
         ])
-    })
-
-    it("warns on a rule's own values, keeping it in play", () => {
-        const front = makeRule("F", ["e"], {terminalOnly: true, values: ["front"]})
-        const g = configToGrammar(harmonyConfig("C.F", {}, [front, consonants]))!
-        expect(featureWarnings(g)).toContainEqual(
-            {message: "Feature 'harmony' is not chosen when rule 'F' is used in 'Word'; its values are all kept", ownerId: "F", itemId: RULE_VALUES_ITEM})
-        expect(enumerate(g).words).toHaveLength(3)
     })
 
     it("is quiet when an enclosing rule chooses, however deep", () => {
@@ -113,10 +110,15 @@ describe("unchosen features", () => {
         expect(featureWarnings(configToGrammar(harmonyConfig("C.V<front>", {}))!)).toEqual([])
     })
 
-    it("warns below the filtered level", () => {
+    it("is quiet below a filter, which reaches every rule under the reference", () => {
         const syllable = makeRule("S", ["C.V"])
-        const warnings = featureWarnings(configToGrammar(harmonyConfig("S<!back>", {}, [syllable, vowels, consonants]))!)
-        expect(warnings.map(w => w.itemId)).toContain("V1")
+        expect(featureWarnings(configToGrammar(harmonyConfig("S<!back>", {}, [syllable, vowels, consonants]))!)).toEqual([])
+    })
+
+    it("warns where the same rule is also reached without a filter", () => {
+        const syllable = makeRule("S", ["C.V"])
+        const warnings = featureWarnings(configToGrammar(harmonyConfig("S<!back>.S", {}, [syllable, vowels, consonants]))!)
+        expect(warnings.map(w => [w.ownerId, w.itemId])).toEqual([["V", RULE_CLASSIFIES_ITEM]])
         expect(warnings[0].message).toMatch(/rule 'V' is used in 'S'/)
     })
 
@@ -137,16 +139,30 @@ describe("filters", () => {
         expect([e.ruleId, e.itemId]).toEqual(["Word", "x"])
     })
 
-    it("rejects filters that leave no alternative", () => {
+    it("rejects filters that leave no row, on the pattern holding the filter", () => {
         const front = tagRows(makeRule("F", ["e", "i"], {terminalOnly: true}), [["front"], ["front"]])
-        const e = errorOf(harmonyConfig("F<back>", {chooses: ["harmony"]}, [front]))
-        expect(e.message).toMatch(/No alternative of rule 'F' can be used through <back>/)
+        const e = errorOf(harmonyConfig("F<back>", {}, [front]))
+        expect(e.message).toMatch(/No row of rule 'F' can be used when harmony must be back/)
+        expect([e.ruleId, e.itemId]).toEqual(["Word", "Word0"])
     })
 
-    it("rejects a filter that the chosen value empties, naming the value", () => {
-        const front = tagRows(makeRule("F", ["e", "o"], {terminalOnly: true}), [["front"], ["back"]])
-        const e = errorOf(harmonyConfig("F<front>", {chooses: ["harmony"]}, [front]))
-        expect(e.message).toMatch(/when harmony is back through <front>/)
+    it("rejects a filter that contradicts a choice above it", () => {
+        const syllable = makeRule("S", ["C.V<back>"])
+        const e = errorOf(harmonyConfig("S", {chooses: ["harmony"]}, [syllable, vowels, consonants]))
+        expect(e.message).toMatch(/No row of rule 'V' can be used when harmony is front and must be back/)
+        expect([e.ruleId, e.itemId]).toEqual(["S", "S0"])
+    })
+
+    it("rejects a filter no rule below the reference is classified by", () => {
+        const e = errorOf(harmonyConfig("C<front>.V", {chooses: ["harmony"]}))
+        expect(e.message).toMatch(/filter front on 'C' has no effect: no rule it reaches is classified by harmony/)
+        expect([e.ruleId, e.itemId]).toEqual(["Word", "Word0"])
+    })
+
+    it("rejects a choice the filters above leave no value for", () => {
+        const inner = makeRule("S", ["C.V"], {chooses: ["harmony"]})
+        const e = errorOf(harmonyConfig("S<!front, !back>", {}, [inner, vowels, consonants]))
+        expect(e.message).toMatch(/Rule 'S' chooses harmony, but the filters above it leave no value/)
         expect([e.ruleId, e.itemId]).toEqual(["Word", "Word0"])
     })
 
@@ -160,20 +176,15 @@ describe("dead ends", () => {
     it("rejects a rule whose alternatives all disagree with some chosen value", () => {
         const front = tagRows(makeRule("F", ["e", "i"], {terminalOnly: true}), [["front"], ["front"]])
         const e = errorOf(harmonyConfig("F", {chooses: ["harmony"]}, [front]))
-        expect(e.message).toMatch(/No alternative of rule 'F' can be used when harmony is back/)
-        expect(e.ruleId).toBe("F")
+        expect(e.message).toMatch(/No row of rule 'F' can be used when harmony is back/)
+        expect([e.ruleId, e.itemId]).toEqual(["Word", RULE_CHOOSES_ITEM])
     })
 
-    it("rejects a rule referenced in a sequence whose own values exclude it", () => {
-        const front = makeRule("F", ["e"], {terminalOnly: true, values: ["front"]})
-        const e = errorOf(harmonyConfig("C.F", {chooses: ["harmony"]}, [front, consonants]))
-        expect(e.message).toMatch(/Rule 'F' cannot be used when harmony is back/)
-    })
-
-    it("accepts tagged rules as alternatives, since out-of-scope ones are removed", () => {
-        const front = makeRule("F", ["e"], {terminalOnly: true, values: ["front"]})
-        const back = makeRule("B", ["o"], {terminalOnly: true, values: ["back"]})
-        expect(() => configToGrammar(harmonyConfig("C.[F / B]", {chooses: ["harmony"]}, [front, back, consonants]))).not.toThrow()
+    it("rejects a rule referenced as an alternative whose rows all disagree with some chosen value", () => {
+        const front = tagRows(makeRule("F", ["e"], {terminalOnly: true}), [["front"]])
+        const back = tagRows(makeRule("B", ["o"], {terminalOnly: true}), [["back"]])
+        const e = errorOf(harmonyConfig("C.[F / B]", {chooses: ["harmony"]}, [front, back, consonants]))
+        expect(e.message).toMatch(/No row of rule '[FB]' can be used when harmony is/)
     })
 })
 
@@ -188,7 +199,14 @@ describe("featureWarnings", () => {
     it("warns about a choice nothing below the rule reacts to", () => {
         const g = configToGrammar(harmonyConfig("C{2}", {chooses: ["harmony"]}))!
         expect(featureWarnings(g)).toEqual([
-            {message: "Rule 'Word' chooses harmony, but nothing it produces carries harmony values", ownerId: "Word", itemId: RULE_CHOOSES_ITEM},
+            {message: "Rule 'Word' chooses harmony, but no rule it produces is classified by harmony", ownerId: "Word", itemId: RULE_CHOOSES_ITEM},
+        ])
+    })
+
+    it("warns about a rule classified by a feature none of its rows carries", () => {
+        const g = configToGrammar(harmonyConfig("C.V", {chooses: ["harmony"]}, [vowels, {...consonants, classifies: ["harmony"]}]))!
+        expect(featureWarnings(g)).toEqual([
+            {message: "Rule 'C' is classified by harmony, but none of its rows carries a harmony value", ownerId: "C", itemId: RULE_CLASSIFIES_ITEM},
         ])
     })
 

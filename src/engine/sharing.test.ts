@@ -3,7 +3,7 @@ import {decodeConfig, encodeConfig} from "./sharing.ts"
 import {Config} from "./config.ts"
 import {ByteBuffer} from "./bytebuffer.ts"
 import {tokiPonaRoot, tokiPonaRules} from "./defaults.ts"
-import {makeConfig, makeRule} from "./test-helpers.ts"
+import {makeConfig, makeRule, repeatRows} from "./test-helpers.ts"
 
 // Rule/pattern ids are regenerated on decode, so compare without them.
 const stripIds = (c: Config) =>
@@ -21,8 +21,8 @@ const named = (c: Config) => {
         ...c,
         rules: c.rules.map(r => ({
             ...r,
-            values: rename(r.values),
             chooses: rename(r.chooses),
+            classifies: rename(r.classifies),
             patterns: r.patterns.map(p => ({...p, values: rename(p.values)})),
         })),
     })
@@ -125,13 +125,14 @@ describe("sharing", () => {
     const featured = () => {
         const config = makeConfig("Word", [
             makeRule("Word", ["V{2}"], {chooses: ["h"]}),
-            makeRule("V", ["a", "e", "o"], {terminalOnly: true, values: ["rv"]}),
+            makeRule("V", ["a", "e", "o"], {terminalOnly: true}),
         ], {language: "frozen", enableWeights: true, seed: "s6", features: [
             {id: "h", name: "harmony", values: [{id: "f", name: "front", weight: 1}, {id: "b", name: "back", weight: 2}]},
             {id: "r", name: "rounding", values: [{id: "rv", name: "round", weight: 0.5}]},
         ]})
         config.rules[1].patterns[1].values = ["f"]
         config.rules[1].patterns[2].values = ["b", "rv"]
+        config.rules[1].classifies = ["h", "r"]
         return config
     }
 
@@ -149,28 +150,49 @@ describe("sharing", () => {
         expect(decoded.rules[1].patterns[0].values).toBeUndefined()
     })
 
-    // Frozen link from format version 6, encoded once from `featured()`. Same rule: fix the decoder, not the fixture.
+    // Frozen link from format version 6, encoded once from `featured()` when rule V also carried the value round,
+    // which is skipped on decoding. Version 6 has no rule declarations: V is read as classified by the features its
+    // rows carry, as `featured()` declares. Same rule: fix the decoder, not the fixture.
     it("decodes a frozen version 6 link", async () => {
         const link = "H4sIAAAAAAAACkWMSwoCQQxEX0cdPY8Lt-MpxnXrjB_EBFpdqAgeXZLGMRBSVXlJ0wD7Ys9Bp8DGSp9AgOtKmAPHXC6mD2FWSb3Bp3V4m3dnYL0Ait21P-khBRYOaIXfV6JStGfda_n2R_-8q8sUwSRmroTLwWUaYXMr48EXEKiV5scAAAA~"
         expect(named(await decodeConfig(link))).toEqual(named(featured()))
     })
 
     const repeating = () => makeConfig("Word", [
-        makeRule("Word", ["[C.V]{2} / C~0.5"], {repeatWeight: 0.5}),
-        makeRule("C", ["p", "t"], {terminalOnly: true, repeatWeight: 0}),
+        repeatRows(makeRule("Word", ["[C.V]{2} / C~0.5", "V"]), [0.5]),
+        repeatRows(makeRule("C", ["p", "t"], {terminalOnly: true}), [0, 0.25]),
         makeRule("V", ["a"], {terminalOnly: true}),
     ], {language: "frozen", enableWeights: true, seed: "s7"})
 
-    it("round-trips rule repeat weights, leaving the default absent", async () => {
-        const decoded = await roundTrip(repeating())
-        expect(decoded).toEqual(stripIds(repeating()))
-        expect("repeatWeight" in decoded.rules[2]).toBe(false)
+    // A declaration with no row values is kept as declared, not recomputed from the rows.
+    const declaring = () => {
+        const config = makeConfig("Word", [
+            repeatRows(makeRule("Word", ["[C.V]{2} / C~0.5", "V"], {chooses: ["h"]}), [0.5]),
+            repeatRows(makeRule("C", ["p", "t"], {terminalOnly: true, classifies: ["r"]}), [0, 0.25]),
+            makeRule("V", ["a", "e"], {terminalOnly: true, classifies: ["h", "r"]}),
+        ], {language: "frozen", enableWeights: true, seed: "s7", features: [
+            {id: "h", name: "harmony", values: [{id: "f", name: "front", weight: 1}, {id: "b", name: "back", weight: 2}]},
+            {id: "r", name: "rounding", values: [{id: "rv", name: "round", weight: 0.5}]},
+        ]})
+        config.rules[2].patterns[1].values = ["f"]
+        return config
+    }
+
+    it("round-trips rule declarations", async () => {
+        const config = declaring()
+        expect(named(await decodeConfig(await encodeConfig(config)))).toEqual(named(config))
     })
 
-    // Frozen link from format version 7, encoded once from `repeating()`. Same rule: fix the decoder, not the fixture.
+    it("round-trips pattern repeat factors, leaving the default absent", async () => {
+        const decoded = await roundTrip(repeating())
+        expect(decoded).toEqual(stripIds(repeating()))
+        expect("repeat" in decoded.rules[0].patterns[1]).toBe(false)
+    })
+
+    // Frozen link from format version 7, encoded once from `declaring()`. Same rule: fix the decoder, not the fixture.
     it("decodes a frozen version 7 link", async () => {
-        const link = "H4sIAAAAAAAACmNnY2BgSCvKr0rNY2FgYAjPL0phZGBgYmBgKDZnYGBmgAkyIIA9I4MAAwNDtLNeWGy1Ua2CvoJznYGeKQNDgz1EASMDA4MzI5IOJrBQAUQFiFmCYIYhFDbYM4KFEiGyAKHthqibAAAA"
-        expect(stripIds(await decodeConfig(link))).toEqual(stripIds(repeating()))
+        const link = "H4sIAAAAAAAAClWNzQ7BQBSFvxk_tfQIfYISidippO9QC7EorRIxI6MWCPHoMj8lNjf3nPudc6M-sDP6XqkusNSmFCCBy0wSAfvCnLS6SXqeVA28Uwtviu0RWAwAo6-qPKhaOMwpIO3QtgIIO5AMgVWW5OvH5BmP4uw1Tqa21CY8lXvprBDMRFgF0hnn_3sTIvPQ0D7jGyh-pVZWrfTkBwXE_UoKAQAA"
+        expect(named(await decodeConfig(link))).toEqual(named(declaring()))
     })
 
     it("round-trips more than 127 rules and more than 127 patterns in one rule", async () => {

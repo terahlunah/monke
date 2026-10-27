@@ -9,6 +9,7 @@ import type {AwkwordsImport as AwkwordsResult} from "@/engine/awkwords.ts";
 import {GeneratorView} from "@/features/generator/useGeneratorView.ts";
 import {exampleToConfig, firstGrammar, recipes} from "@/features/docs/referenceExamples.ts";
 import {useMediaQuery} from "@/app/useMediaQuery.ts";
+import {HelpTip} from "@/components/HelpTip.tsx";
 import {ToggleLabel} from "@/components/ToggleLabel.tsx";
 import {buttonOutline, buttonPrimary, textInput} from "@/components/styles.ts";
 import {Menu, MenuGroup, MenuItem, MenuPanel, MenuTrigger, menuItemClass} from "@/components/menu.tsx";
@@ -147,12 +148,25 @@ export const GrammarToolbar = ({config, dispatch, view}: GrammarToolbarProps) =>
             </div>
 
             <div className="flex flex-wrap gap-2 md:items-center md:gap-3">
-                <ToggleLabel label="Weights" checked={config.enableWeights} tone="primary" dot
-                             onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
-                             className="h-[34px] md:h-[30px] px-3"/>
-                <ToggleLabel label="Repeat rewrites" checked={config.repeatRewrites} tone="primary" dot
-                             onChange={enabled => dispatch({type: "setRepeatRewrites", enabled})}
-                             className="h-[34px] md:h-[30px] px-3"/>
+                {/* Each tip stays beside its toggle, so a wrap never separates them. */}
+                <div className="flex items-center">
+                    <ToggleLabel label="Weights" checked={config.enableWeights} tone="primary" switchMark
+                                 onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
+                                 className="h-[34px] md:h-[30px] px-1.5"/>
+                    <HelpTip compact label="About weights" section="reference-weights">
+                        On, the <code className="font-mono">*N</code> weights, optional probabilities and
+                        repeat factors (<code className="font-mono">~</code>) are used. Off, every alternative is equally likely.
+                    </HelpTip>
+                </div>
+                <div className="flex items-center">
+                    <ToggleLabel label="Repeat rewrites" checked={config.repeatRewrites} tone="primary" switchMark
+                                 onChange={enabled => dispatch({type: "setRepeatRewrites", enabled})}
+                                 className="h-[34px] md:h-[30px] px-1.5"/>
+                    <HelpTip compact label="About repeat rewrites" section="reference-rewrites">
+                        Runs each rule&apos;s rewrite list again until nothing changes, so a rewrite can act on another&apos;s
+                        output. Stops with an error if the output never settles.
+                    </HelpTip>
+                </div>
             </div>
 
             <div className="grid grid-cols-4 gap-1.5 md:ml-auto md:flex md:items-center md:gap-2">

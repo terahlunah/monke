@@ -1,5 +1,5 @@
-import {Expr, Filter, Grammar, Rule} from "./grammar.ts";
-import {conflictsWith, eligibleNested, eligibleRows, emptyScope, ruleAlternatives, Scope, scopeOptions} from "./features.ts";
+import {Expr, Grammar, Rule} from "./grammar.ts";
+import {eligibleRows, emptyScope, ruleAlternatives, Scope, scopeKey, scopeOptions, withFilters} from "./features.ts";
 import {matchesExclusion, matchNonEmpty} from "./match.ts";
 import {detectCycle} from "./analysis.ts";
 import {MAX_REWRITE_LENGTH, MAX_REWRITE_PASSES} from "./generate.ts";
@@ -75,7 +75,7 @@ const ofExpr = (ctx: Ctx, e: Expr, scope: Scope, matches?: string[]): string[] =
         case "Ref": {
             const rule = ctx.g.ruleMap.get(e.rule)
             if (!rule) throw new Error(`Rule ${e.rule} not found`)
-            return ofRule(ctx, rule, scope, e.filters ?? [])
+            return ofRule(ctx, rule, withFilters(ctx.g, scope, e.filters))
         }
         case "Match":
             if (matches === undefined) throw new Error(`Encountered ambiguous match expression #${e.index}#`)
@@ -85,7 +85,7 @@ const ofExpr = (ctx: Ctx, e: Expr, scope: Scope, matches?: string[]): string[] =
         case "Seq":
             return product(ctx, e.items, scope, matches)
         case "Choice": {
-            const items = reachable(ctx, eligibleNested(ctx.g, e.items, scope))
+            const items = reachable(ctx, e.items)
             if (items.length === 0) return [""]
             const out = new Set<string>()
             for (const o of items) {
@@ -145,10 +145,10 @@ const settle = (ctx: Ctx, rule: Rule, scope: Scope, text: string, pass: number, 
 }
 
 // Words of the rule's rows under one set of chosen values. A rule without rows produces the empty string.
-const rawWords = (ctx: Ctx, rule: Rule, scope: Scope, filters: Filter[]): string[] => {
+const rawWords = (ctx: Ctx, rule: Rule, scope: Scope): string[] => {
     if (ruleAlternatives(rule).length === 0) return [""]
     const out = new Set<string>()
-    for (const row of reachable(ctx, eligibleRows(ctx.g, rule, scope, filters))) {
+    for (const row of reachable(ctx, eligibleRows(rule, scope))) {
         for (const s of ofExpr(ctx, row.expr, scope)) keep(ctx, out, s)
         if (ctx.truncated) break
     }
@@ -156,17 +156,16 @@ const rawWords = (ctx: Ctx, rule: Rule, scope: Scope, filters: Filter[]): string
 }
 
 // The rule's words are the union over every value its choices can take, each with rewrites run in that scope.
-const ofRule = (ctx: Ctx, rule: Rule, scope: Scope, filters: Filter[], cap = Infinity): string[] => {
-    const key = `${rule.name}|${[...scope].join(",")}|${filters.map(f => (f.negate ? "!" : "") + f.value).join(",")}`
+const ofRule = (ctx: Ctx, rule: Rule, scope: Scope, cap = Infinity): string[] => {
+    const key = `${rule.name}|${scopeKey(scope)}`
     const cached = ctx.memo.get(key)
     if (cached) return cached
-    if (rule.tags && conflictsWith(rule.tags, scope)) return []
 
     const options = reachable(ctx, scopeOptions(ctx.g, rule, scope).map(([inner, weight]) => ({inner, weight})))
     const out = new Set<string>()
     let produced = false
     for (const {inner} of options) {
-        const raw = rawWords(ctx, rule, inner, filters)
+        const raw = rawWords(ctx, rule, inner)
         produced ||= raw.length !== 0
         for (const s of raw) {
             if (out.size >= cap) {
@@ -206,6 +205,6 @@ export const enumerate = (g: Grammar, {limit = ENUMERATE_LIMIT, budget = DEFAULT
     if (!root) throw new Error(`Root rule ${g.root} not found`)
 
     const ctx: Ctx = {g, limit, budget, truncated: false, memo: new Map()}
-    const words = ofRule(ctx, root, emptyScope, [], limit).sort(collator.compare)
+    const words = ofRule(ctx, root, emptyScope, limit).sort(collator.compare)
     return {words, truncated: ctx.truncated}
 }

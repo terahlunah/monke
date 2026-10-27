@@ -1,7 +1,8 @@
-import {Dispatch, useState} from "react";
+import {Dispatch, useEffect, useRef, useState} from "react";
 import AutowidthInput from "react-autowidth-input";
 import {SquareMinusIcon, SquarePlusIcon, XIcon} from "lucide-react";
-import {Feature, FeatureValue} from "@/engine/config.ts";
+import {HelpTip} from "@/components/HelpTip.tsx";
+import {Feature,FeatureValue} from "@/engine/config.ts";
 import {ConfigAction} from "@/engine/configReducer.ts";
 import {useInvalidProps} from "./grammarError.ts";
 import {InlineGrammarError} from "./InlineGrammarError.tsx";
@@ -27,6 +28,12 @@ export const FeaturesPanel = ({features, dispatch, enableWeights}: FeaturesPanel
                 </button>
                 <h3 id="features-heading" className="text-[15px] font-semibold">Phonological features</h3>
                 <span className="text-[13px] text-subtle">{features.length || "none"}</span>
+                <HelpTip label="About phonological features" section="reference-features">
+                    Features keep sounds consistent across a word, like vowel harmony. Declare a feature with values, add it
+                    to the rules it tags with Tags by, tag their rows, and let a rule Pick the feature. Filter a
+                    reference with <code className="font-mono">Vowel&lt;front&gt;</code> (only front)
+                    or <code className="font-mono">Vowel&lt;!back&gt;</code> (anything but back).
+                </HelpTip>
                 <div className="flex-1"/>
                 <AddButton tone="text-primary-text" label="Add feature" onClick={() => {
                     setOpen(true)
@@ -35,7 +42,7 @@ export const FeaturesPanel = ({features, dispatch, enableWeights}: FeaturesPanel
             </div>
             {!open ? null : features.length === 0 ? (
                 <p className="px-1 pb-1 text-sm text-muted">
-                    Values like front or back that items carry. A rule that chooses a feature keeps one value for everything inside it.
+                    Group sounds into classes and keep them consistent across a word, for vowel harmony and similar patterns.
                 </p>
             ) : (
                 <div className="flex flex-col pb-1">
@@ -58,15 +65,35 @@ const FeatureRow = ({feature, index, dispatch, enableWeights}: FeatureRowProps) 
     const featureId = feature.id
     const invalid = useInvalidProps(featureId)
     const name = feature.name || `${index + 1}`
+    const rowRef = useRef<HTMLDivElement>(null)
+    // Id of the value input (or "name") to focus once the next render has put it in the DOM.
+    const pendingFocus = useRef<string | null>(null)
+    useEffect(() => {
+        const target = pendingFocus.current
+        if (target === null) return
+        pendingFocus.current = null
+        rowRef.current?.querySelector<HTMLInputElement>(`[data-focus-id="${target}"]`)?.focus()
+    })
+    const addAfter = (valueId: string) => {
+        const id = crypto.randomUUID()
+        pendingFocus.current = id
+        dispatch({type: "addFeatureValue", featureId, afterId: valueId, id})
+    }
+    // Focus moves to the previous value, or the feature name when it was the first.
+    const removeValue = (valueId: string, i: number) => {
+        pendingFocus.current = i > 0 ? feature.values[i - 1].id : "name"
+        dispatch({type: "removeFeatureValue", featureId, valueId})
+    }
     return (
-        <div role="group" aria-label={`Feature ${name}`} className="flex flex-col gap-1 border-t border-line-row py-1.5 first:border-t-0">
+        <div ref={rowRef} role="group" aria-label={`Feature ${name}`} className="flex flex-col gap-1 border-t border-line-row py-1.5 first:border-t-0">
             <div className="flex flex-wrap items-center gap-1.5">
-                <AutowidthInput value={feature.name} aria-label={`Name of feature ${index + 1}`} {...invalid}
+                <AutowidthInput value={feature.name} aria-label={`Name of feature ${index + 1}`} data-focus-id="name" {...invalid}
                                 onChange={e => dispatch({type: "renameFeature", featureId, name: e.currentTarget.value})}
                                 minWidth={84} spellCheck={false} placeholder="name"
                                 className="h-9 md:h-8 rounded-md border border-line-strong bg-background px-2.5 font-mono text-sm font-medium outline-0 placeholder:text-subtle"/>
                 {feature.values.map((v, i) =>
-                    <ValueBox key={v.id} value={v} index={i} feature={feature} featureName={name} dispatch={dispatch} enableWeights={enableWeights}/>)}
+                    <ValueBox key={v.id} value={v} index={i} feature={feature} featureName={name} dispatch={dispatch} enableWeights={enableWeights}
+                              onEnter={() => addAfter(v.id)} onBackspaceEmpty={() => removeValue(v.id, i)}/>)}
                 <AddButton tone="text-primary-text" label={`Add a value to feature ${name}`}
                            onClick={() => dispatch({type: "addFeatureValue", featureId})}>value</AddButton>
                 <div className="flex-1"/>
@@ -84,10 +111,12 @@ type ValueBoxProps = {
     featureName: string
     dispatch: Dispatch<ConfigAction>
     enableWeights: boolean
+    onEnter: () => void
+    onBackspaceEmpty: () => void
 }
 
 // `front ×1`: the name, and the weight when weights are on, in one lime outlined box with its delete button.
-const ValueBox = ({value, index, feature, featureName, dispatch, enableWeights}: ValueBoxProps) => {
+const ValueBox = ({value, index, feature, featureName, dispatch, enableWeights, onEnter, onBackspaceEmpty}: ValueBoxProps) => {
     const invalid = useInvalidProps(feature.id, value.id)
     const [weight, setWeight] = useState(String(value.weight))
     const [synced, setSynced] = useState(value.weight)
@@ -103,7 +132,17 @@ const ValueBox = ({value, index, feature, featureName, dispatch, enableWeights}:
     }
     return (
         <span className="inline-flex h-9 md:h-8 items-center rounded-md border border-feature-line pl-1 font-mono text-[13px] text-feature">
-            <AutowidthInput value={value.name} aria-label={`Value ${index + 1} of feature ${featureName}`} {...invalid}
+            <AutowidthInput value={value.name} aria-label={`Value ${index + 1} of feature ${featureName}`} data-focus-id={value.id} {...invalid}
+                            onKeyDown={e => {
+                                if (e.nativeEvent.isComposing) return
+                                if (e.key === "Enter") {
+                                    e.preventDefault()
+                                    onEnter()
+                                } else if (e.key === "Backspace" && e.currentTarget.value === "") {
+                                    e.preventDefault()
+                                    onBackspaceEmpty()
+                                }
+                            }}
                             onChange={e => dispatch({type: "renameFeatureValue", featureId: feature.id, valueId: value.id, name: e.currentTarget.value})}
                             minWidth={40} spellCheck={false} placeholder="value"
                             className="h-7 md:h-6 rounded bg-transparent px-1 text-feature outline-0 placeholder:text-subtle"/>

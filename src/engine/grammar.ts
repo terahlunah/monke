@@ -27,11 +27,10 @@ export type Rule = {
     rewrites: [Expr, Expr][];
     // Config rule id, so feature errors found on the grammar can point at the input at fault.
     id?: string
-    tags?: Tags
     // Feature names whose value is picked on entering the rule.
     chooses?: string[]
-    // Weight factor applied per earlier expansion of this rule in the word to every alternative that is a `Ref` to it.
-    repeat?: number
+    // Feature names that classify the rule's rows: filters and choices on them act on this rule.
+    classifies?: string[]
 }
 
 export type Expr =
@@ -47,7 +46,7 @@ export type Expr =
 export type WeightedExpr = {
     expr: Expr
     weight: number
-    // `x~F`: the weight is multiplied by F for each earlier pick of this alternative in the word.
+    // `x~F` or a row's repeat factor: the weight is multiplied by F for each earlier pick of this alternative in the word.
     repeat?: number
     // Only on a rule's rows (its top-level choice): the values the row carries and its config id.
     tags?: Tags
@@ -71,7 +70,7 @@ export const makeRange = (expr: Expr, min: number, max: number): Expr => ({
     min: min,
     max: max
 });
-export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][], extra: Pick<Rule, "id" | "tags" | "chooses" | "repeat"> = {}): Rule => ({
+export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][], extra: Pick<Rule, "id" | "chooses" | "classifies"> = {}): Rule => ({
     name: name,
     expr: expr,
     exclusions: exclusions,
@@ -87,7 +86,7 @@ export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = t
     return {rules, ruleMap, root, useWeights, repeatRewrites, features, valueFeature}
 }
 
-const getExprEdges = (e: Expr): string[] => {
+export const getExprEdges = (e: Expr): string[] => {
     switch (e.tag) {
         case "Atom":
         case "Match":

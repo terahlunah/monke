@@ -1,4 +1,4 @@
-import {Config} from "./config.ts";
+import {carriedFeatures, Config} from "./config.ts";
 
 type Obj = Record<string, unknown>
 
@@ -71,7 +71,10 @@ export const parseConfigFile = (text: string): Config => {
             patterns: list(r, "patterns", where).map((p, j) => {
                 const weight = p.weight
                 if (typeof weight !== "number" || !Number.isFinite(weight)) fail(`${where}.patterns[${j}].weight must be a number`)
-                return withIds({id: str(p, "id", where), pattern: str(p, "pattern", where), weight: weight as number}, p, ["values"], where)
+                return withIds({
+                    id: str(p, "id", where), pattern: str(p, "pattern", where), weight: weight as number,
+                    ...p.repeat === undefined ? {} : {repeat: number(p, "repeat", `${where}.patterns[${j}]`)},
+                }, p, ["values"], where)
             }),
             rewrites: list(r, "rewrites", where).map(p => ({
                 id: str(p, "id", where), match: str(p, "match", where), replace: str(p, "replace", where),
@@ -83,11 +86,10 @@ export const parseConfigFile = (text: string): Config => {
             showRewrites: bool(r, "showRewrites", where),
             showExclusions: bool(r, "showExclusions", where),
             collapsed: optional(r, "collapsed", false, bool, where),
-            ...r.repeatWeight === undefined ? {} : {repeatWeight: number(r, "repeatWeight", where)},
-        }, r, ["values", "chooses"], where)
+        }, r, ["chooses", "classifies"], where)
     })
 
-    return {
+    const config: Config = {
         language: optional(data, "language", "", str, "config"),
         root: root as string | null,
         rules,
@@ -102,5 +104,14 @@ export const parseConfigFile = (text: string): Config => {
                 id: str(v, "id", `features[${i}]`), name: str(v, "name", `features[${i}]`), weight: number(v, "weight", `features[${i}]`),
             })),
         })),
+    }
+    // Files from before rules declared their features: such a rule is classified by the features its rows carry.
+    // Rows only carry values of declared features, so this also holds for app-built rules that declare none.
+    return {
+        ...config,
+        rules: config.rules.map(r => {
+            const classifies = r.classifies ?? carriedFeatures(r, config.features)
+            return classifies ? {...r, classifies} : r
+        }),
     }
 }

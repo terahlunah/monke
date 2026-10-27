@@ -15,6 +15,8 @@ export const htmlToMarkdown = (html: string): string => html
     .replace(/<a href="#content"[\s\S]*?<\/a>/, "")
     // Chip cells are separate flex items, so nothing but their markup sits between them: give them a space.
     .replace(/<\/span><span class="[^"]*(?:border-l|border-feature-line)[^"]*">/g, " ")
+    // Rule card headers: name, kind, features and chooses are adjacent spans.
+    .replace(/<\/span><span class="text-\[13px\]/g, '</span> <span class="text-[13px]')
     .replace(/<span class="sr-only">values <\/span>/g, " ")
     .replace(/<span class="sr-only">[^<]*<\/span>/g, "")
     .replace(/<h([1-4])[^>]*>([\s\S]*?)<\/h\1>/g, (_, n, t) => `\n\n${"#".repeat(Number(n))} ${t}\n\n`)
@@ -65,6 +67,23 @@ const pageHtml = (template: string, path: string, meta: string[], body: string) 
     return html
 }
 
+// A separate SSR server that loads the prerender module, as the build does: the app's own dev server runs its SSR
+// environment in the Workers runtime (Cloudflare plugin), which can't render the React pages.
+const prerenderServer = (config: ResolvedConfig) => createServer({
+    configFile: false,
+    root: config.root,
+    // Its own dep cache, so it never overwrites the optimized deps of the dev server running beside it.
+    cacheDir: join(config.cacheDir, "prerender"),
+    logLevel: "error",
+    plugins: [react()],
+    resolve: {alias: config.resolve.alias},
+    server: {middlewareMode: true, hmr: false, ws: false},
+    appType: "custom",
+    optimizeDeps: {noDiscovery: true, include: []},
+})
+
+type Prerender = typeof import("../src/site/prerender.tsx")
+
 // Inlines the analytics sanitizer into index.html, preloads the main font, and after the client build prerenders the
 // static pages from the same React components the app uses, so their text can't drift from the in-app views.
 export const site = (): Plugin => {
@@ -73,6 +92,35 @@ export const site = (): Plugin => {
         name: "monke-site",
         configResolved(c) {
             config = c
+        },
+        // Dev only: renders the static pages on request, so links to them (help tips, footer) work under `npm run dev`.
+        // Each request reloads the module, so edits show on refresh. Production serves the prerendered files instead.
+        configureServer(devServer) {
+            let ssr: ReturnType<typeof prerenderServer> | undefined
+            devServer.httpServer?.once("close", () => void ssr?.then(s => s.close()))
+            devServer.middlewares.use(async (req, res, next) => {
+                const pathname = new URL(req.url ?? "/", "http://localhost").pathname
+                const page = staticPages.find(p => p.path === pathname || p.path === `${pathname}/`)
+                if (!page || req.method !== "GET") return next()
+                if (pathname !== page.path) {
+                    res.writeHead(301, {Location: page.path}).end()
+                    return
+                }
+                try {
+                    ssr ??= prerenderServer(config)
+                    const server = await ssr
+                    for (const mod of server.moduleGraph.idToModuleMap.values()) server.moduleGraph.invalidateModule(mod)
+                    const {renderPages} = await server.ssrLoadModule("/src/site/prerender.tsx") as Prerender
+                    const rendered = (await renderPages()).find(p => p.path === page.path)!
+                    const index = await readFile(join(config.root, "index.html"), "utf8")
+                    // The built template links the bundled CSS; in dev the app imports it from JS, which pages drop.
+                    const template = index.replace("</head>", `<link rel="stylesheet" href="/src/main.css"/>\n</head>`)
+                    const html = await devServer.transformIndexHtml(page.path, pageHtml(template, page.path, pageMeta(rendered), rendered.body))
+                    res.writeHead(200, {"Content-Type": "text/html; charset=utf-8"}).end(html)
+                } catch (e) {
+                    next(e)
+                }
+            })
         },
         transformIndexHtml: {
             // After Vite's own transform, so the build's bundle (and the hashed font name) is available.
@@ -100,18 +148,9 @@ export const site = (): Plugin => {
             const outDir = resolve(config.root, this.environment.config.build.outDir)
             const template = await readFile(join(outDir, "index.html"), "utf8")
 
-            const server = await createServer({
-                configFile: false,
-                root: config.root,
-                logLevel: "error",
-                plugins: [react()],
-                resolve: {alias: config.resolve.alias},
-                server: {middlewareMode: true, hmr: false, ws: false},
-                appType: "custom",
-                optimizeDeps: {noDiscovery: true, include: []},
-            })
+            const server = await prerenderServer(config)
             try {
-                const {renderPages, renderNotFound, renderFeed} = await server.ssrLoadModule("/src/site/prerender.tsx") as typeof import("../src/site/prerender.tsx")
+                const {renderPages, renderNotFound, renderFeed} = await server.ssrLoadModule("/src/site/prerender.tsx") as Prerender
                 const pages = await renderPages()
                 for (const page of pages) {
                     const dir = join(outDir, page.path)
