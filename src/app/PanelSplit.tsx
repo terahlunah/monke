@@ -39,6 +39,10 @@ export const PanelSplitter = ({split, onChange, container}: PanelSplitterProps) 
              onKeyDown={onKeyDown}
              onDoubleClick={() => onChange(DEFAULT_SPLIT)}
              onPointerDown={(e: PointerEvent<HTMLDivElement>) => {
+                 // Without this, a double-click leaves a text selection and the next press starts a selection drag,
+                 // which cancels the pointer capture after the first move. Focus is kept for the keyboard.
+                 e.preventDefault()
+                 e.currentTarget.focus({preventScroll: true})
                  e.currentTarget.setPointerCapture(e.pointerId)
                  setDragging(true)
              }}
@@ -47,7 +51,8 @@ export const PanelSplitter = ({split, onChange, container}: PanelSplitterProps) 
              }}
              onPointerUp={() => setDragging(false)}
              onPointerCancel={() => setDragging(false)}
-             className="group relative w-1 shrink-0 cursor-col-resize touch-none outline-none">
+             onLostPointerCapture={() => setDragging(false)}
+             className="group relative w-1 shrink-0 cursor-col-resize touch-none select-none outline-none">
             {/* A wide invisible hit area over the 1px line, so the handle is easy to grab without taking layout space. */}
             <span aria-hidden="true"
                   className={`absolute inset-y-0 -left-1 w-3 z-10 transition-colors group-hover:bg-primary/40 group-focus-visible:bg-primary/60 ${dragging ? "bg-primary/60" : ""}`}/>
