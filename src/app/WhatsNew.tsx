@@ -25,8 +25,8 @@ export default function WhatsNew({open, onClose}: Props) {
     return (
         <Dialog open={open && mounted} onClose={onClose} className="relative z-50">
             <div className="fixed inset-0 bg-black/60" aria-hidden="true"/>
-            <div className="fixed inset-0 flex justify-end">
-                <DialogPanel className="flex flex-col w-full max-w-lg h-full bg-surface border-l border-line-strong shadow-lg">
+            <div className="fixed inset-0 flex items-center justify-center p-4 md:p-8">
+                <DialogPanel className="flex flex-col w-full max-w-2xl max-h-full rounded-lg bg-surface border border-line-strong shadow-lg overflow-hidden">
                     <div className="flex flex-row items-center justify-between gap-3 pl-5 pr-3 h-14 shrink-0 border-b border-line">
                         <DialogTitle className="font-bold text-xl">What's new</DialogTitle>
                         <button aria-label="Close" onClick={onClose}

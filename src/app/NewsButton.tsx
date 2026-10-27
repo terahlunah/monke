@@ -30,7 +30,7 @@ export const NewsButton = ({className = ""}: { className?: string }) => {
                     }}>
                 <BellIcon className="size-5" aria-hidden="true"/>
                 {unread ? <span aria-hidden="true" data-testid="news-dot"
-                                className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-primary-text ring-2 ring-surface"/> : null}
+                                className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-notify ring-2 ring-surface"/> : null}
             </button>
             {loaded ? <Suspense fallback={null}><WhatsNew open={open} onClose={close}/></Suspense> : null}
         </>

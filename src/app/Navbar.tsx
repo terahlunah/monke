@@ -36,8 +36,8 @@ const DesktopNavbar = ({tab, setTab}: NavbarProps) => {
                 ))}
             </nav>
             <div className="grow"/>
-            <p className="text-muted">Made by Terah</p>
             <NewsButton className="size-9"/>
+            <p className="text-muted">Made by Terah</p>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" className="flex rounded-md hover:text-primary-text"
                aria-label="GitHub repository (opens in a new tab)">
                 <GithubIcon className="size-6"/>

@@ -42,6 +42,8 @@
     --color-feature: #b5d96a;
     --color-feature-dim: #94b356;
     --color-feature-line: #3d4a26;
+    /* Unread-news dot: decorative (the bell's name carries the state), so only the 3:1 non-text ratio applies (5.7:1 on surface). */
+    --color-notify: #ff5c5c;
     --color-danger: #4a2626;
     --color-danger-text: #f2b8b8;
 }
