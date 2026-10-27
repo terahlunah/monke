@@ -14,7 +14,8 @@ export const NewsButton = ({className = ""}: { className?: string }) => {
 
     const close = () => {
         setOpen(false)
-        button.current?.focus()
+        // Headless UI releases its focus trap and inert page after this render, so focusing now would be undone.
+        requestAnimationFrame(() => button.current?.focus())
     }
 
     return (

@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest"
-import {act, render, screen} from "@testing-library/react"
+import {act, render, screen, waitFor} from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {newestRelease, releaseStamp} from "@/site/releases.ts"
 import {NewsButton} from "./NewsButton.tsx"
@@ -74,7 +74,7 @@ describe("news panel", () => {
 
         await user.keyboard("{Escape}")
         expect(dialog).not.toBeInTheDocument()
-        expect(screen.getByRole("button", {name: "What's new"})).toHaveFocus()
+        await waitFor(() => expect(screen.getByRole("button", {name: "What's new"})).toHaveFocus())
     })
 
     it("opens from the keyboard and closes with the Close button", async () => {
@@ -86,6 +86,6 @@ describe("news panel", () => {
         await screen.findByRole("dialog", {name: "What's new"}, {timeout: 5000})
         await user.click(screen.getByRole("button", {name: "Close"}))
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-        expect(screen.getByRole("button", {name: "What's new"})).toHaveFocus()
+        await waitFor(() => expect(screen.getByRole("button", {name: "What's new"})).toHaveFocus())
     })
 })
