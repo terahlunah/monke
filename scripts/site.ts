@@ -13,6 +13,9 @@ const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;
 export const htmlToMarkdown = (html: string): string => html
     .replace(/<(header|footer|nav)[\s\S]*?<\/\1>/g, "")
     .replace(/<a href="#content"[\s\S]*?<\/a>/, "")
+    // Chip cells are separate flex items, so nothing but their markup sits between them: give them a space.
+    .replace(/<\/span><span class="[^"]*(?:border-l|border-feature-line)[^"]*">/g, " ")
+    .replace(/<span class="sr-only">values <\/span>/g, " ")
     .replace(/<span class="sr-only">[^<]*<\/span>/g, "")
     .replace(/<h([1-4])[^>]*>([\s\S]*?)<\/h\1>/g, (_, n, t) => `\n\n${"#".repeat(Number(n))} ${t}\n\n`)
     .replace(/<pre[^>]*><code>([\s\S]*?)<\/code><\/pre>/g, "\n\n```\n$1\n```\n\n")

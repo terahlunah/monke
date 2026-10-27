@@ -15,11 +15,14 @@ type ValuesPopoverProps = {
     // Locates the item, e.g. "terminal 2 of rule Vowel": the button is "Feature values of terminal 2 of rule Vowel".
     label: string
     invalid?: object
+    // Row buttons collapse to zero width while the row has no values, until the row has keyboard focus or the panel is
+    // open. Not display:none, so the button stays in the tab order and the accessibility tree.
+    collapseWhenEmpty?: boolean
 }
 
 // Checkboxes grouped by feature in a popover. Headless UI moves focus into the panel, closes on Escape or Tab out,
 // and returns focus to the button. Each checkbox announces its own state, so no extra live region is needed.
-export const ValuesPopover = ({features, selected, onChange, label, invalid}: ValuesPopoverProps) => {
+export const ValuesPopover = ({features, selected, onChange, label, invalid, collapseWhenEmpty}: ValuesPopoverProps) => {
     const set = new Set(selected ?? [])
     const toggle = (id: string, on: boolean) => {
         const next = new Set(set)
@@ -29,11 +32,15 @@ export const ValuesPopover = ({features, selected, onChange, label, invalid}: Va
         onChange(features.flatMap(f => f.values.map(v => v.id)).filter(v => next.has(v)))
     }
     return (
-        <Popover>
-            <PopoverButton aria-label={`Feature values of ${label}`} {...invalid}
-                           className="flex size-9 md:size-[30px] items-center justify-center rounded-md text-feature-dim hover:bg-white/10">
-                <TagIcon className="size-4" aria-hidden="true"/>
-            </PopoverButton>
+        <Popover className="flex shrink-0">
+            {({open}) => (<>
+            <span className={`flex overflow-hidden transition-[max-width] duration-150 motion-reduce:transition-none ${collapseWhenEmpty && !open ? "max-w-0 group-has-[:focus-visible]/row:max-w-9 md:group-has-[:focus-visible]/row:max-w-[30px]" : ""}`}
+                  data-collapsed={collapseWhenEmpty && !open}>
+                <PopoverButton aria-label={`Feature values of ${label}`} {...invalid}
+                               className="flex size-9 md:size-[30px] shrink-0 items-center justify-center rounded-md text-feature-dim hover:bg-white/10 focus-visible:-outline-offset-2">
+                    <TagIcon className="size-4" aria-hidden="true"/>
+                </PopoverButton>
+            </span>
             <PopoverPanel anchor="bottom end" focus
                           className="z-30 flex min-w-48 max-w-[calc(100vw-2rem)] flex-col gap-2 rounded-lg border border-line-strong bg-surface p-3 text-on-surface shadow-lg [--anchor-gap:4px]">
                 <p className="text-sm text-muted">Values of {label}</p>
@@ -51,6 +58,7 @@ export const ValuesPopover = ({features, selected, onChange, label, invalid}: Va
                     </fieldset>
                 ))}
             </PopoverPanel>
+            </>)}
         </Popover>
     )
 }

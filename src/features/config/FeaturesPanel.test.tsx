@@ -84,8 +84,8 @@ describe("phonological features panel", () => {
         await tag(user, "terminal 3 of rule Vowel", "front")
         await tag(user, "terminal 4 of rule Vowel", "back")
         await tag(user, "terminal 5 of rule Vowel", "back")
-        // Tagged but not chosen yet: an error on the first tagged item.
-        expect(await screen.findAllByText(/carries harmony values, but no enclosing rule chooses harmony/)).not.toHaveLength(0)
+        // Tagged but not chosen yet: a warning, the values have no effect.
+        expect(await screen.findAllByText(/Feature .harmony. is not chosen when rule .Vowel. is used in .Word./)).not.toHaveLength(0)
         expect(screen.getByRole("group", {name: "Features chosen by rule Vowel"})).toBeInTheDocument()
 
         await user.click(screen.getByRole("button", {name: "Choose a feature in rule Word"}))
@@ -104,7 +104,7 @@ describe("phonological features panel", () => {
         }, {timeout: 3000})
 
         await user.click(screen.getByRole("button", {name: "Stop choosing harmony in rule Word"}))
-        expect(await screen.findAllByText(/no enclosing rule chooses harmony/)).not.toHaveLength(0)
+        expect(await screen.findAllByText(/Feature .harmony. is not chosen when rule .Vowel./)).not.toHaveLength(0)
     })
 
     it("returns focus to the values button when the popover closes", async () => {
@@ -116,6 +116,17 @@ describe("phonological features panel", () => {
         await screen.findByRole("checkbox", {name: "front"})
         await user.keyboard("{Escape}")
         await waitFor(() => expect(button).toHaveFocus())
+    })
+
+    it("collapses a row's values button until the row has values, but keeps it in the tab order", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await declareHarmony(user)
+        const name = "Feature values of terminal 1 of rule Vowel"
+        const wrapper = () => screen.getByRole("button", {name}).parentElement!
+        expect(wrapper()).toHaveAttribute("data-collapsed", "true")
+        await tag(user, "terminal 1 of rule Vowel", "front")
+        expect(wrapper()).toHaveAttribute("data-collapsed", "false")
     })
 
     it("warns about a declared feature nothing uses", async () => {

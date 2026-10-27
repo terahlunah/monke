@@ -146,7 +146,7 @@ export const GrammarToolbar = ({config, dispatch, view}: GrammarToolbarProps) =>
                 </Listbox>
             </div>
 
-            <div className="flex flex-wrap gap-2 md:items-center md:gap-3 md:border-l md:border-line-strong md:pl-3">
+            <div className="flex flex-wrap gap-2 md:items-center md:gap-3">
                 <ToggleLabel label="Weights" checked={config.enableWeights} tone="primary" dot
                              onChange={enabled => dispatch({type: "setEnableWeights", enabled})}
                              className="h-[34px] md:h-[30px] px-3"/>

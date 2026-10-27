@@ -146,6 +146,9 @@ export const RuleInstance = ({
                     <h3 className="sr-only">Rule {name}</h3>
                     {/* Identity on the left (handle, disclosure, name, kind), actions on the right with delete set apart at the end. */}
                     <div className={`flex flex-wrap items-center gap-x-2 gap-y-2 px-2.5 py-2 md:gap-x-2.5 md:px-3 ${rule.collapsed ? "" : "border-b border-line"}`}>
+                        {/* Identity shrinks (name) or wraps (feature controls, wide screens) inside its own box, so the actions
+                            stay at the right end of the title line. */}
+                        <div className="flex min-w-0 flex-1 items-center gap-x-2 gap-y-2 md:flex-wrap md:gap-x-2.5">
                         <GripButton label={`Reorder rule ${name}`} handleProps={handleProps}/>
                         <button type="button" onClick={() => dispatch({type: "toggleCollapse", ruleId})}
                                 className="flex size-[30px] items-center justify-center rounded-md text-muted hover:bg-white/10"
@@ -155,17 +158,17 @@ export const RuleInstance = ({
                                 <SquareMinusIcon className="size-5" aria-hidden="true"/>}
                         </button>
                         <AutowidthInput value={name} onChange={onRuleNameInput} aria-label="Rule name" {...invalid}
-                                        minWidth={96}
-                                        className={`h-9 md:h-8 rounded-md border border-line-strong bg-background px-2.5 text-[15px] font-semibold outline-0 ${rule.terminalOnly ? "text-terminal" : "text-pattern"}`}/>
-                        <span className="text-xs md:text-[13px] text-subtle">
+                                        minWidth={desktop ? 96 : 56}
+                                        className={`h-9 md:h-8 min-w-0 shrink rounded-md border border-line-strong bg-background px-2.5 text-[15px] font-semibold outline-0 ${rule.terminalOnly ? "text-terminal" : "text-pattern"}`}/>
+                        <span className="shrink-0 text-xs md:text-[13px] text-subtle">
                             {rule.terminalOnly ? "terminal" : "pattern"}<span className="max-md:hidden"> rule</span>{isRoot ? " · start" : ""}<span className="max-md:hidden">{isRoot ? " rule" : ""}</span>
                         </span>
                         {desktop ? featureControls : null}
                         {inventory ?
                             <span className={`min-w-0 max-w-full truncate text-[13px] text-muted ${valueFont(enableSerif)}`}>{inventory}</span> :
                             null}
-                        <div className="flex-1"/>
-                        {actions}
+                        </div>
+                        <div className="ml-auto flex shrink-0 justify-end">{actions}</div>
                         {/* On small screens the feature controls and toggles drop to a line of their own under the name. */}
                         {desktop || !(toggles || featureControls) ? null : (
                             <div className="flex w-full flex-wrap items-center gap-2">{featureControls}<div className="flex-1"/>{toggles}</div>

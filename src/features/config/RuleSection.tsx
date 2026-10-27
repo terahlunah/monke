@@ -192,7 +192,8 @@ export const RulePatternItem = ({
     const desktop = useMediaQuery("(min-width: 768px)")
     const names = valueNames(features, pattern.values)
     const popover = features.length && onValues ?
-        <ValuesPopover features={features} selected={pattern.values} label={lowerFirst(label)} onChange={onValues}/> : null
+        <ValuesPopover features={features} selected={pattern.values} label={lowerFirst(label)} onChange={onValues}
+                       collapseWhenEmpty={names.length === 0}/> : null
 
     const invalid = useInvalidProps(ruleId, pattern.id)
     const [weightValue, setWeightValue] = useState(pattern.weight.toString())
