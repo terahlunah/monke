@@ -1,4 +1,4 @@
-import {Config, Rule} from "@/engine/config.ts";
+import {Config, Feature, Rule} from "@/engine/config.ts";
 
 // Reference examples live here as data so the reference renders them and referenceExamples.test.ts checks them against the engine.
 
@@ -11,6 +11,11 @@ export type ExampleRule = {
     items: ExampleItem[]
     rewrites?: [match: string, replace: string][]
     exclusions?: string[]
+    // Feature values carried by each item, by position; a missing entry is neutral.
+    itemValues?: (string[] | undefined)[]
+    // Values carried by the whole rule, and features it chooses.
+    values?: string[]
+    chooses?: string[]
 }
 
 export type ReferenceExample = {
@@ -19,32 +24,51 @@ export type ReferenceExample = {
     root: string
     weights?: boolean
     repeatRewrites?: boolean
+    // Declared features: name and values, a value optionally with its weight.
+    features?: [name: string, values: ExampleItem[]][]
     rules: ExampleRule[]
 }
 
 export const itemText = (item: ExampleItem): string => typeof item === "string" ? item : item[0]
 export const itemWeight = (item: ExampleItem): number | null => typeof item === "string" ? null : item[1]
 
-export const exampleToConfig = (example: ReferenceExample, enableSerif = false): Config => ({
-    language: example.title,
-    root: example.root,
-    enableWeights: example.weights ?? false,
-    enableSerif,
-    repeatRewrites: example.repeatRewrites ?? false,
-    seed: "",
-    features: [],
-    rules: example.rules.map((r): Rule => ({
+export const exampleToConfig = (example: ReferenceExample, enableSerif = false): Config => {
+    const features: Feature[] = (example.features ?? []).map(([name, values]) => ({
         id: crypto.randomUUID(),
-        name: r.name,
-        terminalOnly: r.terminal ?? false,
-        patterns: r.items.map(item => ({id: crypto.randomUUID(), pattern: itemText(item), weight: itemWeight(item) ?? 1})),
-        rewrites: (r.rewrites ?? []).map(([match, replace]) => ({id: crypto.randomUUID(), match, replace})),
-        exclusions: (r.exclusions ?? []).map(match => ({id: crypto.randomUUID(), match})),
-        showRewrites: (r.rewrites ?? []).length > 0,
-        showExclusions: (r.exclusions ?? []).length > 0,
-        collapsed: false,
-    })),
-})
+        name,
+        values: values.map(v => ({id: crypto.randomUUID(), name: itemText(v), weight: itemWeight(v) ?? 1})),
+    }))
+    const valueIds = (names: string[] | undefined) => {
+        const ids = (names ?? []).flatMap(n => features.flatMap(f => f.values.filter(v => v.name === n).map(v => v.id)))
+        return ids.length ? ids : undefined
+    }
+    const chooseIds = (names: string[] | undefined) => names?.length ? names.flatMap(n => features.filter(f => f.name === n).map(f => f.id)) : undefined
+    return {
+        language: example.title,
+        root: example.root,
+        enableWeights: example.weights ?? false,
+        enableSerif,
+        repeatRewrites: example.repeatRewrites ?? false,
+        seed: "",
+        features,
+        rules: example.rules.map((r): Rule => ({
+            id: crypto.randomUUID(),
+            name: r.name,
+            terminalOnly: r.terminal ?? false,
+            patterns: r.items.map((item, i) => {
+                const values = valueIds(r.itemValues?.[i])
+                return {id: crypto.randomUUID(), pattern: itemText(item), weight: itemWeight(item) ?? 1, ...values ? {values} : {}}
+            }),
+            rewrites: (r.rewrites ?? []).map(([match, replace]) => ({id: crypto.randomUUID(), match, replace})),
+            exclusions: (r.exclusions ?? []).map(match => ({id: crypto.randomUUID(), match})),
+            showRewrites: (r.rewrites ?? []).length > 0,
+            showExclusions: (r.exclusions ?? []).length > 0,
+            collapsed: false,
+            ...valueIds(r.values) ? {values: valueIds(r.values)} : {},
+            ...chooseIds(r.chooses) ? {chooses: chooseIds(r.chooses)} : {},
+        })),
+    }
+}
 
 const C: ExampleRule = {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "n", "l"]}
 const V: ExampleRule = {name: "V", terminal: true, items: ["a", "e", "i", "o", "u"]}
@@ -151,6 +175,81 @@ export type Recipe = ReferenceExample & { summary: string }
 
 const CJ: ExampleRule = {name: "C", terminal: true, items: ["p", "t", "k", "s", "m", "n", "l", "j", "w"]}
 
+// Phonological features. Vowels and consonants follow the toki pona example; a is neutral for harmony.
+const harmonyVowels: ExampleRule = {
+    name: "Vowel", terminal: true, items: ["a", "e", "i", "o", "u"],
+    itemValues: [undefined, ["front"], ["front"], ["back"], ["back"]],
+}
+const tokiConsonants: ExampleRule = {name: "Consonant", terminal: true, items: ["p", "t", "k", "s", "m", "n", "l", "w", "j"]}
+
+export const harmonyExample: Recipe = {
+    id: "harmony",
+    title: "Vowel harmony",
+    summary: "Word chooses a harmony value once per word, so e and i never meet o and u in the same word. a carries no harmony value, so it goes with both.",
+    root: "Word",
+    features: [["harmony", ["front", "back"]]],
+    rules: [
+        harmonyVowels,
+        tokiConsonants,
+        {name: "Syllable", items: ["Consonant.Vowel.('n')"]},
+        {name: "Word", items: ["(Consonant).Vowel.('n').Syllable{:2}"], chooses: ["harmony"]},
+    ],
+}
+
+export const twoFeaturesExample: ReferenceExample = {
+    id: "two-features",
+    title: "Harmony and rounding",
+    root: "Word",
+    weights: true,
+    features: [["harmony", ["front", "back"]], ["rounding", ["round", ["flat", 2]]]],
+    rules: [
+        {
+            name: "Vowel", terminal: true, items: ["a", "e", "i", "o", "u", "y"],
+            itemValues: [["flat"], ["front", "flat"], ["front", "flat"], ["back", "round"], ["back", "round"], ["front", "round"]],
+        },
+        tokiConsonants,
+        {name: "Word", items: ["[Consonant.Vowel]{2:3}"], chooses: ["harmony", "rounding"]},
+    ],
+}
+
+export const branchingExample: ReferenceExample = {
+    id: "word-class",
+    title: "Nouns and verbs",
+    root: "Word",
+    weights: true,
+    features: [["class", [["noun", 2], ["verb", 1]]]],
+    rules: [
+        tokiConsonants,
+        {name: "Vowel", terminal: true, items: ["a", "e", "i", "o", "u"]},
+        {name: "Stem", items: ["Consonant.Vowel.Consonant.Vowel"]},
+        {name: "Ending", items: ["'n'", "'la'", "''"], itemValues: [["noun"], ["verb"]]},
+        {name: "Word", items: ["Stem.Ending"], chooses: ["class"]},
+    ],
+}
+
+export const filterExample: ReferenceExample = {
+    id: "filter-only",
+    title: "Filters without a choice",
+    root: "Word",
+    features: [["harmony", ["front", "back"]]],
+    rules: [
+        harmonyVowels,
+        tokiConsonants,
+        {name: "Word", items: ["Consonant.Vowel<!front>.Consonant.Vowel<!back>"]},
+    ],
+}
+
+export const featureExamples = [harmonyExample, twoFeaturesExample, branchingExample, filterExample]
+
+export type FeatureErrorDemo = { pattern: string, chooses: boolean, message: string }
+
+// The Word pattern of harmonyExample, with or without its choice of harmony, and the error each gives.
+export const featureErrorDemos: FeatureErrorDemo[] = [
+    {pattern: "Consonant.Vowel", chooses: false, message: "This item carries harmony values, but no enclosing rule chooses harmony"},
+    {pattern: "Consonant.Vowel<front>", chooses: true, message: "No alternative of rule 'Vowel' can be used when harmony is back through <front>"},
+    {pattern: "Consonant.Vowel<frnt>", chooses: true, message: "Unknown feature value 'frnt' in the filter on 'Vowel'"},
+]
+
 export const recipes: Recipe[] = [
     {
         id: "syllables",
@@ -227,6 +326,7 @@ export const recipes: Recipe[] = [
             {name: "Word", items: ["V.V.'t'.Pair"]},
         ],
     },
+    harmonyExample,
 ]
 
 // How the Awkwords importer translates a filter whose fragment has outputs containing the filter text.
@@ -273,4 +373,4 @@ export const errorHintDemos: ErrorHintDemo[] = [
 export const awkwordsExample = recipes.find(r => r.id === "awkwords")!
 
 // Every example offering a Try it link, so their share URLs are encoded together once.
-export const allExamples = [firstGrammar, ...recipes]
+export const allExamples = [firstGrammar, ...recipes, twoFeaturesExample, branchingExample, filterExample]

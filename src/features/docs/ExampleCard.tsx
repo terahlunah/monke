@@ -29,6 +29,10 @@ const RuleCard = ({rule, weights}: { rule: ExampleRule, weights: boolean }) => {
                 <span className="sr-only">Rule</span>
                 <span className={`text-[15px] font-semibold [overflow-wrap:anywhere] ${rule.terminal ? "text-terminal" : "text-pattern"}`}>{rule.name}</span>
                 <span className="text-[13px] text-subtle">{rule.terminal ? "terminal rule" : "pattern rule"}</span>
+                {rule.values?.length ? <span className="font-mono text-[13px] text-feature"><span className="sr-only">values </span>[{rule.values.join(", ")}]</span> : null}
+                {rule.chooses?.length ? (
+                    <span className="text-[13px] text-muted">chooses <span className="font-mono text-feature">{rule.chooses.join(", ")}</span></span>
+                ) : null}
             </div>
             <SectionTitle tone="text-muted" count={rule.items.length}>{patternsLabel}</SectionTitle>
             <ul aria-label={`${patternsLabel} of rule ${rule.name}`} className={chipList}>
@@ -39,6 +43,8 @@ const RuleCard = ({rule, weights}: { rule: ExampleRule, weights: boolean }) => {
                             <Cell>{itemText(item)}</Cell>
                             {weight !== null ?
                                 <Cell className="border-l border-line-strong text-muted"><span className="sr-only">weight </span>{weight}</Cell> : null}
+                            {rule.itemValues?.[i]?.length ?
+                                <Cell className="border-l border-line-strong text-feature"><span className="sr-only">values </span>[{rule.itemValues[i]!.join(", ")}]</Cell> : null}
                         </Chip>
                     )
                 })}
@@ -98,6 +104,20 @@ export const ExampleCard = ({example, summary, hrefs}: {
                 Start rule <code className="font-mono rounded-md bg-white/10 px-1.5 py-0.5">{example.root}</code>
                 {example.weights ? ", weights enabled" : null}
             </p>
+            {example.features?.length ? (
+                <ul aria-label={`Features of ${example.title}`} className="flex flex-col gap-1.5">
+                    {example.features.map(([name, values]) => (
+                        <li key={name} className="flex flex-wrap items-center gap-1.5 font-mono text-[13px]">
+                            <span className="mr-1 font-medium">{name}</span>
+                            {values.map(v => (
+                                <span key={itemText(v)} className="inline-flex h-7 items-center gap-1.5 rounded-md border border-feature-line px-2 text-feature">
+                                    {itemText(v)}{example.weights ? <span className="text-feature-dim"><span className="sr-only">weight </span><span aria-hidden="true">×</span>{itemWeight(v) ?? 1}</span> : null}
+                                </span>
+                            ))}
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
             <ul aria-label={`Rules of ${example.title}`} className="flex flex-col gap-2">
                 {example.rules.map(r => <RuleCard key={r.name} rule={r} weights={example.weights ?? false}/>)}
             </ul>

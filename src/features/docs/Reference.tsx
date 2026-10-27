@@ -13,6 +13,11 @@ import {
     exclusionDemos,
     itemText,
     errorHintDemos,
+    branchingExample,
+    featureErrorDemos,
+    filterExample,
+    harmonyExample,
+    twoFeaturesExample,
     listAllDemo,
     seedDemo,
     recipes,
@@ -29,6 +34,7 @@ const sections = [
     {id: "reference-rewrites", title: "Rewrites"},
     {id: "reference-exclusions", title: "Exclusions"},
     {id: "reference-boundaries", title: "Word boundaries"},
+    {id: "reference-features", title: "Phonological features"},
     {id: "reference-output", title: "Generating, sharing and undo"},
     {id: "reference-reordering", title: "Reordering and keyboard"},
     {id: "reference-recipes", title: "Recipes"},
@@ -320,6 +326,97 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
                                  summary={recipes.find(r => r.id === "edges")!.summary}/>
                 </Section>
 
+                <Section id="reference-features">
+                    <p>Features keep sounds consistent across a word, like vowel harmony: once a word picks front
+                        vowels, every vowel in it is front. A feature has a name and a few values, such as{" "}
+                        <Code>harmony</Code> with <Code>front</Code> and <Code>back</Code>. Items carry values, and a
+                        rule <b>chooses</b> a feature to keep one value for everything it produces.</p>
+
+                    <Sub>Declaring features</Sub>
+                    <p>Use <b>+ Feature</b> in the <b>Phonological features</b> panel above the rules, name it, and add
+                        its values with <b>+ value</b>. Feature and value names follow the rules for rule names: letters,
+                        digits and underscores, not starting with a digit. A value name can be used only once in the
+                        grammar, even across features, so a value on its own says which feature it belongs to. With{" "}
+                        <b>Weights</b> on, each value has a weight that sets how often a rule chooses it; with weights off,
+                        values are chosen equally often, like everything else.</p>
+                    <p>Deleting a feature or a value also removes it from every item and rule that carried it. Browser
+                        Back undoes it. Filters written in patterns are text, so renaming or deleting does not change
+                        them.</p>
+
+                    <Sub>Giving values to items</Sub>
+                    <p>Each terminal and pattern row has a <b>Feature values</b> button, a tag icon, that opens a list of
+                        every value to check. The row then shows its values in brackets, like <Code>[front]</Code>. The
+                        same button in a rule&apos;s header gives values to the whole rule, as if every row in it carried
+                        them. A rule used directly as an alternative of a choice counts as an alternative carrying its
+                        values.</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        <li>An item with no value for a feature is <b>neutral</b>: it goes with any value of that
+                            feature. In vowel harmony, a vowel like a that belongs to neither side stays neutral.</li>
+                        <li>An item can carry values of several features, such as <Code>[front, flat]</Code>.</li>
+                        <li>An item can carry several values of one feature; it then goes with each of them.</li>
+                    </ul>
+
+                    <Sub>Choosing a value</Sub>
+                    <p>In a rule&apos;s header, <b>Choose</b> adds a feature the rule chooses. Each time the rule is used,
+                        it picks one value of each feature it chooses, before generating anything. In everything below
+                        it, its rows and every rule it uses, alternatives that carry another value of that feature are
+                        removed. Neutral alternatives stay, and the weights of what is left are shared out as usual.</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        <li>Choose on the start rule to keep a whole word consistent, or on a <Code>Syllable</Code> rule
+                            to choose again in each syllable.</li>
+                        <li>A rule below may choose the same feature again: its own value applies to everything under it
+                            instead.</li>
+                        <li>Each rule picks its values when it starts, so the order of the parts of a pattern does not
+                            matter.</li>
+                        <li>Rewrites and exclusions work as before on the rule&apos;s output. Rule names in a rewrite
+                            replacement are generated with the rule&apos;s chosen values. When an exclusion rejects an
+                            output, the rule chooses again.</li>
+                        <li>An item that carries values is an error if a rule uses it while no enclosing rule chooses
+                            that feature and no filter selects on it there, because its values would be ignored.</li>
+                    </ul>
+                    <ExampleCard hrefs={hrefs} example={harmonyExample} summary={harmonyExample.summary}/>
+
+                    <Sub>Several features</Sub>
+                    <p>A rule can choose several features, and items can carry values of each. Here a word is front or
+                        back and round or flat; y is front and round, and flat words are twice as likely.</p>
+                    <ExampleCard hrefs={hrefs} example={twoFeaturesExample}/>
+
+                    <Sub>Branching on a choice</Sub>
+                    <p>Values on pattern rows pick between whole structures. Word chooses a class, noun twice as often
+                        as verb; nouns end in n or nothing, verbs in la or nothing.</p>
+                    <ExampleCard hrefs={hrefs} example={branchingExample}/>
+
+                    <Sub>Filters</Sub>
+                    <p>A filter after a rule name keeps only some of that rule&apos;s alternatives, with or without a
+                        choice:</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        <li><Code>{"Vowel<front>"}</Code> keeps the alternatives that carry front. Neutral ones are
+                            left out.</li>
+                        <li><Code>{"Vowel<!back>"}</Code> keeps those that do not carry back, neutral ones included.</li>
+                        <li>Commas combine filters, all of which must hold: <Code>{"Vowel<front, !round>"}</Code>.</li>
+                        <li>Filters work in patterns, rewrite matches and exclusions. In a rule that chooses, they apply
+                            on top of the chosen value.</li>
+                        <li>A filter only looks at the rule&apos;s own alternatives. Values carried deeper, in rules
+                            those alternatives use, still need a rule that chooses.</li>
+                    </ul>
+                    <ExampleCard hrefs={hrefs} example={filterExample}/>
+
+                    <Sub>Errors and warnings</Sub>
+                    <p>Problems are found before generating and shown under the input at fault. With the vowel harmony
+                        grammar above, these Word patterns give:</p>
+                    <ul className="list-disc pl-6 flex flex-col gap-2">
+                        {featureErrorDemos.map(d => (
+                            <li key={d.pattern}><Code>{d.pattern}</Code>{d.chooses ? "" : ", without choosing harmony"}: <b>{d.message}</b></li>
+                        ))}
+                    </ul>
+                    <p>Invalid or duplicate feature and value names are errors too. A feature that nothing uses, and a
+                        rule that chooses a feature nothing below it carries, are only warnings, listed under the word
+                        count.</p>
+                    <p>Generate all lists the words for every value each choice can take. The number of possible
+                        branches counts each chosen value separately, so a word made only of neutral items is counted
+                        once per value.</p>
+                </Section>
+
                 <Section id="reference-output">
                     <Sub>Generator options</Sub>
                     <ul className="list-disc pl-6 flex flex-col gap-2">
@@ -412,7 +509,7 @@ export const ReferenceContent = ({hrefs}: { hrefs: Record<string, string> }) => 
 
                 <Section id="reference-recipes">
                     <p>Each recipe is a complete grammar. <b>Try it</b> opens it in a new tab, so your current grammar is untouched.</p>
-                    {recipes.filter(r => !["weighted", "awkwords", "edges"].includes(r.id)).map(r =>
+                    {recipes.filter(r => !["weighted", "awkwords", "edges", "harmony"].includes(r.id)).map(r =>
                         <ExampleCard hrefs={hrefs} key={r.id} example={r} summary={r.summary}/>)}
                 </Section>
 

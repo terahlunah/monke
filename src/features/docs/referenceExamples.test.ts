@@ -7,7 +7,7 @@ import {mulberry32} from "@/engine/test-helpers.ts"
 import {importAwkwords} from "@/engine/awkwords.ts"
 import {enumerate} from "@/engine/enumerate.ts"
 import {seededRng} from "@/engine/seed.ts"
-import {awkwordsImportDemo, exampleToConfig,ExampleRule, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
+import {awkwordsImportDemo, branchingExample, exampleToConfig, ExampleRule, featureErrorDemos, filterExample, harmonyExample, twoFeaturesExample, errorHintDemos, exclusionDemos, firstGrammar, listAllDemo, seedDemo, ReferenceExample, recipes, rewriteDemos, syntaxRows} from "./referenceExamples.ts"
 
 const grammarOf = (example: ReferenceExample) => {
     const grammar = configToGrammar(exampleToConfig(example))
@@ -126,5 +126,46 @@ describe("error hint demos", () => {
     it.each(errorHintDemos)("$pattern reports $message", ({pattern, message}) => {
         const rules = firstGrammar.rules.map(r => r.name === "Word" ? {...r, items: [pattern]} : r)
         expect(() => grammarOf({...firstGrammar, rules})).toThrow(message)
+    })
+})
+
+describe("phonological feature examples", () => {
+    const mixes = (w: string) => /[ei]/.test(w) && /[ou]/.test(w)
+
+    it("vowel harmony never mixes front and back vowels, and a goes with both", () => {
+        const ws = sample(harmonyExample, 1000)
+        expect(ws.filter(mixes)).toEqual([])
+        expect(ws.some(w => /a/.test(w) && /[ei]/.test(w))).toBe(true)
+        expect(ws.some(w => /a/.test(w) && /[ou]/.test(w))).toBe(true)
+    })
+
+    it("harmony and rounding: y only with front round vowels, a only with flat ones", () => {
+        const vowelsOf = (w: string) => w.replace(/[^aeiouy]/g, "")
+        for (const w of sample(twoFeaturesExample, 1000).map(vowelsOf)) {
+            expect(w).toMatch(/^([aei]+|[y]+|[a]+|[ou]+)$/)
+        }
+    })
+
+    it("nouns end in n or nothing, verbs in la or nothing, nouns twice as often", () => {
+        const ws = sample(branchingExample, 3000)
+        for (const w of ws) expect(w).toMatch(/^([ptksmnlwj][aeiou]){2}(n|la)?$/)
+        const nouns = ws.filter(w => w.endsWith("n") && !w.endsWith("la")).length
+        const verbs = ws.filter(w => w.endsWith("la")).length
+        expect(nouns / verbs).toBeGreaterThan(1.5)
+    })
+
+    it("filters alone keep front vowels out of the first syllable and back ones out of the last", () => {
+        const ws = sample(filterExample, 500)
+        for (const w of ws) expect(w).toMatch(/^[ptksmnlwj][aou][ptksmnlwj][aei]$/)
+        expect(new Set(ws.map(w => w[1]))).toEqual(new Set("aou"))
+    })
+
+    it("vowel harmony is offered in the Examples menu as a recipe", () => {
+        expect(recipes).toContain(harmonyExample)
+    })
+
+    it.each(featureErrorDemos)("$pattern reports $message", ({pattern, chooses, message}) => {
+        const rules = harmonyExample.rules.map(r => r.name === "Word" ? {...r, items: [pattern], chooses: chooses ? ["harmony"] : undefined} : r)
+        expect(() => grammarOf({...harmonyExample, rules})).toThrow(message)
     })
 })

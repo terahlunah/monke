@@ -2,11 +2,11 @@
 
 > Free, client-only, grammar-based random word generator for conlang (constructed language) creators. Runs entirely in the browser; grammars are shared via URL and never stored on a server.
 
-Monke builds words from named rules: terminal rules list sounds, pattern rules combine them with a small syntax (quoted text, rule references, `.` sequence, `/` choice, `*N` weights, `(x)` optionals, `[x]` groups, `{min:max}` repetition). Rewrites with back-references model sound changes; exclusions reject unwanted outputs. It imports Awkwords patterns.
+Monke builds words from named rules: terminal rules list sounds, pattern rules combine them with a small syntax (quoted text, rule references, `.` sequence, `/` choice, `*N` weights, `(x)` optionals, `[x]` groups, `{min:max}` repetition). Rewrites with back-references model sound changes; exclusions reject unwanted outputs. Phonological features (e.g. `harmony: front | back`) tag sounds and patterns; a rule that chooses a feature keeps one value for its whole subtree (vowel harmony, word classes), and filters like `Vowel<front>` or `Vowel<!back>` select tagged alternatives. It imports Awkwords patterns.
 
 ## Docs
 
-- [Reference](https://monke.lunah.dev/reference/): pattern syntax, weights, rewrites, back-references, exclusions, word boundaries, seeds, sharing, and recipes
+- [Reference](https://monke.lunah.dev/reference/): pattern syntax, weights, rewrites, back-references, exclusions, word boundaries, phonological features and filters, seeds, sharing, and recipes
 - [FAQ](https://monke.lunah.dev/faq/): what Monke is, where grammars are saved, feedback
 - [Coming from Awkwords](https://monke.lunah.dev/awkwords-alternative/): importing Awkwords patterns and the syntax mapping
 - [Full text](https://monke.lunah.dev/llms-full.txt): all of the above in one file

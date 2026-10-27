@@ -19,6 +19,12 @@ export const faqItems: { question: string, answer: ReactNode }[] = [
         answer: <>Absolutely, for anything you like.</>,
     },
     {
+        question: "Can it do vowel harmony?",
+        answer: <>Yes. Declare a feature such as harmony with the values front and back, give the vowels their values, and let
+            the start rule choose harmony: every word then keeps to one side, while vowels without a value go with both. The
+            Reference's Phonological features section has the details and a vowel harmony example, also in the Examples menu.</>,
+    },
+    {
         question: "Where is my grammar saved?",
         answer: <>Only in the page address and in the files you export. Nothing is sent to a server, so keep the link or an
             exported file to come back to your work.</>,
