@@ -52,9 +52,8 @@
         }
     </script>
 
-    <!-- Analytics. The URL path holds the whole grammar, so neither service may see it: GA gets a sanitized address
-         and no automatic page view, and the Cloudflare beacon (which can't be given another address) only loads on
-         the static pages. analyticsPageUrl is inlined by the build from src/site/pages.ts. -->
+    <!-- Analytics. The URL path holds the whole grammar, so GA, a third party, gets a sanitized address and no
+         automatic page view. analyticsPageUrl is inlined by the build from src/site/pages.ts. -->
     <script>
         (function () {
             var pageUrl = __ANALYTICS_PAGE_URL__;
@@ -86,16 +85,13 @@
             ga.src = "https://www.googletagmanager.com/gtag/js?id=G-E30C8XJMHD";
             document.head.appendChild(ga);
 
-            // The beacon reads the live address when it reports, and the app rewrites its address on every edit, so it
-            // only runs on the static pages, whose address never changes.
-            if (page !== location.origin + "/shared" && page !== location.origin + "/") {
-                var cf = document.createElement("script");
-                cf.defer = true;
-                cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
-                // spa: false, so edits (which rewrite the path) are never reported as navigations.
-                cf.setAttribute("data-cf-beacon", '{"token": "48c822a97803490ca08d33ae208157b7", "spa": false}');
-                document.head.appendChild(cf);
-            }
+            // The beacon reports the live address, grammar included. Cloudflare already serves every request, so it
+            // learns nothing new; spa: false keeps each edit (which rewrites the path) from counting as a navigation.
+            var cf = document.createElement("script");
+            cf.defer = true;
+            cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
+            cf.setAttribute("data-cf-beacon", '{"token": "48c822a97803490ca08d33ae208157b7", "spa": false}');
+            document.head.appendChild(cf);
         })();
     </script>
 </head>
