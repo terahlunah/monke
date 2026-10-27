@@ -1,5 +1,6 @@
 import {
     Expr,
+    Filter,
     makeAtom,
     makeBoundary,
     makeMatch,
@@ -98,7 +99,28 @@ export class Parser {
             this.error("Expected a reference name");
         }
 
-        return makeRef(refName);
+        return makeRef(refName, this.peek() === "<" ? this.parseFilters() : []);
+    }
+
+    // `<front, !round>`: feature values the referenced rule's alternatives must (or, with `!`, must not) carry.
+    private parseFilters(): Filter[] {
+        this.consume("<")
+        const filters: Filter[] = []
+        do {
+            const negate = this.consume("!")
+            let value = ""
+            if (this.isRefCharacter(this.peek(), true)) {
+                while (this.isRefCharacter(this.peek())) {
+                    value += this.peek()
+                    this.advancePosition(false)
+                }
+            }
+            this.skipWhiteSpace()
+            if (value === "") this.error("Expected a feature value name in `<...>`")
+            filters.push({value, negate})
+        } while (this.consume(","))
+        if (!this.consume(">")) this.error("Expected `,` or `>` to end the feature filter")
+        return filters
     }
 
     private parseMatch(): Expr {

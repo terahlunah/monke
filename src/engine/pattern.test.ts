@@ -37,6 +37,25 @@ describe("pattern syntax", () => {
         expect(parse("Vowel_2")).toEqual(makeRef("Vowel_2"))
     })
 
+    it("parses feature filters on references", () => {
+        expect(parse("V<front>")).toEqual(makeRef("V", [{value: "front", negate: false}]))
+        expect(parse("V < front , !round >.C")).toEqual(makeSeq([
+            makeRef("V", [{value: "front", negate: false}, {value: "round", negate: true}]),
+            makeRef("C"),
+        ]))
+        expect(parse("[V<!back>]{2}")).toEqual(makeRange(makeRef("V", [{value: "back", negate: true}]), 2, 2))
+    })
+
+    it.each([
+        ["V<>", /Expected a feature value name/],
+        ["V<front", /Expected `,` or `>`/],
+        ["V<front,>", /Expected a feature value name/],
+        ["V<!>", /Expected a feature value name/],
+        ["V<1a>", /Expected a feature value name/],
+    ])("rejects the malformed filter %s", (src, message) => {
+        expect(() => parse(src)).toThrow(message)
+    })
+
     it("parses sequences, ignoring whitespace between terms", () => {
         expect(parse("A . 'x' .B")).toEqual(makeSeq([makeRef("A"), makeAtom("x"), makeRef("B")]))
     })

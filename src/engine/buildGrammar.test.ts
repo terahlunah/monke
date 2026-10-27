@@ -14,7 +14,7 @@ describe("configToGrammar", () => {
         const g = configToGrammar(makeConfig("T", [
             makeRule("T", ["a.b", "(x)"], {terminalOnly: true}),
         ]))!
-        expect(g.rules[0].expr).toEqual(choice([makeAtom("a.b"), makeAtom("(x)")]))
+        expect(g.rules[0].expr).toMatchObject(choice([makeAtom("a.b"), makeAtom("(x)")]))
     })
 
     it("carries pattern weights and the weights flag", () => {
@@ -22,7 +22,7 @@ describe("configToGrammar", () => {
         rule.patterns[0].weight = 4
         const g = configToGrammar(makeConfig("R", [rule], {enableWeights: true}))!
         expect(g.useWeights).toBe(true)
-        expect(g.rules[0].expr).toEqual(makeWeightedChoice([makeWeighted(makeAtom("a"), 4)]))
+        expect(g.rules[0].expr).toMatchObject(makeWeightedChoice([makeWeighted(makeAtom("a"), 4)]))
     })
 
     it("ignores exclusions and rewrites that are hidden", () => {
@@ -153,7 +153,7 @@ describe("configToGrammar", () => {
 
     it("treats ^ and $ in terminal rules as plain text", () => {
         const g = configToGrammar(makeConfig("T", [makeRule("T", ["^", "$"], {terminalOnly: true})]))!
-        expect(g.rules[0].expr).toEqual(choice([makeAtom("^"), makeAtom("$")]))
+        expect(g.rules[0].expr).toMatchObject(choice([makeAtom("^"), makeAtom("$")]))
     })
 
     it("rejects non-terminal rules without patterns, naming the rule", () => {

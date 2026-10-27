@@ -4,18 +4,37 @@ export type Grammar = {
     root: string;
     useWeights: boolean
     repeatRewrites: boolean
+    features: GrammarFeature[]
+    // Feature name of each value name; value names are unique across the grammar so filters name them alone.
+    valueFeature: Map<string, string>
 }
+
+export type GrammarFeature = {
+    name: string
+    values: { name: string, weight: number }[]
+}
+
+// Feature name -> the values an item carries for it. A feature missing from the map is neutral for that item.
+export type Tags = ReadonlyMap<string, ReadonlySet<string>>
+
+// `Ref<front>` keeps alternatives that carry front, `Ref<!front>` those that do not.
+export type Filter = { value: string, negate: boolean }
 
 export type Rule = {
     name: string;
     expr: Expr;
     exclusions: Expr[];
     rewrites: [Expr, Expr][];
+    // Config rule id, so feature errors found on the grammar can point at the input at fault.
+    id?: string
+    tags?: Tags
+    // Feature names whose value is picked on entering the rule.
+    chooses?: string[]
 }
 
 export type Expr =
     | { tag: 'Atom', value: string }
-    | { tag: 'Ref', rule: string }
+    | { tag: 'Ref', rule: string, filters?: Filter[] }
     | { tag: 'Match', index: number }
     | { tag: 'Seq', items: Expr[] }
     | { tag: 'Choice', items: WeightedExpr[] }
@@ -26,12 +45,15 @@ export type Expr =
 export type WeightedExpr = {
     expr: Expr
     weight: number
+    // Only on a rule's rows (its top-level choice): the values the row carries and its config id.
+    tags?: Tags
+    id?: string
 }
 
 // Utility functions
 
 export const makeAtom = (value: string): Expr => ({tag: "Atom", value});
-export const makeRef = (rule: string): Expr => ({tag: "Ref", rule});
+export const makeRef = (rule: string, filters: Filter[] = []): Expr => filters.length ? {tag: "Ref", rule, filters} : {tag: "Ref", rule};
 export const makeMatch = (index: number): Expr => ({tag: "Match", index});
 export const makeBoundary = (edge: 'start' | 'end'): Expr => ({tag: "Boundary", edge});
 export const makeSeq =(items: Expr[]): Expr => ({tag: "Seq", items});
@@ -45,18 +67,20 @@ export const makeRange = (expr: Expr, min: number, max: number): Expr => ({
     min: min,
     max: max
 });
-export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][]): Rule => ({
+export const makeRule = (name: string, expr: Expr, exclusions: Expr[], rewrites: [Expr, Expr][], extra: Pick<Rule, "id" | "tags" | "chooses"> = {}): Rule => ({
     name: name,
     expr: expr,
     exclusions: exclusions,
-    rewrites: rewrites
+    rewrites: rewrites,
+    ...extra,
 })
-export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = true, repeatRewrites: boolean = false): Grammar => {
+export const makeGrammar = (root: string, rules: Rule[], useWeights: boolean = true, repeatRewrites: boolean = false, features: GrammarFeature[] = []): Grammar => {
     const ruleMap = new Map<string, Rule>()
     for (const r of rules) {
         if (!ruleMap.has(r.name)) ruleMap.set(r.name, r)
     }
-    return {rules, ruleMap, root, useWeights, repeatRewrites}
+    const valueFeature = new Map(features.flatMap(f => f.values.map(v => [v.name, f.name] as const)))
+    return {rules, ruleMap, root, useWeights, repeatRewrites, features, valueFeature}
 }
 
 const getExprEdges = (e: Expr): string[] => {
