@@ -1,6 +1,7 @@
 import {useEffect, useId, useRef, useState} from "react";
 import {MenuIcon} from "lucide-react";
 import {GithubIcon} from "@/components/GithubIcon.tsx";
+import {NewsButton} from "./NewsButton.tsx";
 import {useMediaQuery} from "./useMediaQuery.ts";
 import {Tab, tabs} from "./tabs.ts";
 
@@ -36,6 +37,7 @@ const DesktopNavbar = ({tab, setTab}: NavbarProps) => {
             </nav>
             <div className="grow"/>
             <p className="text-muted">Made by Terah</p>
+            <NewsButton className="size-9"/>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer noopener" className="flex rounded-md hover:text-primary-text"
                aria-label="GitHub repository (opens in a new tab)">
                 <GithubIcon className="size-6"/>
@@ -74,39 +76,42 @@ const MobileNavbar = ({tab, setTab}: NavbarProps) => {
         <header className="flex flex-row items-center justify-between gap-3 px-4 h-[52px] shrink-0 border-b border-line bg-surface">
             <h1 className="text-lg font-bold">Monke</h1>
 
-            <nav ref={nav} aria-label="Main" className="relative"
-                 // Closes when focus leaves the menu, so a keyboard user tabbing past it doesn't leave it open.
-                 onBlur={e => {
-                     if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false)
-                 }}>
-                <button ref={toggle} aria-label="Menu" aria-expanded={open} aria-controls={panelId} className="flex size-11 items-center justify-center rounded-md -mr-2.5 hover:bg-white/5"
-                        onClick={() => setOpen(!open)}>
-                    <MenuIcon className="size-6"/>
-                </button>
-                {open ? (
-                    <ul id={panelId}
-                        className="z-20 absolute right-0 top-12 flex flex-col shadow-lg border border-line-strong bg-surface rounded-lg overflow-hidden divide-y divide-line min-w-40">
-                        <li className="flex flex-col">
-                            <ul className="flex flex-col gap-4 p-4">
-                                {tabs.map(t => (
-                                    <li key={t.id} className="flex flex-col">
-                                        <button className={tabStyle(t.id)} aria-current={t.id === tab ? "page" : undefined}
-                                                onClick={() => {
-                                                    setOpen(false)
-                                                    setTab(t.id)
-                                                }}>{t.label}</button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </li>
-                        <li className="flex flex-col p-4">
-                            <a className="text-left" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
-                                GitHub<span className="sr-only"> (opens in a new tab)</span>
-                            </a>
-                        </li>
-                    </ul>
-                ) : null}
-            </nav>
+            <div className="flex flex-row items-center">
+            <NewsButton className="size-11"/>
+                <nav ref={nav} aria-label="Main" className="relative"
+                     // Closes when focus leaves the menu, so a keyboard user tabbing past it doesn't leave it open.
+                     onBlur={e => {
+                         if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false)
+                     }}>
+                    <button ref={toggle} aria-label="Menu" aria-expanded={open} aria-controls={panelId} className="flex size-11 items-center justify-center rounded-md -mr-2.5 hover:bg-white/5"
+                            onClick={() => setOpen(!open)}>
+                        <MenuIcon className="size-6"/>
+                    </button>
+                    {open ? (
+                        <ul id={panelId}
+                            className="z-20 absolute right-0 top-12 flex flex-col shadow-lg border border-line-strong bg-surface rounded-lg overflow-hidden divide-y divide-line min-w-40">
+                            <li className="flex flex-col">
+                                <ul className="flex flex-col gap-4 p-4">
+                                    {tabs.map(t => (
+                                        <li key={t.id} className="flex flex-col">
+                                            <button className={tabStyle(t.id)} aria-current={t.id === tab ? "page" : undefined}
+                                                    onClick={() => {
+                                                        setOpen(false)
+                                                        setTab(t.id)
+                                                    }}>{t.label}</button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </li>
+                            <li className="flex flex-col p-4">
+                                <a className="text-left" href={GITHUB_URL} target="_blank" rel="noreferrer noopener">
+                                    GitHub<span className="sr-only"> (opens in a new tab)</span>
+                                </a>
+                            </li>
+                        </ul>
+                    ) : null}
+                </nav>
+            </div>
         </header>
     )
 }

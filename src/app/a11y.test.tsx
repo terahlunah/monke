@@ -133,4 +133,12 @@ describe("accessibility (axe)", () => {
         await screen.findByRole("menuitem", {name: "harmony"})
         await check(document.body, {landmarks: false})
     })
+
+    it("what's new panel open", async () => {
+        const user = userEvent.setup()
+        await renderApp()
+        await user.click(screen.getByRole("button", {name: /^What's new/}))
+        await screen.findByRole("dialog", {name: "What's new"})
+        await check(document.body, {landmarks: false})
+    })
 })
