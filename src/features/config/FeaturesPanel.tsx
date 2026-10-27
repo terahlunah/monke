@@ -27,7 +27,6 @@ export const FeaturesPanel = ({features, dispatch, enableWeights}: FeaturesPanel
                     {open ? <SquareMinusIcon className="size-5" aria-hidden="true"/> : <SquarePlusIcon className="size-5" aria-hidden="true"/>}
                 </button>
                 <h3 id="features-heading" className="text-[15px] font-semibold">Phonological features</h3>
-                <span className="text-[13px] text-subtle">{features.length || "none"}</span>
                 <HelpTip label="About phonological features" section="reference-features">
                     Features keep sounds consistent across a word, like vowel harmony. Declare a feature with values, add it
                     to the rules it tags with Tags by, tag their rows, and let a rule Pick the feature. Filter a
