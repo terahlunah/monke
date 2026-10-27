@@ -52,6 +52,10 @@
         }
     </script>
 
+    <!-- Connections for the analytics requests that follow the page load. -->
+    <link rel="preconnect" href="https://region1.google-analytics.com"/>
+    <link rel="preconnect" href="https://cloudflareinsights.com"/>
+
     <!-- Analytics. The URL path holds the whole grammar, so GA, a third party, gets a sanitized address and no
          automatic page view. analyticsPageUrl is inlined by the build from src/site/pages.ts. -->
     <script>
@@ -80,18 +84,31 @@
             gtag("set", params);
             gtag("config", "G-E30C8XJMHD", Object.assign({send_page_view: false}, params));
             gtag("event", "page_view", params);
-            var ga = document.createElement("script");
-            ga.async = true;
-            ga.src = "https://www.googletagmanager.com/gtag/js?id=G-E30C8XJMHD";
-            document.head.appendChild(ga);
+            // Only the script downloads wait: everything above has already run, so the sanitized address and the history
+            // capture are in place whenever gtag.js arrives and replays the queue. Keeping the two third-party
+            // scripts off the critical path lets the app render and become interactive first.
+            function injectAnalytics() {
+                var ga = document.createElement("script");
+                ga.async = true;
+                ga.src = "https://www.googletagmanager.com/gtag/js?id=G-E30C8XJMHD";
+                document.head.appendChild(ga);
 
-            // The beacon reports the live address, grammar included. Cloudflare already serves every request, so it
-            // learns nothing new; spa: false keeps each edit (which rewrites the path) from counting as a navigation.
-            var cf = document.createElement("script");
-            cf.defer = true;
-            cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
-            cf.setAttribute("data-cf-beacon", '{"token": "48c822a97803490ca08d33ae208157b7", "spa": false}');
-            document.head.appendChild(cf);
+                // The beacon reports the live address, grammar included. Cloudflare already serves every request, so it
+                // learns nothing new; spa: false keeps each edit (which rewrites the path) from counting as a navigation.
+                var cf = document.createElement("script");
+                cf.defer = true;
+                cf.src = "https://static.cloudflareinsights.com/beacon.min.js";
+                cf.setAttribute("data-cf-beacon", '{"token": "48c822a97803490ca08d33ae208157b7", "spa": false}');
+                document.head.appendChild(cf);
+            }
+
+            function whenIdle() {
+                if (window.requestIdleCallback) requestIdleCallback(injectAnalytics, {timeout: 4000});
+                else setTimeout(injectAnalytics, 2000);
+            }
+
+            if (document.readyState === "complete") whenIdle();
+            else addEventListener("load", whenIdle);
         })();
     </script>
 </head>
