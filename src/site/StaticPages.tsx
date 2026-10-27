@@ -8,6 +8,9 @@ import {awkwordsRows} from "@/features/docs/awkwordsRows.tsx";
 import {awkwordsExample} from "@/features/docs/referenceExamples.ts";
 import {notFoundPage, StaticPage, staticPages} from "./pages.ts";
 import {navLabel} from "./navLabel.ts";
+import {ReleaseArticle} from "./ReleaseNotes.tsx";
+import {releases} from "./releases.ts";
+import {feedPath} from "./feed.ts";
 
 // Prerendered at build time (see scripts/prerender.ts) and served without the app bundle, so crawlers and readers
 // without JavaScript get the full text. Everything here must render without effects.
@@ -48,6 +51,7 @@ export const Shell = ({page, children}: { page: ShellPage, children: ReactNode }
         <footer className="px-4 md:px-6 py-4 border-t border-line bg-surface text-muted">
             <p className="max-w-3xl mx-auto">Monke is a free, open-source word generator made by Terah. It runs in your
                 browser; grammars live in the page address and are never stored on a server.</p>
+            <p className="max-w-3xl mx-auto mt-2"><a className={linkClass} href={feedPath}>Atom feed of release notes</a></p>
         </footer>
     </div>
 )
@@ -129,6 +133,12 @@ export const AwkwordsAlternative = ({hrefs}: { hrefs: Record<string, string> }) 
     </Prose>
 )
 
+export const News = () => (
+    <Prose>
+        {releases.map(release => <ReleaseArticle key={release.version} release={release} level={2} anchor/>)}
+    </Prose>
+)
+
 export const NotFoundBody = () => (
     <Shell page={notFoundPage}>
         <Prose>
@@ -143,5 +153,6 @@ export const StaticPageBody =({page, hrefs}: { page: StaticPage, hrefs: Record<s
         {page.path === "/reference/" ? <ReferenceContent hrefs={hrefs}/> : null}
         {page.path === "/faq/" ? <div className="flex flex-col gap-10"><FaqList/></div> : null}
         {page.path === "/awkwords-alternative/" ? <AwkwordsAlternative hrefs={hrefs}/> : null}
+        {page.path === "/news/" ? <News/> : null}
     </Shell>
 )

@@ -3,6 +3,7 @@ import {join, resolve} from "node:path"
 import {createServer, Plugin, ResolvedConfig} from "vite"
 import react from "@vitejs/plugin-react"
 import {analyticsPageUrl, notFoundPage, siteOrigin, staticPages} from "../src/site/pages.ts"
+import {feedPath} from "../src/site/feed.ts"
 import type {RenderedPage} from "../src/site/prerender.tsx"
 
 const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;")
@@ -106,18 +107,19 @@ export const site = (): Plugin => {
                 optimizeDeps: {noDiscovery: true, include: []},
             })
             try {
-                const {renderPages, renderNotFound} = await server.ssrLoadModule("/src/site/prerender.tsx") as typeof import("../src/site/prerender.tsx")
+                const {renderPages, renderNotFound, renderFeed} = await server.ssrLoadModule("/src/site/prerender.tsx") as typeof import("../src/site/prerender.tsx")
                 const pages = await renderPages()
                 for (const page of pages) {
                     const dir = join(outDir, page.path)
                     await mkdir(dir, {recursive: true})
                     await writeFile(join(dir, "index.html"), pageHtml(template, page.path, pageMeta(page), page.body))
                 }
+                await writeFile(join(outDir, feedPath.slice(1)), renderFeed())
                 await writeFile(join(outDir, notFoundPage.file), pageHtml(template, notFoundPage.path, notFoundMeta, renderNotFound()))
                 const llms = await readFile(join(config.root, "public", "llms.txt"), "utf8")
                 const full = [llms.trim(), ...pages.map(p => `# ${siteOrigin}${p.path}\n\n${htmlToMarkdown(p.body)}`)].join("\n\n---\n\n")
                 await writeFile(join(outDir, "llms-full.txt"), full + "\n")
-                config.logger.info(`Prerendered ${pages.map(p => p.path).join(", ")} and llms-full.txt`)
+                config.logger.info(`Prerendered ${pages.map(p => p.path).join(", ")} , llms-full.txt and ${feedPath}`)
             } finally {
                 await server.close()
             }

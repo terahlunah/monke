@@ -19,6 +19,12 @@ export const staticPages = [
         heading: "Monke as an Awkwords alternative",
         description: "Coming from Awkwords? Monke reads Awkwords patterns and .awkw files, and maps subpatterns, brackets, optionals, weights and filters to rules and exclusions.",
     },
+    {
+        path: "/news/",
+        title: "What's new in Monke – Release Notes",
+        heading: "What's new in Monke",
+        description: "Release notes for Monke, the free conlang word generator: new features, redesigns, accessibility work and fixes, newest first. Also available as an Atom feed.",
+    },
 ] as const
 
 export type StaticPage = typeof staticPages[number]

@@ -3,6 +3,9 @@ import {encodeConfig} from "@/engine/sharing.ts";
 import {faqItems} from "@/features/docs/faqItems.tsx";
 import {allExamples, exampleToConfig} from "@/features/docs/referenceExamples.ts";
 import {siteOrigin, StaticPage, staticPages} from "./pages.ts";
+import {atomFeed} from "./feed.ts";
+import {ReleaseBody} from "./ReleaseNotes.tsx";
+import {releases} from "./releases.ts";
 import {NotFoundBody, StaticPageBody} from "./StaticPages.tsx";
 
 // Loaded by the build (scripts/prerender.ts) through Vite's SSR loader, so it shares the app's modules and aliases.
@@ -26,6 +29,8 @@ const faqJsonLd = () => ({
         },
     })),
 })
+
+export const renderFeed = () => atomFeed(releases, r => renderToStaticMarkup(<ReleaseBody release={r} level={3}/>))
 
 export const renderNotFound = () => renderToStaticMarkup(<NotFoundBody/>)
 

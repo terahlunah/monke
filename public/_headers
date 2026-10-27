@@ -18,6 +18,10 @@
   Cache-Control: public, max-age=3600
   Content-Type: application/json; charset=utf-8
 
+/news/feed.xml
+  Cache-Control: public, max-age=3600
+  Content-Type: application/atom+xml; charset=utf-8
+
 /sitemap.xml
   Cache-Control: public, max-age=3600
 

@@ -9,6 +9,7 @@ Monke builds words from named rules: terminal rules list sounds, pattern rules c
 - [Reference](https://monke.lunah.dev/reference/): pattern syntax, weights, rewrites, back-references, exclusions, word boundaries, phonological features and filters, seeds, sharing, and recipes
 - [FAQ](https://monke.lunah.dev/faq/): what Monke is, where grammars are saved, feedback
 - [Coming from Awkwords](https://monke.lunah.dev/awkwords-alternative/): importing Awkwords patterns and the syntax mapping
+- [What's new](https://monke.lunah.dev/news/): release notes, newest first; also an [Atom feed](https://monke.lunah.dev/news/feed.xml)
 - [Full text](https://monke.lunah.dev/llms-full.txt): all of the above in one file
 
 ## Optional
