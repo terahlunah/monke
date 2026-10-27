@@ -9,6 +9,25 @@ import {makeConfig, makeRule} from "./test-helpers.ts"
 const stripIds = (c: Config) =>
     JSON.parse(JSON.stringify(c, (key, value) => key === "id" ? undefined : value))
 
+// Ids are regenerated on decode, so feature references are compared by name.
+const named = (c: Config) => {
+    const names = new Map<string, string>()
+    for (const f of c.features) {
+        names.set(f.id, f.name)
+        for (const v of f.values) names.set(v.id, `${f.name}:${v.name}`)
+    }
+    const rename = (ids?: string[]) => ids?.map(id => names.get(id) ?? id)
+    return stripIds({
+        ...c,
+        rules: c.rules.map(r => ({
+            ...r,
+            values: rename(r.values),
+            chooses: rename(r.chooses),
+            patterns: r.patterns.map(p => ({...p, values: rename(p.values)})),
+        })),
+    })
+}
+
 const roundTrip = async (c: Config) => stripIds(await decodeConfig(await encodeConfig(c)))
 
 describe("sharing", () => {
@@ -101,6 +120,39 @@ describe("sharing", () => {
             makeRule("V", ["a", "i"], {terminalOnly: true, collapsed: true}),
         ], {language: "frozen", enableWeights: true, repeatRewrites: true, seed: "sé3d"})
         expect(stripIds(await decodeConfig(link))).toEqual(stripIds(expected))
+    })
+
+    const featured = () => {
+        const config = makeConfig("Word", [
+            makeRule("Word", ["V{2}"], {chooses: ["h"]}),
+            makeRule("V", ["a", "e", "o"], {terminalOnly: true, values: ["rv"]}),
+        ], {language: "frozen", enableWeights: true, seed: "s6", features: [
+            {id: "h", name: "harmony", values: [{id: "f", name: "front", weight: 1}, {id: "b", name: "back", weight: 2}]},
+            {id: "r", name: "rounding", values: [{id: "rv", name: "round", weight: 0.5}]},
+        ]})
+        config.rules[1].patterns[1].values = ["f"]
+        config.rules[1].patterns[2].values = ["b", "rv"]
+        return config
+    }
+
+    it("round-trips features, item values and chooses", async () => {
+        const config = featured()
+        expect(named(await decodeConfig(await encodeConfig(config)))).toEqual(named(config))
+    })
+
+    it("drops references to features or values that no longer exist", async () => {
+        const config = featured()
+        config.rules[0].chooses = ["h", "gone"]
+        config.rules[1].patterns[0].values = ["gone"]
+        const decoded = named(await decodeConfig(await encodeConfig(config)))
+        expect(decoded.rules[0].chooses).toEqual(["harmony"])
+        expect(decoded.rules[1].patterns[0].values).toBeUndefined()
+    })
+
+    // Frozen link from format version 6, encoded once from `featured()`. Same rule: fix the decoder, not the fixture.
+    it("decodes a frozen version 6 link", async () => {
+        const link = "H4sIAAAAAAAACkWMSwoCQQxEX0cdPY8Lt-MpxnXrjB_EBFpdqAgeXZLGMRBSVXlJ0wD7Ys9Bp8DGSp9AgOtKmAPHXC6mD2FWSb3Bp3V4m3dnYL0Ait21P-khBRYOaIXfV6JStGfda_n2R_-8q8sUwSRmroTLwWUaYXMr48EXEKiV5scAAAA~"
+        expect(named(await decodeConfig(link))).toEqual(named(featured()))
     })
 
     it("round-trips more than 127 rules and more than 127 patterns in one rule", async () => {

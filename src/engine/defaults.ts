@@ -188,6 +188,7 @@ export const emptyConfig: Config = {
     enableSerif: false,
     repeatRewrites: false,
     seed: "",
+    features: [],
 }
 
 export const defaultConfig: Config = {
@@ -198,4 +199,5 @@ export const defaultConfig: Config = {
     enableSerif: false,
     repeatRewrites: false,
     seed: "",
+    features: [],
 }

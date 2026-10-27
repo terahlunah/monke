@@ -32,6 +32,7 @@ export const exampleToConfig = (example: ReferenceExample, enableSerif = false):
     enableSerif,
     repeatRewrites: example.repeatRewrites ?? false,
     seed: "",
+    features: [],
     rules: example.rules.map((r): Rule => ({
         id: crypto.randomUUID(),
         name: r.name,

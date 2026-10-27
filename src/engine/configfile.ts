@@ -22,6 +22,28 @@ const bool = (o: Obj, key: string, where: string): boolean => {
 const optional = <T>(o: Obj, key: string, fallback: T, read: (o: Obj, key: string, where: string) => T, where: string): T =>
     o[key] === undefined ? fallback : read(o, key, where)
 
+// A list of ids; kept absent when the file has none so configs compare equal to app-built ones.
+const ids = (o: Obj, key: string, where: string): string[] | undefined => {
+    const v = o[key]
+    if (v === undefined) return undefined
+    if (!Array.isArray(v) || v.some(x => typeof x !== "string")) return fail(`${where}.${key} must be a list of text`)
+    return v.length ? v as string[] : undefined
+}
+
+const withIds = <T extends object>(item: T, o: Obj, keys: string[], where: string): T => {
+    const out = {...item} as Record<string, unknown>
+    for (const key of keys) {
+        const v = ids(o, key, where)
+        if (v) out[key] = v
+    }
+    return out as T
+}
+
+const number = (o: Obj, key: string, where: string): number => {
+    const v = o[key]
+    return typeof v === "number" && Number.isFinite(v) ? v : fail(`${where}.${key} must be a number`)
+}
+
 const list =(o: Obj, key: string, where: string): Obj[] => {
     const v = o[key]
     if (!Array.isArray(v)) return fail(`${where}.${key} must be a list`)
@@ -43,13 +65,13 @@ export const parseConfigFile = (text: string): Config => {
 
     const rules = list(data, "rules", "config").map((r, i) => {
         const where = `rules[${i}]`
-        return {
+        return withIds({
             id: str(r, "id", where),
             name: str(r, "name", where),
             patterns: list(r, "patterns", where).map((p, j) => {
                 const weight = p.weight
                 if (typeof weight !== "number" || !Number.isFinite(weight)) fail(`${where}.patterns[${j}].weight must be a number`)
-                return {id: str(p, "id", where), pattern: str(p, "pattern", where), weight: weight as number}
+                return withIds({id: str(p, "id", where), pattern: str(p, "pattern", where), weight: weight as number}, p, ["values"], where)
             }),
             rewrites: list(r, "rewrites", where).map(p => ({
                 id: str(p, "id", where), match: str(p, "match", where), replace: str(p, "replace", where),
@@ -61,7 +83,7 @@ export const parseConfigFile = (text: string): Config => {
             showRewrites: bool(r, "showRewrites", where),
             showExclusions: bool(r, "showExclusions", where),
             collapsed: optional(r, "collapsed", false, bool, where),
-        }
+        }, r, ["values", "chooses"], where)
     })
 
     return {
@@ -72,5 +94,12 @@ export const parseConfigFile = (text: string): Config => {
         enableSerif: optional(data, "enableSerif", false, bool, "config"),
         repeatRewrites: optional(data, "repeatRewrites", false, bool, "config"),
         seed: optional(data, "seed", "", str, "config"),
+        features: data.features === undefined ? [] : list(data, "features", "config").map((f, i) => ({
+            id: str(f, "id", `features[${i}]`),
+            name: str(f, "name", `features[${i}]`),
+            values: list(f, "values", `features[${i}]`).map(v => ({
+                id: str(v, "id", `features[${i}]`), name: str(v, "name", `features[${i}]`), weight: number(v, "weight", `features[${i}]`),
+            })),
+        })),
     }
 }

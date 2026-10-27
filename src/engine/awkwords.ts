@@ -678,6 +678,7 @@ export const importAwkwords = (input: string | Uint8Array, fileName?: string): A
             enableWeights: allAlts.some(anyWeight),
             enableSerif: false,
             repeatRewrites: false,
+            features: [],
             seed: "",
         },
         wordCount,

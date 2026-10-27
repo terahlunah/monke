@@ -26,6 +26,7 @@ describe("parseConfigFile", () => {
             enableWeights: undefined,
             repeatRewrites: undefined,
             seed: undefined,
+            features: undefined,
             rules: valid.rules.map(r => ({...r, collapsed: undefined})),
         }
         const parsed = parseConfigFile(JSON.stringify(old))
@@ -35,6 +36,15 @@ describe("parseConfigFile", () => {
         expect(parsed.enableSerif).toBe(false)
         expect(parsed.enableWeights).toBe(false)
         expect(parsed.rules[0].collapsed).toBe(false)
+        expect(parsed.features).toEqual([])
+    })
+
+    it("round-trips features, item values and chooses", () => {
+        const featured = makeConfig("R", [makeRule("R", ["'a'"], {values: ["f"], chooses: ["h"]})], {
+            features: [{id: "h", name: "harmony", values: [{id: "f", name: "front", weight: 2}]}],
+        })
+        featured.rules[0].patterns[0].values = ["f"]
+        expect(parseConfigFile(JSON.stringify(featured))).toEqual(featured)
     })
 
     it("drops unknown keys", () => {
@@ -54,6 +64,8 @@ describe("parseConfigFile", () => {
             ...valid,
             rules: [{...valid.rules[0], patterns: [{id: "p", pattern: "a", weight: "1"}]}],
         })],
+        ["values that are not a list of ids", JSON.stringify({...valid, rules: [{...valid.rules[0], values: [1]}]})],
+        ["a feature value without a weight", JSON.stringify({...valid, features: [{id: "h", name: "h", values: [{id: "v", name: "v"}]}]})],
         ["a non-boolean flag", JSON.stringify({...valid, enableSerif: "yes"})],
     ])("rejects %s", (_, text) => {
         expect(() => parseConfigFile(text)).toThrow(/Invalid config file/)

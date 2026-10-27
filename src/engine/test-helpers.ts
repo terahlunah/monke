@@ -22,6 +22,7 @@ export const makeConfig = (root: string, rules: Rule[], extra: Partial<Config> =
     enableSerif: false,
     repeatRewrites: false,
     seed: "",
+    features: [],
     ...extra,
 })
 

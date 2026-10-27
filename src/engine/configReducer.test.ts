@@ -18,7 +18,7 @@ describe("whole-config actions", () => {
 
     it("clear empties the grammar, keeps the display flags and picks a new seed", () => {
         const c = configReducer({...base(), enableWeights: true, enableSerif: true, seed: "s"}, {type: "clear"})
-        expect(c).toEqual({language: "", root: null, rules: [], enableWeights: true, enableSerif: true, repeatRewrites: false, seed: c.seed})
+        expect(c).toEqual({language: "", root: null, rules: [], features: [], enableWeights: true, enableSerif: true, repeatRewrites: false, seed: c.seed})
         expect(c.seed).toMatch(/^[a-z2-9]{6}$/)
     })
 
@@ -134,5 +134,77 @@ describe("rewrite and exclusion actions", () => {
         expect(c.rules[0].exclusions.map(e => e.id)).toEqual([second.id, first.id])
         c = configReducer(c, {type: "removeExclusion", ruleId: "A", id: first.id})
         expect(c.rules[0].exclusions.map(e => e.id)).toEqual([second.id])
+    })
+})
+
+describe("feature actions", () => {
+    const withHarmony = () => {
+        let c = apply({type: "addFeature"})
+        const featureId = c.features[0].id
+        c = [
+            {type: "renameFeature", featureId, name: "harmony"},
+            {type: "addFeatureValue", featureId},
+            {type: "addFeatureValue", featureId},
+        ].reduce((acc, a) => configReducer(acc, a as ConfigAction), c)
+        const [front, back] = c.features[0].values
+        c = [
+            {type: "renameFeatureValue", featureId, valueId: front.id, name: "front"},
+            {type: "renameFeatureValue", featureId, valueId: back.id, name: "back"},
+            {type: "setFeatureValueWeight", featureId, valueId: back.id, weight: 3},
+            {type: "setPatternValues", ruleId: "A", id: "A0", values: [front.id]},
+            {type: "setPatternValues", ruleId: "A", id: "A1", values: [back.id]},
+            {type: "setRuleValues", ruleId: "B", values: [front.id]},
+            {type: "addRuleChoice", ruleId: "A", featureId},
+            {type: "addRuleChoice", ruleId: "A", featureId},
+        ].reduce((acc, a) => configReducer(acc, a as ConfigAction), c)
+        return {c, featureId, front: front.id, back: back.id}
+    }
+
+    it("declares a feature with named, weighted values and tags items with them", () => {
+        const {c, featureId, front, back} = withHarmony()
+        expect(c.features).toEqual([{id: featureId, name: "harmony", values: [
+            {id: front, name: "front", weight: 1},
+            {id: back, name: "back", weight: 3},
+        ]}])
+        expect(c.rules[0].patterns.map(p => p.values)).toEqual([[front], [back]])
+        expect(c.rules[1].values).toEqual([front])
+        expect(c.rules[0].chooses).toEqual([featureId])
+    })
+
+    it("renaming keeps references, which are ids", () => {
+        const {c, featureId, front} = withHarmony()
+        const renamed = configReducer(c, {type: "renameFeatureValue", featureId, valueId: front, name: "fronted"})
+        expect(renamed.rules[0].patterns[0].values).toEqual([front])
+        expect(renamed.features[0].values[0].name).toBe("fronted")
+    })
+
+    it("removing a value removes it from every item", () => {
+        const {c, featureId, front, back} = withHarmony()
+        const removed = configReducer(c, {type: "removeFeatureValue", featureId, valueId: front})
+        expect(removed.features[0].values.map(v => v.id)).toEqual([back])
+        expect(removed.rules[0].patterns[0].values).toBeUndefined()
+        expect(removed.rules[1].values).toBeUndefined()
+        expect(removed.rules[0].chooses).toEqual([featureId])
+    })
+
+    it("removing a feature removes its values and chooses everywhere", () => {
+        const {c, featureId} = withHarmony()
+        const removed = configReducer(c, {type: "removeFeature", featureId})
+        expect(removed.features).toEqual([])
+        expect(removed.rules.flatMap(r => [r.values, r.chooses, ...r.patterns.map(p => p.values)]).every(v => v === undefined)).toBe(true)
+    })
+
+    it("stops choosing a feature and stores no values as absent", () => {
+        const {c, featureId} = withHarmony()
+        const next = [
+            {type: "removeRuleChoice", ruleId: "A", featureId},
+            {type: "setRuleValues", ruleId: "B", values: []},
+        ].reduce((acc, a) => configReducer(acc, a as ConfigAction), c)
+        expect(next.rules[0].chooses).toBeUndefined()
+        expect(next.rules[1].values).toBeUndefined()
+    })
+
+    it("clear removes the features", () => {
+        expect(configReducer(withHarmony().c, {type: "clear"}).features).toEqual([])
     })
 })

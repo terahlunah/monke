@@ -1,4 +1,4 @@
-import {Config, ExclusionPattern, RewritePattern, Rule, RulePattern} from "./config.ts"
+import {Config, ExclusionPattern, Feature, RewritePattern, Rule, RulePattern} from "./config.ts"
 import {defaultConfig, tokiPonaWeightedRules} from "./defaults.ts"
 import {randomSeed, withSeed} from "./seed.ts"
 import {moveItem, patchById, removeById} from "./list.ts"
@@ -39,6 +39,18 @@ export type ConfigAction =
     | { type: "editExclusion", ruleId: string, id: string, patch: Partial<Omit<ExclusionPattern, "id">> }
     | { type: "removeExclusion", ruleId: string, id: string }
     | { type: "moveExclusion", ruleId: string, from: number, to: number }
+    // Features. Removing a feature or value also removes it from every rule and row that refers to it.
+    | { type: "addFeature" }
+    | { type: "renameFeature", featureId: string, name: string }
+    | { type: "removeFeature", featureId: string }
+    | { type: "addFeatureValue", featureId: string }
+    | { type: "renameFeatureValue", featureId: string, valueId: string, name: string }
+    | { type: "setFeatureValueWeight", featureId: string, valueId: string, weight: number }
+    | { type: "removeFeatureValue", featureId: string, valueId: string }
+    | { type: "setPatternValues", ruleId: string, id: string, values: string[] }
+    | { type: "setRuleValues", ruleId: string, values: string[] }
+    | { type: "addRuleChoice", ruleId: string, featureId: string }
+    | { type: "removeRuleChoice", ruleId: string, featureId: string }
 
 const newRule = (terminalOnly: boolean): Rule => ({
     id: crypto.randomUUID(),
@@ -62,6 +74,28 @@ const cloneRule = (source: Rule): Rule => ({
     exclusions: source.exclusions.map(p => ({...p, id: crypto.randomUUID()})),
 })
 
+// Empty lists are stored as absent, so "none" has one representation.
+const idList = (ids: string[]): string[] | undefined => ids.length ? ids : undefined
+
+const withoutIds = (ids: string[] | undefined, gone: Set<string>): string[] | undefined =>
+    ids === undefined ? undefined : idList(ids.filter(id => !gone.has(id)))
+
+// Drops references to removed features and values from every rule and row.
+const forget = (config: Config, gone: Set<string>): Config => ({
+    ...config,
+    rules: config.rules.map(r => ({
+        ...r,
+        values: withoutIds(r.values, gone),
+        chooses: withoutIds(r.chooses, gone),
+        patterns: r.patterns.map(p => ({...p, values: withoutIds(p.values, gone)})),
+    })),
+})
+
+const updateFeature = (config: Config, featureId: string, change: (f: Feature) => Partial<Feature>): Config => ({
+    ...config,
+    features: config.features.map(f => f.id === featureId ? {...f, ...change(f)} : f),
+})
+
 const updateRule = (config: Config, ruleId: string, change: (rule: Rule) => Partial<Rule>): Config => ({
     ...config,
     rules: config.rules.map(r => r.id === ruleId ? {...r, ...change(r)} : r),
@@ -73,13 +107,14 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
             return withSeed(action.config)
         // Flags are preferences, not grammar content, so clearing leaves them alone.
         case "clear":
-            return {...config, language: "", root: null, rules: [], seed: randomSeed()}
+            return {...config, language: "", root: null, rules: [], features: [], seed: randomSeed()}
         case "loadExample":
             return {
                 ...config,
                 language: defaultConfig.language,
                 root: defaultConfig.root,
                 rules: action.weighted ? tokiPonaWeightedRules : defaultConfig.rules,
+                features: defaultConfig.features,
                 enableWeights: action.weighted,
                 repeatRewrites: defaultConfig.repeatRewrites,
                 seed: randomSeed(),
@@ -162,5 +197,37 @@ export const configReducer = (config: Config, action: ConfigAction): Config => {
             return updateRule(config, action.ruleId, r => ({exclusions: removeById(r.exclusions, action.id)}))
         case "moveExclusion":
             return updateRule(config, action.ruleId, r => ({exclusions: moveItem(r.exclusions, action.from, action.to)}))
+
+        case "addFeature":
+            return {...config, features: [...config.features, {id: crypto.randomUUID(), name: "", values: []}]}
+        case "renameFeature":
+            return updateFeature(config, action.featureId, () => ({name: action.name}))
+        case "removeFeature": {
+            const feature = config.features.find(f => f.id === action.featureId)
+            if (!feature) return config
+            const gone = new Set([feature.id, ...feature.values.map(v => v.id)])
+            return forget({...config, features: removeById(config.features, feature.id)}, gone)
+        }
+        case "addFeatureValue":
+            return updateFeature(config, action.featureId, f => ({
+                values: [...f.values, {id: crypto.randomUUID(), name: "", weight: 1}],
+            }))
+        case "renameFeatureValue":
+            return updateFeature(config, action.featureId, f => ({values: patchById(f.values, action.valueId, {name: action.name})}))
+        case "setFeatureValueWeight":
+            return updateFeature(config, action.featureId, f => ({values: patchById(f.values, action.valueId, {weight: action.weight})}))
+        case "removeFeatureValue": {
+            const removed = updateFeature(config, action.featureId, f => ({values: removeById(f.values, action.valueId)}))
+            return forget(removed, new Set([action.valueId]))
+        }
+        case "setPatternValues":
+            return updateRule(config, action.ruleId, r => ({patterns: patchById(r.patterns, action.id, {values: idList(action.values)})}))
+        case "setRuleValues":
+            return updateRule(config, action.ruleId, () => ({values: idList(action.values)}))
+        case "addRuleChoice":
+            return updateRule(config, action.ruleId, r =>
+                r.chooses?.includes(action.featureId) ? {} : {chooses: [...r.chooses ?? [], action.featureId]})
+        case "removeRuleChoice":
+            return updateRule(config, action.ruleId, r => ({chooses: withoutIds(r.chooses, new Set([action.featureId]))}))
     }
 }
