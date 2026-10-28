@@ -132,6 +132,7 @@ const ValueBox = ({value, index, feature, featureName, dispatch, enableWeights, 
     return (
         <span className="inline-flex h-9 md:h-8 items-center rounded-md border border-feature-line pl-1 font-mono text-[13px] text-feature">
             <AutowidthInput value={value.name} aria-label={`Value ${index + 1} of feature ${featureName}`} data-focus-id={value.id} {...invalid}
+                            enterKeyHint="enter"
                             onKeyDown={e => {
                                 if (e.nativeEvent.isComposing) return
                                 if (e.key === "Enter") {

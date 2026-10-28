@@ -141,8 +141,10 @@ const AddSeveral = ({ruleName, enableSerif, onAdd}: AddSeveralProps) => {
     return (
         <>
             <input value={text} onChange={e => setText(e.target.value)}
+                   // Without a hint, Android keyboards show Next, which moves focus instead of sending Enter.
+                   enterKeyHint="enter"
                    onKeyDown={e => {
-                       if (e.key !== "Enter") return
+                       if (e.nativeEvent.isComposing || e.key !== "Enter") return
                        e.preventDefault()
                        submit()
                    }}

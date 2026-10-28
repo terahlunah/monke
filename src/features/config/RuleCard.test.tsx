@@ -17,6 +17,8 @@ describe("adding several terminals", () => {
         await renderApp()
         const before = vowels()
         const field = screen.getByLabelText("Add several terminals to rule Vowel, separated by spaces")
+        // Android keyboards show Next without it, which moves focus instead of sending Enter.
+        expect(field).toHaveAttribute("enterkeyhint", "enter")
 
         await user.type(field, "x  y\tz{Enter}")
 
