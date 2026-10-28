@@ -150,7 +150,7 @@ describe("accessibility (axe)", () => {
         await user.click(screen.getByRole("button", {name: "Add feature picked by rule Word"}))
         await screen.findByRole("menuitem", {name: "harmony"})
         await check(document.body, {landmarks: false})
-    })
+    }, 15000) // three axe runs plus typing; close to the 5 s default on CI runners
 
     it("help tips open", async () => {
         const user = userEvent.setup()
